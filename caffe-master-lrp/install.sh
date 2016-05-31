@@ -45,19 +45,19 @@ sudo apt-get install --no-install-recommends libboost-all-dev
 mkdir cuda_dl ; cd cuda_dl
 
 # local debian package installation. caution, causes an update of installed packages! 
-wget http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
+wget -nc http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
 sudo dpkg -i cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
 sudo apt-get update
 sudo apt-get install cuda
 
 # network-based debian package installation. disabled by default.
-#wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.5-18_amd64.deb
+#wget -nc http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.5-18_amd64.deb
 #sudo dpkg -i cuda-repo-ubuntu1404_7.5-18_amd64.deb
 #sudo apt-get update
 #sudo apt-get install cuda
 
 # local installation using a runfile
-#wget http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run
+#wget -nc http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run
 #sudo sh cuda_7.5.18_linux.run
 
 # cleanup after cuda installation
