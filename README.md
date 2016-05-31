@@ -11,7 +11,7 @@ The  implementations  for  Matlab  and  python  shall  serve  as  a  playing fie
 
 ### Installing the Toolbox -- TL;DR version:
 
-For whichever language / purpose you wish to make use of this tool box download the appropriate sub-package (*python*, *matlab*, *caffe-master-lrp* -- or do a full download) and then just run for your implementation of choice, e.g.
+For whichever language / purpose you wish to make use of this toolbox download the appropriate sub-package (*python*, *matlab*, *caffe-master-lrp* -- or do a full clone of the project) and then just run the installation script for your implementation of choice, e.g.
 
     git clone https://github.com/sebastian-lapuschkin/lrp_toolbox/
     cd lrp_toolbox/$yourChoice
