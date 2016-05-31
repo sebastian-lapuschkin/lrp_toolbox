@@ -27,16 +27,22 @@ sudo apt-get install python-numpy python-numpy-dbg python-scipy python-matplotli
 cd .. 
 
 # download and extract the MNIST hand written data set
-fname=data_mnist_npy.tar.gz
-wget http://heatmapping.org/files/lrp_toolbox/data/$fname
-tar xvf $fname
-rm $fname
+if ! [[ -f data/MNIST/test_images.npy && -f data/MNIST/test_labels.npy ]]
+then
+  fname=data_mnist_npy.tar.gz
+  wget -nc http://heatmapping.org/files/lrp_toolbox/data/$fname
+  tar xvf $fname
+  rm $fname
+fi
 
 # download and extract the model required for successfully run the demo
-fname=models_mnist_nn.tar.gz
-wget http://heatmapping.org/files/lrp_toolbox/models/$fname
-tar xvf $fname
-rm $fname
+if ! [ -f models/MNIST/long-rect.nn ]
+then
+  fname=models_mnist_nn.tar.gz
+  wget -nc http://heatmapping.org/files/lrp_toolbox/models/$fname
+  tar xvf $fname
+  rm $fname
+fi
 
 # go back to ./python
 cd python
