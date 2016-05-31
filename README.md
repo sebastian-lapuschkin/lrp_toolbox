@@ -11,16 +11,17 @@ The  implementations  for  Matlab  and  python  shall  serve  as  a  playing fie
 
 ### Installing the Toolbox -- TL;DR version:
 
-For whichever language / purpose you wish to make use of this tool box download the appropriate package (python, matlab, caffe-master-lrp -- or do a full download) and then just run for your implementation of choice
+For whichever language / purpose you wish to make use of this tool box download the appropriate sub-package (*python*, *matlab*, *caffe-master-lrp* -- or do a full download) and then just run for your implementation of choice, e.g.
 
-    cd $yourChoice
+    git clone https://github.com/sebastian-lapuschkin/lrp_toolbox/
+    cd lrp_toolbox/$yourChoice
     bash install.sh
 
 Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/manual.pdf).
 
 ### The LRP Toolbox Paper
 
-When using (any part) of this toolbox for, please cite [our (recently accepted) paper](BROKEN LINK)
+When using (any part) of this toolbox, please cite [our (recently accepted) paper](BROKEN LINK)
 
     @article{lapusckin2016LRP,
       title={The LRP Toolbox for Artificial Neural Networks},
