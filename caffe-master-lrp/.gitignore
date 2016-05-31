@@ -53,7 +53,8 @@
 ## Caffe
 
 # User's build configuration
-Makefile.config
+# Makefile.config
+# We actually need this for the preconfigured build
 
 # Data and models are either
 # 1. reference, and not casually committed
