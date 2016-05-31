@@ -1,4 +1,4 @@
-# The LRP Toolbox for Artificial Neural Networks (v1.0)
+# The LRP Toolbox for Artificial Neural Networks
 
 The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
 specific  to  a  given  data  point  by  attributing
@@ -20,4 +20,20 @@ Make sure to at least skim through the installation scripts! For more details an
 
 ### The LRP Toolbox Paper
 
-When using (any part) of this toolbox for, please cite [our paper](BROKEN LINK)
+When using (any part) of this toolbox for, please cite [our (recently accepted) paper](BROKEN LINK)
+
+    @article{lapusckin2016LRP,
+      title={The LRP Toolbox for Artificial Neural Networks},
+      author={Lapuschkin, Sebastian and Binder, Alexander and Montavon, Gr\'{e}goire and M\"{u}ller, Klaus-Robert and Samek, Wojciech },
+      journal={The Journal of Machine Learning Research},
+      year={2016},
+      volume={?17?},
+      number={????}
+      pages={????},
+      publisher={JMLR. org}
+    }
+    
+### Misc
+
+For further research and projects involving LRP, visit [heatmapping.org (WIP. the ugly will vanish soon.)](https://heatmapping.org)
+
