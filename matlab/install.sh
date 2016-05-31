@@ -18,7 +18,7 @@ then
 fi
 
 # download and extract the model required for successfully run the demo
-if  ! [ -f models/MNIST/long-rect.mat ]
+if  ! [ -f models/MNIST/long-tanh.mat ]
 then
     fname=models_mnist_mat.tar.gz
     wget -nc http://heatmapping.org/files/lrp_toolbox/models/$fname
