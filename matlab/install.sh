@@ -23,7 +23,7 @@ then
     fname=models_mnist_mat.tar.gz
     wget -nc http://heatmapping.org/files/lrp_toolbox/models/$fname
     tar xvf $fname
-  rm $fname
+    rm $fname
 fi
 
 # go back to ./matlab
