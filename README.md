@@ -9,11 +9,11 @@ The LRP Toolbox provides simple and accessible stand-alone implementations of LR
 
 The  implementations  for  Matlab  and  python  shall  serve  as  a  playing field to familiarize oneself with the LRP algorithm and are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
 
-## Installing the Toolbox TL;DR version:
+## Installing the Toolbox -- TL;DR version:
 
 For whichever language / purpose you wish to make use of this tool box download the appropriate package (python, matlab, caffe-master-lrp -- or do a full download) and then just run for your implementation of choice
 
     cd $yourChoice
     bash install.sh
 
-Make sure to at least skim through the installation scripts!
+Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/manual.pdf).
