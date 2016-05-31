@@ -20,7 +20,7 @@ import data_io.*
 import render.*
 
 %load neural network, as well as the MNIST test data and some labels
-nn = model_io.read('../models/MNIST/long-tanh.mat');
+nn = model_io.read('../models/MNIST/long-rect.mat');
 X = data_io.read('../data/MNIST/test_images.mat');
 Y = data_io.read('../data/MNIST/test_labels.mat');
 
