@@ -36,5 +36,5 @@ When using (any part) of this toolbox, please cite [our (recently accepted) pape
     
 ### Misc
 
-For further research and projects involving LRP, visit [heatmapping.org (WIP. the ugly will vanish soon.)](https://heatmapping.org)
+For further research and projects involving LRP, visit [heatmapping.org (WIP. the ugly will vanish soon.)](http://heatmapping.org)
 
