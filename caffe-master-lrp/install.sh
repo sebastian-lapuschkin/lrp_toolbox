@@ -72,7 +72,7 @@ sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 
 # COMPILE CAFFE CODE
 make clean
-make all
+make all -j10
 #test your build?
 #make test
 #make runtest
