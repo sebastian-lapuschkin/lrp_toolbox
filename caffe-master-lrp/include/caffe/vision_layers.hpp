@@ -62,6 +62,20 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   		Dtype * new_lowerlayerrelevances, const relpropopts & ro,
   		bool skip_im2col = false);
 
+
+  void zbeta_gregoire(
+  		const Dtype* upperlayerrelevances, //ex output,
+  		const Dtype* weights, const Dtype* input,
+  		Dtype * new_lowerlayerrelevances, const relpropopts & ro,
+  		bool skip_im2col = false);
+
+  void wsquare(
+  		const Dtype* upperlayerrelevances, //ex output,
+  		const Dtype* weights, const Dtype* input,
+  		Dtype * new_lowerlayerrelevances, const relpropopts & ro,
+  		bool skip_im2col = false);
+
+
 #ifndef CPU_ONLY
   void forward_gpu_gemm(const Dtype* col_input, const Dtype* weights,
       Dtype* output, bool skip_im2col = false);
@@ -262,6 +276,24 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
   virtual void Backward_Relevance_cpu_alphabeta_4cases(const vector<Blob<Dtype>*>& top,
         const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
   	  const int layerindex, const relpropopts & ro );
+
+  virtual void Backward_Relevance_cpu_zbeta_gregoire2(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
+  	  const int layerindex, const relpropopts & ro );
+
+  virtual void Backward_Relevance_cpu_wsquare(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
+  	  const int layerindex, const relpropopts & ro );
+
+  virtual void Backward_Relevance_cpu_flatdist_slowneasy(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+	  const int layerindex, const relpropopts & ro );
+
+  virtual void Backward_Relevance_cpu_zeilerlike_slowneasy(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+  	  const int layerindex, const relpropopts & ro ) ;
+
+
 };
 
 /**

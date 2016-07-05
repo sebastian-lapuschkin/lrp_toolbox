@@ -309,7 +309,7 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 	int Iin = conv_out_spatial_dim_;
 	int Rout = conv_out_channels_ / group_;
 
-	float beta =ro.alphabeta_beta;
+	float beta = ro.alphabeta_beta;
 	float alpha = 1.0 + beta;
 	// inputs col_buff are K x Iin
 	//weights are Rout x K
@@ -331,8 +331,7 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 	}
 	//memset(col_buff_new, 0,
 	//		sizeof(Dtype) * conv_out_spatial_dim_ * kernel_dim_);
-	memset(col_buff_new, 0,
-			sizeof(Dtype) * col_buffer_.count());
+	memset(col_buff_new, 0, sizeof(Dtype) * col_buffer_.count());
 
 	Blob < Dtype > pos_sums(1, 1, Rout, Iin);
 	Blob < Dtype > neg_sums(1, 1, Rout, Iin);
@@ -362,36 +361,42 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 
 							//w is weights[routind,kernelind]
 
-							for (long kernelind = 0; kernelind < K; ++kernelind) {
+							for (long kernelind = 0; kernelind < K;
+									++kernelind) {
 								//if or max/min ?
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.),
-										col_buff[col_offset_ * g + kernelind * Iin
-												+ iinind]
-												* weights[weight_offset_ * g
-														+ routind * K + kernelind]);
-								neg_sums_data[routind * Iin + iinind] += std::min(
-										Dtype(0.),
-										col_buff[col_offset_ * g + kernelind * Iin
-												+ iinind]
-												* weights[weight_offset_ * g
-														+ routind * K + kernelind]);
+								pos_sums_data[routind * Iin + iinind] +=
+										std::max(Dtype(0.),
+												col_buff[col_offset_ * g
+														+ kernelind * Iin
+														+ iinind]
+														* weights[weight_offset_
+																* g
+																+ routind * K
+																+ kernelind]);
+								neg_sums_data[routind * Iin + iinind] +=
+										std::min(Dtype(0.),
+												col_buff[col_offset_ * g
+														+ kernelind * Iin
+														+ iinind]
+														* weights[weight_offset_
+																* g
+																+ routind * K
+																+ kernelind]);
 
 							}
-							
-								Dtype bterm = this->blobs_[1]->cpu_data()[routind]
-										* bias_multiplier_.cpu_data()[iinind];
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.), bterm);
-								neg_sums_data[routind * Iin + iinind] += std::min(
-										Dtype(0.), bterm);
-							
+
+							Dtype bterm = this->blobs_[1]->cpu_data()[routind]
+									* bias_multiplier_.cpu_data()[iinind];
+							pos_sums_data[routind * Iin + iinind] += std::max(
+									Dtype(0.), bterm);
+							neg_sums_data[routind * Iin + iinind] += std::min(
+									Dtype(0.), bterm);
 
 						} //for (long routind = 0; routind < Rout; ++routind) {
 					} //for (long iinind = 0; iinind < Iin; ++iinind) {
 				} // case 0:
-				break;
-				
+					break;
+
 				case 1: //distrib bias
 				{
 					for (long iinind = 0; iinind < Iin; ++iinind) {
@@ -404,71 +409,78 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 
 							Dtype bterm = this->blobs_[1]->cpu_data()[routind]
 									* bias_multiplier_.cpu_data()[iinind];
-							
-							for (long kernelind = 0; kernelind < K; ++kernelind) {
+
+							for (long kernelind = 0; kernelind < K;
+									++kernelind) {
 								//if or max/min ?
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.),
-										col_buff[col_offset_ * g + kernelind * Iin
-												+ iinind]
-												* weights[weight_offset_ * g
-														+ routind * K + kernelind] + bterm / K);
-								neg_sums_data[routind * Iin + iinind] += std::min(
-										Dtype(0.),
-										col_buff[col_offset_ * g + kernelind * Iin
-												+ iinind]
-												* weights[weight_offset_ * g
-														+ routind * K + kernelind]  + bterm / K);
+								pos_sums_data[routind * Iin + iinind] +=
+										std::max(Dtype(0.),
+												col_buff[col_offset_ * g
+														+ kernelind * Iin
+														+ iinind]
+														* weights[weight_offset_
+																* g
+																+ routind * K
+																+ kernelind]
+														+ bterm / K);
+								neg_sums_data[routind * Iin + iinind] +=
+										std::min(Dtype(0.),
+												col_buff[col_offset_ * g
+														+ kernelind * Iin
+														+ iinind]
+														* weights[weight_offset_
+																* g
+																+ routind * K
+																+ kernelind]
+														+ bterm / K);
 
 							}
-							
 
 						} //for (long routind = 0; routind < Rout; ++routind) {
 					} //for (long iinind = 0; iinind < Iin; ++iinind) {
 				} // case 1:
-				break;
-				
+					break;
+
 				default: {
 					LOG(FATAL) << "uknown value for: ro.biastreatmenttype "
 							<< ro.biastreatmenttype;
 				}
 					break;
-				}//				switch (ro.biastreatmenttype) {
+				} //				switch (ro.biastreatmenttype) {
 
-			}
-			else //if (this->bias_term_) {
-			{	
-			for (long iinind = 0; iinind < Iin; ++iinind) {
-				for (long routind = 0; routind < Rout; ++routind) {
-					//pos_sums_data[routind,iinind]
+			} else //if (this->bias_term_) {
+			{
+				for (long iinind = 0; iinind < Iin; ++iinind) {
+					for (long routind = 0; routind < Rout; ++routind) {
+						//pos_sums_data[routind,iinind]
 
-					// x is col_buff[kernelind,iinind]
+						// x is col_buff[kernelind,iinind]
 
-					//w is weights[routind,kernelind]
+						//w is weights[routind,kernelind]
 
-					for (long kernelind = 0; kernelind < K; ++kernelind) {
-						//if or max/min ?
-						pos_sums_data[routind * Iin + iinind] += std::max(
-								Dtype(0.),
-								col_buff[col_offset_ * g + kernelind * Iin
-										+ iinind]
-										* weights[weight_offset_ * g
-												+ routind * K + kernelind]);
-						neg_sums_data[routind * Iin + iinind] += std::min(
-								Dtype(0.),
-								col_buff[col_offset_ * g + kernelind * Iin
-										+ iinind]
-										* weights[weight_offset_ * g
-												+ routind * K + kernelind]);
+						for (long kernelind = 0; kernelind < K; ++kernelind) {
+							//if or max/min ?
+							pos_sums_data[routind * Iin + iinind] += std::max(
+									Dtype(0.),
+									col_buff[col_offset_ * g + kernelind * Iin
+											+ iinind]
+											* weights[weight_offset_ * g
+													+ routind * K + kernelind]);
+							neg_sums_data[routind * Iin + iinind] += std::min(
+									Dtype(0.),
+									col_buff[col_offset_ * g + kernelind * Iin
+											+ iinind]
+											* weights[weight_offset_ * g
+													+ routind * K + kernelind]);
 
-					}
+						}
 
-				} //for (long routind = 0; routind < Rout; ++routind) {
-			} //for (long iinind = 0; iinind < Iin; ++iinind) {
+					} //for (long routind = 0; routind < Rout; ++routind) {
+				} //for (long iinind = 0; iinind < Iin; ++iinind) {
 			} // else of if (this->bias_term_) {
 		} else // if(beta>0)
 		{
-			
+
 			if (this->bias_term_) {
 				switch (ro.biastreatmenttype) {
 				case 0: //ignore bias
@@ -481,31 +493,33 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 
 							//w is weights[routind,kernelind]
 
-							for (long kernelind = 0; kernelind < K; ++kernelind) {
+							for (long kernelind = 0; kernelind < K;
+									++kernelind) {
 								//if or max/min ?
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.),
-										col_buff[col_offset_ * g + kernelind * Iin
-												+ iinind]
-												* weights[weight_offset_ * g
-														+ routind * K + kernelind]);
+								pos_sums_data[routind * Iin + iinind] +=
+										std::max(Dtype(0.),
+												col_buff[col_offset_ * g
+														+ kernelind * Iin
+														+ iinind]
+														* weights[weight_offset_
+																* g
+																+ routind * K
+																+ kernelind]);
 								//neg_sums_data[ routind*Iin+iinind]+=std::min(Dtype(0.), col_buff[col_offset_ * g + kernelind*Iin+iinind]*weights[weight_offset_ * g + routind*K+kernelind] );
 
 							}
 
-							
-								Dtype bterm = this->blobs_[1]->cpu_data()[routind]
-										* bias_multiplier_.cpu_data()[iinind];
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.), bterm);
-								neg_sums_data[routind * Iin + iinind] += std::min(
-										Dtype(0.), bterm);
-							
+							Dtype bterm = this->blobs_[1]->cpu_data()[routind]
+									* bias_multiplier_.cpu_data()[iinind];
+							pos_sums_data[routind * Iin + iinind] += std::max(
+									Dtype(0.), bterm);
+							neg_sums_data[routind * Iin + iinind] += std::min(
+									Dtype(0.), bterm);
 
 						} //for (long routind = 0; routind < Rout; ++routind) {
 					} //for (long iinind = 0; iinind < Iin; ++iinind) {
-				}//case 0:
-				break;
+				} //case 0:
+					break;
 				case 1: //distrib bias
 				{
 					for (long iinind = 0; iinind < Iin; ++iinind) {
@@ -518,31 +532,35 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 							Dtype bterm = this->blobs_[1]->cpu_data()[routind]
 									* bias_multiplier_.cpu_data()[iinind];
 
-							for (long kernelind = 0; kernelind < K; ++kernelind) {
+							for (long kernelind = 0; kernelind < K;
+									++kernelind) {
 								//if or max/min ?
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.),
-										col_buff[col_offset_ * g + kernelind * Iin
-												+ iinind]
-												* weights[weight_offset_ * g
-														+ routind * K + kernelind] + bterm / K );
+								pos_sums_data[routind * Iin + iinind] +=
+										std::max(Dtype(0.),
+												col_buff[col_offset_ * g
+														+ kernelind * Iin
+														+ iinind]
+														* weights[weight_offset_
+																* g
+																+ routind * K
+																+ kernelind]
+														+ bterm / K);
 								//neg_sums_data[ routind*Iin+iinind]+=std::min(Dtype(0.), col_buff[col_offset_ * g + kernelind*Iin+iinind]*weights[weight_offset_ * g + routind*K+kernelind] );
 
 							}
 
 						} //for (long routind = 0; routind < Rout; ++routind) {
 					} //for (long iinind = 0; iinind < Iin; ++iinind) {
-				}//case 1:
-				break;
+				} //case 1:
+					break;
 				default: {
 					LOG(FATAL) << "uknown value for: ro.biastreatmenttype "
 							<< ro.biastreatmenttype;
 				}
 					break;
-				}//				switch (ro.biastreatmenttype) {
+				} //				switch (ro.biastreatmenttype) {
 
-			}
-			else //if (this->bias_term_) {
+			} else //if (this->bias_term_) {
 			{
 				for (long iinind = 0; iinind < Iin; ++iinind) {
 					for (long routind = 0; routind < Rout; ++routind) {
@@ -563,7 +581,6 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 							//neg_sums_data[ routind*Iin+iinind]+=std::min(Dtype(0.), col_buff[col_offset_ * g + kernelind*Iin+iinind]*weights[weight_offset_ * g + routind*K+kernelind] );
 
 						}
-
 
 					} //for (long routind = 0; routind < Rout; ++routind) {
 				} //for (long iinind = 0; iinind < Iin; ++iinind) {
@@ -853,9 +870,6 @@ void BaseConvolutionLayer<Dtype>::alphabeta(
 
 }
 
-
-
-
 template<typename Dtype>
 void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 		const Dtype* upperlayerrelevances, //ex output,
@@ -866,7 +880,7 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 	int Iin = conv_out_spatial_dim_;
 	int Rout = conv_out_channels_ / group_;
 
-	float beta =  ro.alphabeta_beta;
+	float beta = ro.alphabeta_beta;
 	float alpha = 1.0 + beta;
 	// inputs col_buff are K x Iin
 	//weights are Rout x K
@@ -886,62 +900,60 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 	}
 	//memset(col_buff_new, 0,
 	//		sizeof(Dtype) * conv_out_spatial_dim_ * kernel_dim_);
-	memset(col_buff_new, 0,
-			sizeof(Dtype) * col_buffer_.count());
+	memset(col_buff_new, 0, sizeof(Dtype) * col_buffer_.count());
 	//
 	Blob < Dtype > pos_sums(1, 1, Rout, Iin);
 	Blob < Dtype > neg_sums(1, 1, Rout, Iin);
 	Dtype* pos_sums_data = pos_sums.mutable_cpu_data();
 	Dtype* neg_sums_data = neg_sums.mutable_cpu_data();
-	
 
 	Blob < Dtype > xpos(col_buffer_.shape());
-	Dtype* xpos_data=xpos.mutable_cpu_data();
-	caffe_copy(col_buffer_.count(),col_buff, xpos_data);
-	for(int i=0;i< xpos.count();++i)
-	{
-		xpos_data[i]=std::max(Dtype(0.),xpos_data[i]);
+	Dtype* xpos_data = xpos.mutable_cpu_data();
+	caffe_copy(col_buffer_.count(), col_buff, xpos_data);
+	for (int i = 0; i < xpos.count(); ++i) {
+		xpos_data[i] = std::max(Dtype(0.), xpos_data[i]);
 	}
-	
+
 	Blob < Dtype > xneg(col_buffer_.shape());
-	Dtype* xneg_data=xneg.mutable_cpu_data();
-	caffe_copy(col_buffer_.count(),col_buff, xneg_data);
-	for(int i=0;i< xneg.count();++i)
-	{
-		xneg_data[i]=std::min(Dtype(0.),xneg_data[i]);
+	Dtype* xneg_data = xneg.mutable_cpu_data();
+	caffe_copy(col_buffer_.count(), col_buff, xneg_data);
+	for (int i = 0; i < xneg.count(); ++i) {
+		xneg_data[i] = std::min(Dtype(0.), xneg_data[i]);
 	}
-	
-	Dtype *wpos=new Dtype[ weight_offset_ * group_ ];
-	caffe_copy(weight_offset_ * group_,weights, wpos);
-	for(int i=0;i< weight_offset_ * group_;++i)
-	{
-		wpos[i]=std::max(Dtype(0.),wpos[i]);
+
+	Dtype *wpos = new Dtype[weight_offset_ * group_];
+	caffe_copy(weight_offset_ * group_, weights, wpos);
+	for (int i = 0; i < weight_offset_ * group_; ++i) {
+		wpos[i] = std::max(Dtype(0.), wpos[i]);
 	}
-	
-	Dtype *wneg=new Dtype[ weight_offset_ * group_ ];					  
-	caffe_copy(weight_offset_ * group_,weights, wneg);
-	for(int i=0;i< weight_offset_ * group_;++i)
-	{
-		wneg[i]=std::min(Dtype(0.),wneg[i]);
+
+	Dtype *wneg = new Dtype[weight_offset_ * group_];
+	caffe_copy(weight_offset_ * group_, weights, wneg);
+	for (int i = 0; i < weight_offset_ * group_; ++i) {
+		wneg[i] = std::min(Dtype(0.), wneg[i]);
 	}
-	
-	const Dtype* xpos_cdata=xpos.cpu_data();
-	const Dtype* xneg_cdata=xneg.cpu_data();
-	
+
+	const Dtype* xpos_cdata = xpos.cpu_data();
+	const Dtype* xneg_cdata = xneg.cpu_data();
+
 	Blob < Dtype > wijplus_tjplus___wijminus_tjplus(col_buffer_.shape());
 	Blob < Dtype > wijplus_tjminus___wijminus_tjminus(col_buffer_.shape());
 
-	Dtype * wijplus_tjplus_data=wijplus_tjplus___wijminus_tjplus.mutable_cpu_data();
-	Dtype * wijminus_tjplus_data=wijplus_tjplus___wijminus_tjplus.mutable_cpu_diff();
-	Dtype * wijplus_tjminus_data=wijplus_tjminus___wijminus_tjminus.mutable_cpu_data();
-	Dtype * wijminus_tjminus_data=wijplus_tjminus___wijminus_tjminus.mutable_cpu_diff();
+	Dtype * wijplus_tjplus_data =
+			wijplus_tjplus___wijminus_tjplus.mutable_cpu_data();
+	Dtype * wijminus_tjplus_data =
+			wijplus_tjplus___wijminus_tjplus.mutable_cpu_diff();
+	Dtype * wijplus_tjminus_data =
+			wijplus_tjminus___wijminus_tjminus.mutable_cpu_data();
+	Dtype * wijminus_tjminus_data =
+			wijplus_tjminus___wijminus_tjminus.mutable_cpu_diff();
 
-	Dtype* Rj_tjplus = new Dtype[ output_offset_ * group_ ];
-	Dtype* Rj_tjminus = new Dtype[ output_offset_ * group_ ];
-	
+	Dtype* Rj_tjplus = new Dtype[output_offset_ * group_];
+	Dtype* Rj_tjminus = new Dtype[output_offset_ * group_];
+
 	caffe_copy(output_offset_ * group_, upperlayerrelevances, Rj_tjplus);
 	caffe_copy(output_offset_ * group_, upperlayerrelevances, Rj_tjminus);
-	
+
 	for (int g = 0; g < group_; ++g) {
 		/*
 		 caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, kernel_dim_,
@@ -957,24 +969,32 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 				switch (ro.biastreatmenttype) {
 				case 0: //ignore bias
 				{
-																//Rout						Iin					K_
+					//Rout						Iin					K_
 					caffe_cpu_gemm < Dtype
-							> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
-									+ weight_offset_ * g, xpos_cdata + col_offset_ * g, (Dtype) 0., pos_sums_data);
+							> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+									/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
+									+ weight_offset_ * g, xpos_cdata
+									+ col_offset_ * g, (Dtype) 0., pos_sums_data);
 					caffe_cpu_gemm < Dtype
-							> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
-									+ weight_offset_ * g, xneg_cdata + col_offset_ * g, (Dtype) 1., pos_sums_data);
-					
+							> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+									/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
+									+ weight_offset_ * g, xneg_cdata
+									+ col_offset_ * g, (Dtype) 1., pos_sums_data);
+
 					caffe_cpu_gemm < Dtype
-							> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
-									+ weight_offset_ * g, xpos_cdata + col_offset_ * g, (Dtype) 0., neg_sums_data);
+							> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+									/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
+									+ weight_offset_ * g, xpos_cdata
+									+ col_offset_ * g, (Dtype) 0., neg_sums_data);
 					caffe_cpu_gemm < Dtype
-							> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
-									+ weight_offset_ * g, xneg_cdata + col_offset_ * g, (Dtype) 1., neg_sums_data);
-					
+							> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+									/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
+									+ weight_offset_ * g, xneg_cdata
+									+ col_offset_ * g, (Dtype) 1., neg_sums_data);
+
 					//	caffe_cpu_gemm < Dtype
 					//> (CblasNoTrans, CblasNoTrans, num_output_, out_spatial_dim_, 1, (Dtype) 1., bias, bias_multiplier_.cpu_data(), (Dtype) 1., output);
-					
+
 					for (long iinind = 0; iinind < Iin; ++iinind) {
 						for (long routind = 0; routind < Rout; ++routind) {
 							//pos_sums_data[routind,iinind]
@@ -982,59 +1002,72 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 							// x is col_buff[kernelind,iinind]
 
 							//w is weights[routind,kernelind]
-							
-								Dtype bterm = this->blobs_[1]->cpu_data()[routind]
-										* bias_multiplier_.cpu_data()[iinind];
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.), bterm);
-								neg_sums_data[routind * Iin + iinind] += std::min(
-										Dtype(0.), bterm);
-							
+
+							Dtype bterm = this->blobs_[1]->cpu_data()[routind]
+									* bias_multiplier_.cpu_data()[iinind];
+							pos_sums_data[routind * Iin + iinind] += std::max(
+									Dtype(0.), bterm);
+							neg_sums_data[routind * Iin + iinind] += std::min(
+									Dtype(0.), bterm);
 
 						} //for (long routind = 0; routind < Rout; ++routind) {
 					} //for (long iinind = 0; iinind < Iin; ++iinind) {
-					
+
 				} // case 0:
-				break;
-				
+					break;
+
 				default: {
-					LOG(FATAL) << "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype" << ro.biastreatmenttype << " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
+					LOG(FATAL)
+							<< "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype"
+							<< ro.biastreatmenttype
+							<< " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
 				}
 					break;
-				}//				switch (ro.biastreatmenttype) {
+				} //				switch (ro.biastreatmenttype) {
 
-			}
-			else //if (this->bias_term_) {
-			{	
+			} else //if (this->bias_term_) {
+			{
 				caffe_cpu_gemm < Dtype
-						> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
-								+ weight_offset_ * g, xpos_cdata + col_offset_ * g, (Dtype) 0., pos_sums_data);
+						> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+								/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
+								+ weight_offset_ * g, xpos_cdata
+								+ col_offset_ * g, (Dtype) 0., pos_sums_data);
 				caffe_cpu_gemm < Dtype
-						> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
-								+ weight_offset_ * g, xneg_cdata + col_offset_ * g, (Dtype) 1., pos_sums_data);
-				
+						> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+								/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
+								+ weight_offset_ * g, xneg_cdata
+								+ col_offset_ * g, (Dtype) 1., pos_sums_data);
+
 				caffe_cpu_gemm < Dtype
-						> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
-								+ weight_offset_ * g, xpos_cdata + col_offset_ * g, (Dtype) 0., neg_sums_data);
+						> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+								/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
+								+ weight_offset_ * g, xpos_cdata
+								+ col_offset_ * g, (Dtype) 0., neg_sums_data);
 				caffe_cpu_gemm < Dtype
-						> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
-								+ weight_offset_ * g, xneg_cdata + col_offset_ * g, (Dtype) 1., neg_sums_data);
+						> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+								/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
+								+ weight_offset_ * g, xneg_cdata
+								+ col_offset_ * g, (Dtype) 1., neg_sums_data);
 			} // else of if (this->bias_term_) {
 		} else // if(beta>0)
 		{
-			
+
 			if (this->bias_term_) {
 				switch (ro.biastreatmenttype) {
 				case 0: //ignore bias
 				{
-					
+
 					caffe_cpu_gemm < Dtype
-							> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
-									+ weight_offset_ * g, xpos_cdata + col_offset_ * g, (Dtype) 0., pos_sums_data);
+							> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+									/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
+									+ weight_offset_ * g, xpos_cdata
+									+ col_offset_ * g, (Dtype) 0., pos_sums_data);
 					caffe_cpu_gemm < Dtype
-							> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
-									+ weight_offset_ * g, xneg_cdata + col_offset_ * g, (Dtype) 1., pos_sums_data);
-					
+							> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+									/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
+									+ weight_offset_ * g, xneg_cdata
+									+ col_offset_ * g, (Dtype) 1., pos_sums_data);
+
 					for (long iinind = 0; iinind < Iin; ++iinind) {
 						for (long routind = 0; routind < Rout; ++routind) {
 							//pos_sums_data[routind,iinind]
@@ -1042,178 +1075,186 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 							// x is col_buff[kernelind,iinind]
 
 							//w is weights[routind,kernelind]
-							
-								Dtype bterm = this->blobs_[1]->cpu_data()[routind]
-										* bias_multiplier_.cpu_data()[iinind];
-								pos_sums_data[routind * Iin + iinind] += std::max(
-										Dtype(0.), bterm);
-								neg_sums_data[routind * Iin + iinind] += std::min(
-										Dtype(0.), bterm);
-							
+
+							Dtype bterm = this->blobs_[1]->cpu_data()[routind]
+									* bias_multiplier_.cpu_data()[iinind];
+							pos_sums_data[routind * Iin + iinind] += std::max(
+									Dtype(0.), bterm);
+							neg_sums_data[routind * Iin + iinind] += std::min(
+									Dtype(0.), bterm);
 
 						} //for (long routind = 0; routind < Rout; ++routind) {
 					} //for (long iinind = 0; iinind < Iin; ++iinind) {
-				}//case 0:
-				break;
-
-				default: {
-					LOG(FATAL) << "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype" << ro.biastreatmenttype << " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
-
-				}
-					break;
-				}//				switch (ro.biastreatmenttype) {
-
-			}
-			else //if (this->bias_term_) {
-			{
-				caffe_cpu_gemm < Dtype
-						> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
-								+ weight_offset_ * g, xpos_cdata + col_offset_ * g, (Dtype) 0., pos_sums_data);
-				caffe_cpu_gemm < Dtype
-						> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
-								+ weight_offset_ * g, xneg_cdata + col_offset_ * g, (Dtype) 1., pos_sums_data);
-			} // else of //if (this->bias_term_) {
-		} // else of  if(beta>0)
-
-
-
-
-
-		for(int i=0;i< pos_sums.count();++i)
-		{
-			if(pos_sums_data[i]>0)
-			{
-				Rj_tjplus[output_offset_ * g + i]/= pos_sums_data[i];
-			}
-		}
-		
-		if (beta > 0) {
-		for(int i=0;i< neg_sums.count();++i)
-		{
-			if(neg_sums_data[i]<0)
-			{
-				Rj_tjminus[output_offset_ * g + i]/= neg_sums_data[i];
-			}
-		}
-		}
-
-
-		
-		if (beta > 0) {
-			if (this->bias_term_) {
-				switch (ro.biastreatmenttype) {
-				case 0: //ignore bias
-				{
-					caffe_cpu_gemm < Dtype
-							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
-									/ group_, (Dtype) 1., wpos + weight_offset_ * g, Rj_tjplus
-									+ output_offset_ * g, (Dtype) 0., wijplus_tjplus_data
-									+ col_offset_ * g);
-					
-					caffe_cpu_gemm < Dtype
-							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
-									/ group_, (Dtype) 1., wneg + weight_offset_ * g, Rj_tjplus
-									+ output_offset_ * g, (Dtype) 0., wijminus_tjplus_data
-									+ col_offset_ * g);
-					
-					caffe_cpu_gemm < Dtype
-							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
-									/ group_, (Dtype) 1., wpos + weight_offset_ * g, Rj_tjminus
-									+ output_offset_ * g, (Dtype) 0., wijplus_tjminus_data
-									+ col_offset_ * g);
-					
-					caffe_cpu_gemm < Dtype
-							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
-									/ group_, (Dtype) 1., wneg + weight_offset_ * g, Rj_tjminus
-									+ output_offset_ * g, (Dtype) 0., wijminus_tjminus_data
-									+ col_offset_ * g);
-					
-					
-					for (int i=0;i< col_offset_ ;++i)
-					{
-						wijplus_tjplus_data[col_offset_ * g + i]*=xpos_data[col_offset_ * g + i];
-					}
-					
-					for (int i=0;i< col_offset_ ;++i)
-					{
-						wijminus_tjplus_data[col_offset_ * g + i]*=xneg_data[col_offset_ * g + i];
-					}
-					
-					for (int i=0;i< col_offset_ ;++i)
-					{
-						wijplus_tjminus_data[col_offset_ * g + i]*=xneg_data[col_offset_ * g + i];
-					}
-					
-					for (int i=0;i< col_offset_ ;++i)
-					{
-						wijminus_tjminus_data[col_offset_ * g + i]*=xpos_data[col_offset_ * g + i];
-					}
-					
-					caffe_axpy<Dtype>(col_offset_, alpha, wijplus_tjplus_data + col_offset_ * g,
-							col_buff_new + col_offset_ * g);
-					caffe_axpy<Dtype>(col_offset_, alpha, wijminus_tjplus_data + col_offset_ * g,
-							col_buff_new + col_offset_ * g);
-					
-					caffe_axpy<Dtype>(col_offset_, -beta, wijplus_tjminus_data + col_offset_ * g,
-							col_buff_new + col_offset_ * g);
-					caffe_axpy<Dtype>(col_offset_, -beta, wijminus_tjminus_data + col_offset_ * g,
-							col_buff_new + col_offset_ * g);
-					
-
-					/*
-					for (long iinind = 0; iinind < Iin; ++iinind) {
-						for (long routind = 0; routind < Rout; ++routind) {
-							Dtype z1 = 0;
-							if (pos_sums_data[routind * Iin + iinind] > 0) {
-								z1 = upperlayerrelevances[output_offset_ * g
-										+ routind * Iin + iinind]
-										/ pos_sums_data[routind * Iin + iinind];
-							}
-							Dtype z2 = 0;
-							if (neg_sums_data[routind * Iin + iinind] < 0) {
-								z2 = upperlayerrelevances[output_offset_ * g
-										+ routind * Iin + iinind]
-										/ neg_sums_data[routind * Iin + iinind];
-							}
-							for (long kernelind = 0; kernelind < K;
-									++kernelind) {
-
-								col_buff_new[col_offset_ * g + kernelind * Iin
-										+ iinind] +=
-										alpha
-												* std::max(Dtype(0.),
-														col_buff[col_offset_ * g
-																+ kernelind
-																		* Iin
-																+ iinind]
-																* weights[weight_offset_
-																		* g
-																		+ routind
-																				* K
-																		+ kernelind])
-												* z1
-												- beta
-														* std::min(Dtype(0.),
-																col_buff[col_offset_
-																		* g
-																		+ kernelind
-																				* Iin
-																		+ iinind]
-																		* weights[weight_offset_
-																				* g
-																				+ routind
-																						* K
-																				+ kernelind])
-														* z2;
-							}
-						} //for (long routind = 0; routind < Rout; ++routind) {
-					} //for (long iinind = 0; iinind < Iin; ++iinind) {
-					*/
 				} //case 0:
 					break;
 
 				default: {
-					LOG(FATAL) << "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype" << ro.biastreatmenttype << " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
+					LOG(FATAL)
+							<< "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype"
+							<< ro.biastreatmenttype
+							<< " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
+
+				}
+					break;
+				} //				switch (ro.biastreatmenttype) {
+
+			} else //if (this->bias_term_) {
+			{
+				caffe_cpu_gemm < Dtype
+						> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+								/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
+								+ weight_offset_ * g, xpos_cdata
+								+ col_offset_ * g, (Dtype) 0., pos_sums_data);
+				caffe_cpu_gemm < Dtype
+						> (CblasNoTrans, CblasNoTrans, conv_out_channels_
+								/ group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
+								+ weight_offset_ * g, xneg_cdata
+								+ col_offset_ * g, (Dtype) 1., pos_sums_data);
+			} // else of //if (this->bias_term_) {
+		} // else of  if(beta>0)
+
+		for (int i = 0; i < pos_sums.count(); ++i) {
+			if (pos_sums_data[i] > 0) {
+				Rj_tjplus[output_offset_ * g + i] /= pos_sums_data[i];
+			}
+		}
+
+		if (beta > 0) {
+			for (int i = 0; i < neg_sums.count(); ++i) {
+				if (neg_sums_data[i] < 0) {
+					Rj_tjminus[output_offset_ * g + i] /= neg_sums_data[i];
+				}
+			}
+		}
+
+		if (beta > 0) {
+			if (this->bias_term_) {
+				switch (ro.biastreatmenttype) {
+				case 0: //ignore bias
+				{
+					caffe_cpu_gemm < Dtype
+							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
+									/ group_, (Dtype) 1., wpos
+									+ weight_offset_ * g, Rj_tjplus
+									+ output_offset_ * g, (Dtype) 0., wijplus_tjplus_data
+									+ col_offset_ * g);
+
+					caffe_cpu_gemm < Dtype
+							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
+									/ group_, (Dtype) 1., wneg
+									+ weight_offset_ * g, Rj_tjplus
+									+ output_offset_ * g, (Dtype) 0., wijminus_tjplus_data
+									+ col_offset_ * g);
+
+					caffe_cpu_gemm < Dtype
+							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
+									/ group_, (Dtype) 1., wpos
+									+ weight_offset_ * g, Rj_tjminus
+									+ output_offset_ * g, (Dtype) 0., wijplus_tjminus_data
+									+ col_offset_ * g);
+
+					caffe_cpu_gemm < Dtype
+							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
+									/ group_, (Dtype) 1., wneg
+									+ weight_offset_ * g, Rj_tjminus
+									+ output_offset_ * g, (Dtype) 0., wijminus_tjminus_data
+									+ col_offset_ * g);
+
+					for (int i = 0; i < col_offset_; ++i) {
+						wijplus_tjplus_data[col_offset_ * g + i] *=
+								xpos_data[col_offset_ * g + i];
+					}
+
+					for (int i = 0; i < col_offset_; ++i) {
+						wijminus_tjplus_data[col_offset_ * g + i] *=
+								xneg_data[col_offset_ * g + i];
+					}
+
+					for (int i = 0; i < col_offset_; ++i) {
+						wijplus_tjminus_data[col_offset_ * g + i] *=
+								xneg_data[col_offset_ * g + i];
+					}
+
+					for (int i = 0; i < col_offset_; ++i) {
+						wijminus_tjminus_data[col_offset_ * g + i] *=
+								xpos_data[col_offset_ * g + i];
+					}
+
+					caffe_axpy < Dtype
+							> (col_offset_, alpha, wijplus_tjplus_data
+									+ col_offset_ * g, col_buff_new
+									+ col_offset_ * g);
+					caffe_axpy < Dtype
+							> (col_offset_, alpha, wijminus_tjplus_data
+									+ col_offset_ * g, col_buff_new
+									+ col_offset_ * g);
+
+					caffe_axpy < Dtype
+							> (col_offset_, -beta, wijplus_tjminus_data
+									+ col_offset_ * g, col_buff_new
+									+ col_offset_ * g);
+					caffe_axpy < Dtype
+							> (col_offset_, -beta, wijminus_tjminus_data
+									+ col_offset_ * g, col_buff_new
+									+ col_offset_ * g);
+
+					/*
+					 for (long iinind = 0; iinind < Iin; ++iinind) {
+					 for (long routind = 0; routind < Rout; ++routind) {
+					 Dtype z1 = 0;
+					 if (pos_sums_data[routind * Iin + iinind] > 0) {
+					 z1 = upperlayerrelevances[output_offset_ * g
+					 + routind * Iin + iinind]
+					 / pos_sums_data[routind * Iin + iinind];
+					 }
+					 Dtype z2 = 0;
+					 if (neg_sums_data[routind * Iin + iinind] < 0) {
+					 z2 = upperlayerrelevances[output_offset_ * g
+					 + routind * Iin + iinind]
+					 / neg_sums_data[routind * Iin + iinind];
+					 }
+					 for (long kernelind = 0; kernelind < K;
+					 ++kernelind) {
+
+					 col_buff_new[col_offset_ * g + kernelind * Iin
+					 + iinind] +=
+					 alpha
+					 * std::max(Dtype(0.),
+					 col_buff[col_offset_ * g
+					 + kernelind
+					 * Iin
+					 + iinind]
+					 * weights[weight_offset_
+					 * g
+					 + routind
+					 * K
+					 + kernelind])
+					 * z1
+					 - beta
+					 * std::min(Dtype(0.),
+					 col_buff[col_offset_
+					 * g
+					 + kernelind
+					 * Iin
+					 + iinind]
+					 * weights[weight_offset_
+					 * g
+					 + routind
+					 * K
+					 + kernelind])
+					 * z2;
+					 }
+					 } //for (long routind = 0; routind < Rout; ++routind) {
+					 } //for (long iinind = 0; iinind < Iin; ++iinind) {
+					 */
+				} //case 0:
+					break;
+
+				default: {
+					LOG(FATAL)
+							<< "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype"
+							<< ro.biastreatmenttype
+							<< " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
 
 				}
 					break;
@@ -1225,55 +1266,62 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 								/ group_, (Dtype) 1., wpos + weight_offset_ * g, Rj_tjplus
 								+ output_offset_ * g, (Dtype) 0., wijplus_tjplus_data
 								+ col_offset_ * g);
-				
+
 				caffe_cpu_gemm < Dtype
 						> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
 								/ group_, (Dtype) 1., wneg + weight_offset_ * g, Rj_tjplus
 								+ output_offset_ * g, (Dtype) 0., wijminus_tjplus_data
 								+ col_offset_ * g);
-				
+
 				caffe_cpu_gemm < Dtype
 						> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
 								/ group_, (Dtype) 1., wpos + weight_offset_ * g, Rj_tjminus
 								+ output_offset_ * g, (Dtype) 0., wijplus_tjminus_data
 								+ col_offset_ * g);
-				
+
 				caffe_cpu_gemm < Dtype
 						> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
 								/ group_, (Dtype) 1., wneg + weight_offset_ * g, Rj_tjminus
 								+ output_offset_ * g, (Dtype) 0., wijminus_tjminus_data
 								+ col_offset_ * g);
-				
-				
-				for (int i=0;i< col_offset_ ;++i)
-				{
-					wijplus_tjplus_data[col_offset_ * g + i]*=xpos_data[col_offset_ * g + i];
+
+				for (int i = 0; i < col_offset_; ++i) {
+					wijplus_tjplus_data[col_offset_ * g + i] *=
+							xpos_data[col_offset_ * g + i];
 				}
-				
-				for (int i=0;i< col_offset_ ;++i)
-				{
-					wijminus_tjplus_data[col_offset_ * g + i]*=xneg_data[col_offset_ * g + i];
+
+				for (int i = 0; i < col_offset_; ++i) {
+					wijminus_tjplus_data[col_offset_ * g + i] *=
+							xneg_data[col_offset_ * g + i];
 				}
-				
-				for (int i=0;i< col_offset_ ;++i)
-				{
-					wijplus_tjminus_data[col_offset_ * g + i]*=xneg_data[col_offset_ * g + i];
+
+				for (int i = 0; i < col_offset_; ++i) {
+					wijplus_tjminus_data[col_offset_ * g + i] *=
+							xneg_data[col_offset_ * g + i];
 				}
-				
-				for (int i=0;i< col_offset_ ;++i)
-				{
-					wijminus_tjminus_data[col_offset_ * g + i]*=xpos_data[col_offset_ * g + i];
+
+				for (int i = 0; i < col_offset_; ++i) {
+					wijminus_tjminus_data[col_offset_ * g + i] *=
+							xpos_data[col_offset_ * g + i];
 				}
-				
-				caffe_axpy<Dtype>(col_offset_, alpha, wijplus_tjplus_data + col_offset_ * g,
-						col_buff_new + col_offset_ * g);
-				caffe_axpy<Dtype>(col_offset_, alpha, wijminus_tjplus_data + col_offset_ * g,
-						col_buff_new + col_offset_ * g);
-				
-				caffe_axpy<Dtype>(col_offset_, -beta, wijplus_tjminus_data + col_offset_ * g,
-						col_buff_new + col_offset_ * g);
-				caffe_axpy<Dtype>(col_offset_, -beta, wijminus_tjminus_data + col_offset_ * g,
-						col_buff_new + col_offset_ * g);
+
+				caffe_axpy < Dtype
+						> (col_offset_, alpha, wijplus_tjplus_data
+								+ col_offset_ * g, col_buff_new
+								+ col_offset_ * g);
+				caffe_axpy < Dtype
+						> (col_offset_, alpha, wijminus_tjplus_data
+								+ col_offset_ * g, col_buff_new
+								+ col_offset_ * g);
+
+				caffe_axpy < Dtype
+						> (col_offset_, -beta, wijplus_tjminus_data
+								+ col_offset_ * g, col_buff_new
+								+ col_offset_ * g);
+				caffe_axpy < Dtype
+						> (col_offset_, -beta, wijminus_tjminus_data
+								+ col_offset_ * g, col_buff_new
+								+ col_offset_ * g);
 
 			} //else of if (this->bias_term_) 
 		} else // if(beta>0)
@@ -1285,39 +1333,45 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 				{
 					caffe_cpu_gemm < Dtype
 							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
-									/ group_, (Dtype) 1., wpos + weight_offset_ * g, Rj_tjplus
+									/ group_, (Dtype) 1., wpos
+									+ weight_offset_ * g, Rj_tjplus
 									+ output_offset_ * g, (Dtype) 0., wijplus_tjplus_data
 									+ col_offset_ * g);
-					
+
 					caffe_cpu_gemm < Dtype
 							> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
-									/ group_, (Dtype) 1., wneg + weight_offset_ * g, Rj_tjplus
+									/ group_, (Dtype) 1., wneg
+									+ weight_offset_ * g, Rj_tjplus
 									+ output_offset_ * g, (Dtype) 0., wijminus_tjplus_data
 									+ col_offset_ * g);
-					
-					
-					for (int i=0;i< col_offset_ ;++i)
-					{
-						wijplus_tjplus_data[col_offset_ * g + i]*=xpos_data[col_offset_ * g + i];
+
+					for (int i = 0; i < col_offset_; ++i) {
+						wijplus_tjplus_data[col_offset_ * g + i] *=
+								xpos_data[col_offset_ * g + i];
 					}
-					
-					for (int i=0;i< col_offset_ ;++i)
-					{
-						wijminus_tjplus_data[col_offset_ * g + i]*=xneg_data[col_offset_ * g + i];
+
+					for (int i = 0; i < col_offset_; ++i) {
+						wijminus_tjplus_data[col_offset_ * g + i] *=
+								xneg_data[col_offset_ * g + i];
 					}
-					
-					
-					caffe_axpy<Dtype>(col_offset_, alpha, wijplus_tjplus_data + col_offset_ * g,
-							col_buff_new + col_offset_ * g);
-					caffe_axpy<Dtype>(col_offset_, alpha, wijminus_tjplus_data + col_offset_ * g,
-							col_buff_new + col_offset_ * g);
+
+					caffe_axpy < Dtype
+							> (col_offset_, alpha, wijplus_tjplus_data
+									+ col_offset_ * g, col_buff_new
+									+ col_offset_ * g);
+					caffe_axpy < Dtype
+							> (col_offset_, alpha, wijminus_tjplus_data
+									+ col_offset_ * g, col_buff_new
+									+ col_offset_ * g);
 
 				} //case 0:
 					break;
 
-				
 				default: {
-					LOG(FATAL) << "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype" << ro.biastreatmenttype << " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
+					LOG(FATAL)
+							<< "BaseConvolutionLayer<Dtype>::alphabeta_4cases(...) does not support this ro.biastreatmenttype"
+							<< ro.biastreatmenttype
+							<< " if ro.biastreatmenttype==1, then use ro.codeexectype=1 to call void alphabeta(...) instead ";
 
 				}
 					break;
@@ -1330,29 +1384,31 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 								/ group_, (Dtype) 1., wpos + weight_offset_ * g, Rj_tjplus
 								+ output_offset_ * g, (Dtype) 0., wijplus_tjplus_data
 								+ col_offset_ * g);
-				
+
 				caffe_cpu_gemm < Dtype
 						> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
 								/ group_, (Dtype) 1., wneg + weight_offset_ * g, Rj_tjplus
 								+ output_offset_ * g, (Dtype) 0., wijminus_tjplus_data
 								+ col_offset_ * g);
-				
-				
-				for (int i=0;i< col_offset_ ;++i)
-				{
-					wijplus_tjplus_data[col_offset_ * g + i]*=xpos_data[col_offset_ * g + i];
+
+				for (int i = 0; i < col_offset_; ++i) {
+					wijplus_tjplus_data[col_offset_ * g + i] *=
+							xpos_data[col_offset_ * g + i];
 				}
-				
-				for (int i=0;i< col_offset_ ;++i)
-				{
-					wijminus_tjplus_data[col_offset_ * g + i]*=xneg_data[col_offset_ * g + i];
+
+				for (int i = 0; i < col_offset_; ++i) {
+					wijminus_tjplus_data[col_offset_ * g + i] *=
+							xneg_data[col_offset_ * g + i];
 				}
-				
-				
-				caffe_axpy<Dtype>(col_offset_, alpha, wijplus_tjplus_data + col_offset_ * g,
-						col_buff_new + col_offset_ * g);
-				caffe_axpy<Dtype>(col_offset_, alpha, wijminus_tjplus_data + col_offset_ * g,
-						col_buff_new + col_offset_ * g);
+
+				caffe_axpy < Dtype
+						> (col_offset_, alpha, wijplus_tjplus_data
+								+ col_offset_ * g, col_buff_new
+								+ col_offset_ * g);
+				caffe_axpy < Dtype
+						> (col_offset_, alpha, wijminus_tjplus_data
+								+ col_offset_ * g, col_buff_new
+								+ col_offset_ * g);
 			} // else of //if (this->bias_term_) 
 		} // else of  if(beta>0)
 
@@ -1362,7 +1418,6 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 		conv_col2im_cpu(col_buff_new, new_lowerlayerrelevances);
 	}
 
-	
 	delete[] wpos;
 	delete[] wneg;
 	delete[] Rj_tjplus;
@@ -1370,7 +1425,309 @@ void BaseConvolutionLayer<Dtype>::alphabeta_4cases(
 
 }
 
+template<typename Dtype>
+void BaseConvolutionLayer<Dtype>::zbeta_gregoire(
+		const Dtype* upperlayerrelevances, //ex output,
+		const Dtype* weights, const Dtype* input,
+		Dtype * new_lowerlayerrelevances, const relpropopts & ro,
+		bool skip_im2col) {
 
+	int K = kernel_dim_; //xi gets summed along this with wij
+	int Iin = conv_out_spatial_dim_;
+	int Rout = conv_out_channels_ / group_;
+
+	// inputs col_buff are K x Iin
+	//weights are Rout x K
+	// upper relevances are Rout x Iin
+
+	const Dtype* col_buff = input;
+	if (!is_1x1_) {
+		if (!skip_im2col) {
+			//memset(col_buffer_.mutable_cpu_data(), 0,
+			//		sizeof(Dtype) * col_buffer_.count());
+			conv_im2col_cpu(input, col_buffer_.mutable_cpu_data());
+		}
+		col_buff = col_buffer_.cpu_data();
+	}
+
+	Blob < Dtype > mean_buffer;
+	mean_buffer.ReshapeLike(col_buffer_);
+
+	Dtype* transformedimagemean; // NOT to be deleted
+
+	//ALT: init from global min max
+
+	float globalmin = 0;
+	float globalmax = 0;
+	for (int ch = 0; ch < ro.imagemeancopy.size(); ++ch) {
+		for (int i = 0; i < ro.imagemeancopy[ch].size(); ++i) {
+			globalmin = std::min(globalmin, 0 - ro.imagemeancopy[ch][i]);
+			globalmax = std::max(globalmax, 255 - ro.imagemeancopy[ch][i]);
+		}
+	}
+
+	Dtype* transformedimagemean0(NULL);
+	int numel2 = 0;
+
+	//transform imagemean a la im2col
+	for (int ch = 0; ch < ro.imagemeancopy.size(); ++ch) {
+		numel2 += ro.imagemeancopy[ch].size();
+	}
+
+	/*
+	 if(mean_buffer.count()!=numel)
+	 {
+	 LOG(FATAL) << " mean_buffer.count()!=numel, applied not to the first layer?? " << mean_buffer.count() << " vs "<<numel;
+
+	 }
+	 */
+
+	transformedimagemean0 = new Dtype[numel2];
+	{
+		int curct = 0;
+		for (int ch = 0; ch < ro.imagemeancopy.size(); ++ch) {
+			std::copy(ro.imagemeancopy[ch].begin(), ro.imagemeancopy[ch].end(),
+					transformedimagemean0 + curct);
+			curct += ro.imagemeancopy[ch].size();
+		}
+	}
+
+	if (!is_1x1_) {
+		conv_im2col_cpu(transformedimagemean0, mean_buffer.mutable_cpu_data());
+		transformedimagemean = mean_buffer.mutable_cpu_data();
+	} else {
+		transformedimagemean = transformedimagemean0;
+	}
+
+	Dtype* col_buff_new = col_buffer_.mutable_cpu_diff();
+	if (is_1x1_) {
+		col_buff_new = new_lowerlayerrelevances;
+	}
+	//memset(col_buff_new, 0,
+	//		sizeof(Dtype) * conv_out_spatial_dim_ * kernel_dim_);
+	memset(col_buff_new, 0, sizeof(Dtype) * col_buffer_.count());
+
+	Blob < Dtype > all_sums(1, 1, Rout, Iin);
+	Dtype* all_sums_data = all_sums.mutable_cpu_data();
+
+	Dtype *wpos = new Dtype[weight_offset_ * group_];
+	caffe_copy(weight_offset_ * group_, weights, wpos);
+	for (int i = 0; i < weight_offset_ * group_; ++i) {
+		wpos[i] = std::max(Dtype(0.), wpos[i]);
+	}
+
+	Dtype *wneg = new Dtype[weight_offset_ * group_];
+	caffe_copy(weight_offset_ * group_, weights, wneg);
+	for (int i = 0; i < weight_offset_ * group_; ++i) {
+		wneg[i] = -std::min(Dtype(0.), wneg[i]);
+	}
+
+	Dtype * lis = new Dtype[mean_buffer.count()];
+	Dtype * his = new Dtype[mean_buffer.count()];
+
+	for (int ind = 0; ind < mean_buffer.count(); ++ind) {
+		lis[ind] = +transformedimagemean[ind];
+		his[ind] = 255 - transformedimagemean[ind];
+	}
+
+	Dtype* Rj_nor = new Dtype[output_offset_ * group_];
+
+	Blob < Dtype > wijforxi_Rj(col_buffer_.shape());
+	Blob < Dtype > wijplusforli_Rj___wijminusforhi_Rj(col_buffer_.shape());
+
+	Dtype * wijforxi_Rj_data = wijforxi_Rj.mutable_cpu_data();
+	Dtype * wijplusforli_Rj_data =
+			wijplusforli_Rj___wijminusforhi_Rj.mutable_cpu_data();
+	Dtype * wijminusforhi_Rj_data =
+			wijplusforli_Rj___wijminusforhi_Rj.mutable_cpu_diff();
+
+	for (int g = 0; g < group_; ++g) {
+
+		memset(all_sums_data, 0, sizeof(Dtype) * Rout * Iin);
+
+		//Rout						Iin					K_
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., weights
+						+ weight_offset_ * g, col_buff + col_offset_ * g, (Dtype) 0., all_sums_data);
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wpos
+						+ weight_offset_ * g, lis + col_offset_ * g, (Dtype) 1., all_sums_data);
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_, conv_out_spatial_dim_, kernel_dim_, (Dtype) 1., wneg
+						+ weight_offset_ * g, his + col_offset_ * g, (Dtype) 1., all_sums_data);
+
+		caffe_copy(output_offset_ * group_, upperlayerrelevances, Rj_nor);
+
+
+if (this->bias_term_) {
+					for (long iinind = 0; iinind < Iin; ++iinind) {
+						for (long routind = 0; routind < Rout; ++routind) {
+							//pos_sums_data[routind,iinind]
+
+							// x is col_buff[kernelind,iinind]
+
+							//w is weights[routind,kernelind]
+
+							Dtype bterm = this->blobs_[1]->cpu_data()[routind]
+									* bias_multiplier_.cpu_data()[iinind];
+							all_sums_data[routind * Iin + iinind] += std::max(
+									Dtype(0.), bterm);
+						} //for (long routind = 0; routind < Rout; ++routind) {
+					} //for (long iinind = 0; iinind < Iin; ++iinind) {
+	} //if (this->bias_term_) {
+
+		for (int i = 0; i < output_offset_ * group_; ++i) {
+			if (fabs(all_sums_data[i]) > 1e-12) {
+				Rj_nor[output_offset_ * g + i] /= all_sums_data[i];
+			}
+		}
+
+		caffe_cpu_gemm < Dtype
+				> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
+						/ group_, (Dtype) 1., weights + weight_offset_ * g, Rj_nor
+						+ output_offset_ * g, (Dtype) 0., wijforxi_Rj_data
+						+ col_offset_ * g);
+
+		caffe_cpu_gemm < Dtype
+				> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
+						/ group_, (Dtype) 1., wpos + weight_offset_ * g, Rj_nor
+						+ output_offset_ * g, (Dtype) 0., wijplusforli_Rj_data
+						+ col_offset_ * g);
+
+		caffe_cpu_gemm < Dtype
+				> (CblasTrans, CblasNoTrans, kernel_dim_, conv_out_spatial_dim_, conv_out_channels_
+						/ group_, (Dtype) 1., wneg + weight_offset_ * g, Rj_nor
+						+ output_offset_ * g, (Dtype) 0., wijminusforhi_Rj_data
+						+ col_offset_ * g);
+
+		for (int i = 0; i < col_offset_; ++i) {
+			wijforxi_Rj_data[col_offset_ * g + i] *= col_buff[col_offset_ * g
+					+ i];
+		}
+		for (int i = 0; i < col_offset_; ++i) {
+			wijplusforli_Rj_data[col_offset_ * g + i] *=
+					lis[col_offset_ * g + i];
+		}
+		for (int i = 0; i < col_offset_; ++i) {
+			wijminusforhi_Rj_data[col_offset_ * g + i] *= his[col_offset_ * g
+					+ i];
+		}
+
+		caffe_axpy < Dtype
+				> (col_offset_, (Dtype) 1., wijforxi_Rj_data + col_offset_ * g, col_buff_new
+						+ col_offset_ * g);
+		caffe_axpy < Dtype
+				> (col_offset_, (Dtype) 1., wijplusforli_Rj_data
+						+ col_offset_ * g, col_buff_new + col_offset_ * g);
+		caffe_axpy < Dtype
+				> (col_offset_, (Dtype) 1., wijminusforhi_Rj_data
+						+ col_offset_ * g, col_buff_new + col_offset_ * g);
+
+	} //	for (int g = 0; g < group_; ++g) {
+
+	//we need to use the diffs , not the data!!
+	if (!is_1x1_) {
+		conv_col2im_cpu(col_buff_new, new_lowerlayerrelevances);
+	}
+
+	delete[] transformedimagemean0;
+	transformedimagemean0 = NULL;
+
+	delete[] wpos;
+	delete[] wneg;
+	delete[] lis;
+	delete[] his;
+
+	delete[] Rj_nor;
+
+}
+
+template<typename Dtype>
+void BaseConvolutionLayer<Dtype>::wsquare(
+		const Dtype* upperlayerrelevances, //ex output,
+		const Dtype* weights, const Dtype* input,
+		Dtype * new_lowerlayerrelevances, const relpropopts & ro,
+		bool skip_im2col) {
+	int K = kernel_dim_; //xi gets summed along this with wij
+	int Iin = conv_out_spatial_dim_;
+	int Rout = conv_out_channels_ / group_;
+
+	// inputs col_buff are K x Iin
+	//weights are Rout x K
+	// upper relevances are Rout x Iin
+
+	const Dtype* col_buff = input;
+	if (!is_1x1_) {
+		if (!skip_im2col) {
+			//memset(col_buffer_.mutable_cpu_data(), 0,
+			//		sizeof(Dtype) * col_buffer_.count());
+			conv_im2col_cpu(input, col_buffer_.mutable_cpu_data());
+		}
+		col_buff = col_buffer_.cpu_data();
+	}
+
+	Dtype* col_buff_new = col_buffer_.mutable_cpu_diff();
+	if (is_1x1_) {
+		col_buff_new = new_lowerlayerrelevances;
+	}
+	//memset(col_buff_new, 0,
+	//		sizeof(Dtype) * conv_out_spatial_dim_ * kernel_dim_);
+	memset(col_buff_new, 0, sizeof(Dtype) * col_buffer_.count());
+
+	Blob < Dtype > wsquares(1, 1, Rout, Iin);
+	Dtype* wsquares_data = wsquares.mutable_cpu_data();
+
+	for (int g = 0; g < group_; ++g) {
+		/*
+		 caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, kernel_dim_,
+		 conv_out_spatial_dim_, conv_out_channels_ / group_,
+		 (Dtype)1., weights + weight_offset_ * g, output + output_offset_ * g,
+		 (Dtype)0., col_buff + col_offset_ * g);
+		 */
+		memset(wsquares_data, 0, sizeof(Dtype) * Rout * Iin);
+
+		for (long iinind = 0; iinind < Iin; ++iinind) {
+			for (long routind = 0; routind < Rout; ++routind) {
+				//pos_sums_data[routind,iinind]
+
+				// x is col_buff[kernelind,iinind]
+
+				//w is weights[routind,kernelind]
+
+				for (long kernelind = 0; kernelind < K; ++kernelind) {
+					wsquares_data[routind * Iin + iinind] +=
+							weights[weight_offset_ * g + routind * K + kernelind]
+									* weights[weight_offset_ * g + routind * K
+											+ kernelind];
+				}
+
+			} //for (long routind = 0; routind < Rout; ++routind) {
+		} //for (long iinind = 0; iinind < Iin; ++iinind) {
+
+		for (long iinind = 0; iinind < Iin; ++iinind) {
+			for (long routind = 0; routind < Rout; ++routind) {
+				Dtype z1 = 0;
+				if (wsquares_data[routind * Iin + iinind] > 0) {
+					z1 = upperlayerrelevances[output_offset_ * g + routind * Iin
+							+ iinind] / wsquares_data[routind * Iin + iinind];
+				}
+				for (long kernelind = 0; kernelind < K; ++kernelind) {
+
+					col_buff_new[col_offset_ * g + kernelind * Iin + iinind] +=
+							weights[weight_offset_ * g + routind * K + kernelind]
+									* weights[weight_offset_ * g + routind * K
+											+ kernelind] * z1;
+				}
+			} //for (long routind = 0; routind < Rout; ++routind) {
+		} //for (long iinind = 0; iinind < Iin; ++iinind) {
+
+	} //for (int g = 0; g < group_; ++g) {
+	  //we need to use the diffs , not the data!!
+	if (!is_1x1_) {
+		conv_col2im_cpu(col_buff_new, new_lowerlayerrelevances);
+	}
+
+}
 
 template<typename Dtype>
 void BaseConvolutionLayer<Dtype>::weight_cpu_gemm(const Dtype* input,

@@ -156,7 +156,7 @@ void heatmaprunner::init(const std::string & configfile) {
 	ro.biastreatmenttype = configs.biastreatmenttype;
 
 	ro.lrn_forward_type = 0;
-	ro.lrn_backward_type = 0;
+	ro.lrn_backward_type = 1;
 
 	ro.lastlayerindex = configs.lastlayerindex;
 	ro.firstlayerindex = configs.firstlayerindex;
@@ -623,9 +623,34 @@ void heatmaprunner::process_heatmap(const std::string & imgfile,
 			classinds2[0] = classindstype;
 			std::cout << "heatmapping for " << classinds2[0] << std::endl;
 		}
-
-		net_->Backward_Relevance(classinds2, rawhm, ro);
-
+		
+		if(ro.relpropformulatype == 99){
+			ro.relpropformulatype = 11;
+		}
+        if (ro.relpropformulatype == 11)
+        {
+            net_->Backward_Gradient(classinds2, rawhm, ro);
+            //compute gradient l2 norm
+            for(int p = 0; p<rawhm[0].size(); ++p)
+            {
+                double norm = sqrt(rawhm[0][p]*rawhm[0][p] + rawhm[1][p]*rawhm[1][p] + rawhm[2][p]*rawhm[2][p]);
+                /*if (norm < 0)
+                {
+                    std::cout << "IMPOSSSIBLE! NORM IS " << norm << std::endl ;
+                }else
+                {
+                    std::cout << norm << std::endl;
+                }*/
+                rawhm[0][p] = norm;
+                rawhm[1][p] = norm;
+                rawhm[2][p] = norm;
+            }
+ 
+        }
+        else
+        {
+		    net_->Backward_Relevance(classinds2, rawhm, ro);
+        }
 	}
 
 	std::cout << "posthm " << std::endl;

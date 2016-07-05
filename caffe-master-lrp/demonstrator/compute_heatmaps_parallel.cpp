@@ -164,8 +164,8 @@ void heatmaprunner::init(const std::string & configfile)
 	ro.codeexectype = 0;
 	ro.biastreatmenttype=configs.biastreatmenttype;
 
-	ro.lrn_forward_type = 0;
-	ro.lrn_backward_type = 0;
+	ro.lrn_forward_type = 0; // THIS LINE HAS BEEN PATCHED AUTOMATICALLY! original line was ::  [	ro.lrn_forward_type = 0;]
+	ro.lrn_backward_type = 1; // THIS LINE HAS BEEN PATCHED AUTOMATICALLY! original line was ::  [	ro.lrn_backward_type = 0;]
 	
 	ro.lastlayerindex=configs.lastlayerindex;
 	ro.firstlayerindex=configs.firstlayerindex;
