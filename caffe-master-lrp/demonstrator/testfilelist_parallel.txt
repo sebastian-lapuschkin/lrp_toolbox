@@ -1,0 +1,10 @@
+./someimages/scooter10.jpg -2
+./someimages/volcano2.jpg -1
+./someimages/bw1.png -1
+./someimages/cat1.jpg -1
+./someimages/cat6.jpg -1
+./someimages/espresso1.jpg -1
+./someimages/frog5.jpg -1
+./someimages/ladybug5.jpg -1
+./someimages/rooster1.jpg -1
+./someimages/rooster5.jpg -1

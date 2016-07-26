@@ -1,4 +1,4 @@
-// 
+//
 
 /*
 
@@ -174,26 +174,18 @@ void heatmaprunner::init(const std::string & configfile) {
 	numclasses = configs.numclasses;
 	ro.numclasses = numclasses;
 
-	ro.maxpoolingtoavgpoolinginbackwardpass =
-			configs.maxpoolingtoavgpoolinginbackwardpass;
-
-	/*
-	 std::string standalone_outpath;
-	 std::string standalone_rootpath;
-	 float epsstab;
-	 float alphabeta_beta;
-	 int relpropformulatype;
-	 */
+	ro.maxpoolingtoavgpoolinginbackwardpass=configs.maxpoolingtoavgpoolinginbackwardpass;
 
 	init_caffe();
 
 }
 
-void heatmaprunner::init_caffe() {
+void heatmaprunner::init_caffe()
+{
 	//inhei=configs.netinhei;
 	//inwid=configs.netinwid;
 
-//read imgmean
+	//read imgmean
 	switch (configs.use_mean_file_asbinaryprotoblob) {
 	case 0: {
 		std::ifstream f;
@@ -626,7 +618,7 @@ void heatmaprunner::process_heatmap(const std::string & imgfile,
 			classinds2[0] = classindstype;
 			std::cout << "heatmapping for " << classinds2[0] << std::endl;
 		}
-		
+
 		if(ro.relpropformulatype == 99){
 			ro.relpropformulatype = 11;
 		}
@@ -648,7 +640,7 @@ void heatmaprunner::process_heatmap(const std::string & imgfile,
                 rawhm[1][p] = norm;
                 rawhm[2][p] = norm;
             }
- 
+
         }
         else
         {
@@ -1033,7 +1025,7 @@ bool configstuff::readattributefromstring(vartype & variable,
 		curlength += (int) filestr.gcount();
 		//curlength+=line.length()+endlinelength; // filestr.gcount() does not work whyever
 
-		//::std::cout <<curlength <<"---"<< totallength <<std::endl; 
+		//::std::cout <<curlength <<"---"<< totallength <<std::endl;
 
 		deblankbeginandend(line);
 
