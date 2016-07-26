@@ -7,4 +7,4 @@
 ./someimages/frog5.jpg -1
 ./someimages/ladybug5.jpg -1
 ./someimages/rooster1.jpg -1
-./someimages/rooster5.jpg -1
+./someimages/rooster5.jpg -2 
