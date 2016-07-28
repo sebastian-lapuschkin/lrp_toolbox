@@ -271,7 +271,7 @@ void heatmaprunner::init_caffe()
 		f.close();
 	}
 
-// in process heatmap??
+
 	std::cout << "loading net" << std::endl;
 	{
 		net_.reset(new Net<float>(configs.param_file, caffe::TEST));
@@ -519,8 +519,7 @@ void getoutputpath_createdir(std::string & curoutpath,
 
 }
 
-void heatmaprunner::process_heatmap(const std::string & imgfile,
-		const int classindstype2) {
+void heatmaprunner::process_heatmap(const std::string & imgfile, const int classindstype2) {
 	classindstype = classindstype2;
 
 	::boost::filesystem::path pt(imgfile);

@@ -42,7 +42,7 @@ alphabeta_beta
 1
 
 relpropformulatype
-2
+0
 
 
 

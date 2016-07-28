@@ -722,21 +722,33 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 
 std::vector < std::vector < std::vector<double> > > allrawhm;
 
-		net_->Backward_Relevance_multi(allclassinds, allrawhm, ro);
-	std::cout << "posthm " << std::endl;
+if (ro.relpropformulatype == 99){
+	if ro.relpropformulatype = 11;
+}
+if (ro.relpropformulatype == 11){
+	//this defaults to a wrapper, which only sequentially computes the gradient for all inputs at the moment
+	//net_->Backward_Gradient_multi(allclassinds, allrawhm, ro)
+	LOG(ERROR) << "FORMULA TYPE " << ro.relpropformulatype << " NOT SUPPORTED YET!";
+}
+else{
+	net_->Backward_Relevance_multi(allclassinds, allrawhm, ro);
+}
 
-	for(int nim=0; nim< (int) imgfilesall.size();++nim )
-	{
-		std::string imgfile=imgfilesall[nim];
-	::boost::filesystem::path pt(imgfile);
-	if(! ::boost::filesystem::is_regular_file(pt))
-	{
-		std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
-				exit(1);
-	}
 
-	std::string outputname;
-	getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
+std::cout << "posthm " << std::endl;
+
+for(int nim=0; nim< (int) imgfilesall.size();++nim )
+{
+	std::string imgfile=imgfilesall[nim];
+::boost::filesystem::path pt(imgfile);
+if(! ::boost::filesystem::is_regular_file(pt))
+{
+	std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
+			exit(1);
+}
+
+std::string outputname;
+getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
 
 
 	std::vector < std::vector<double> > rawhm(allrawhm[nim]);

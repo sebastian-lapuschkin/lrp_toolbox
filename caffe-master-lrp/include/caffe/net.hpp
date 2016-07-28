@@ -93,6 +93,10 @@ const vector<Blob<Dtype>*>& ForwardPrefilled_LastlayerScores( vector<Blob<Dtype>
   vector<vector<double> > & rawhm, 
   const relpropopts & ro);
 
+  void Backward_Gradient_multi(const std::vector< std::vector<int> > & classinds, 
+  vector< vector<vector<double> > > & rawhm, 
+  const relpropopts & ro);
+
   void Backward_Relevance_multi_winit(const std::vector< std::vector<float> > & allinitvecs, const int toplayerindex,
 		vector<vector<vector<double> > > & rawhm, const relpropopts & ro);
 

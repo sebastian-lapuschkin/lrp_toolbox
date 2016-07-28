@@ -220,7 +220,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
 	for (int layer_id = layers_.size() - 1; layer_id >= 0; --layer_id) {
 		bool layer_contributes_loss = false;
 		bool layer_skip_propagate_down = true;
-		for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
+		for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {f
 			const string& blob_name =
 					blob_names_[top_id_vecs_[layer_id][top_id]];
 			if (layers_[layer_id]->loss(top_id)
@@ -1434,7 +1434,14 @@ void Net<Dtype>::InputDebugInfo(const int input_id) {
 	}
 }
 
+template<typename Dtype>
+void Net<Dtype>::Backward_Gradient_multi(const std::vector< std::vector<int> > & classinds, 
+  vector< vector<vector<double> > > & rawhm, const relpropopts & ro){
 
+	// this method is just a wrapper which sequentially computes the gradients for each input image.
+	// OR NOT; BECAUSE ALEX DOES NOT COMPLETE HIS WORK
+
+}
 
 template<typename Dtype>
 void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
