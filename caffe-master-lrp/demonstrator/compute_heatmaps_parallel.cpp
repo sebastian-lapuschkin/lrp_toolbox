@@ -51,6 +51,9 @@ void readablob3d(std::vector<std::vector<float> > & channels, int & imgmeanhei, 
 void saveimgasjpg(const std::string & file, const int hei, const int wid,
 		const std::vector<std::vector<double> > & img);
 
+void saveimgaspng(const std::string & file, const int hei, const int wid,
+		const std::vector<std::vector<double> > & img);
+
 class configstuff {
 public:
 
@@ -588,12 +591,14 @@ void heatmaprunner::process_heatmap_multi(const std::vector<std::string> & imgfi
 				sizeof(float) *  3 *  inhei * inwid);
 	}
 
-		std::string outfile2 = outputname+"_as_inputted_into_the_dnn.jpg";
+		//std::string outfile2 = outputname+"_as_inputted_into_the_dnn.jpg";
+		std::string outfile2 = outputname+"_as_inputted_into_the_dnn.png";
 		if (img_asinputted.size() == 3) {
 			if (((int) img_asinputted[0].size() == inhei * inwid)
 					&& ((int) img_asinputted[1].size() == inhei * inwid)
 					&& ((int) img_asinputted[2].size() == inhei * inwid)) {
-				saveimgasjpg(outfile2, inhei, inwid, img_asinputted);
+				//saveimgasjpg(outfile2, inhei, inwid, img_asinputted);
+				saveimgaspng(outfile2, inhei, inwid, img_asinputted);
 			}
 		}
 
@@ -772,8 +777,11 @@ std::vector < std::vector < std::vector<double> > > allrawhm;
 
 
 		std::cout << "postimg5create " << std::endl;
-		std::string outf=outputname+"_heatmap.jpg";
-		saveimgasjpg(outf, inhei, inwid, img5);
+		//std::string outf=outputname+"_heatmap.jpg";
+		//saveimgasjpg(outf, inhei, inwid, img5);
+		std::string outf=outputname+"_heatmap.png";
+		saveimgaspng(outf, inhei, inwid, img5);
+
 
 	}
 
@@ -1412,6 +1420,46 @@ void saveimgasjpg(const std::string & file, const int hei, const int wid,
 	}
 
 	out.compressType(MagickCore::JPEGCompression);
+	out.write(pt.native());
+
+}
+
+void saveimgaspng(const std::string & file, const int hei, const int wid,
+		const std::vector<std::vector<double> > & img) {
+
+	Magick::Geometry fmt(wid, hei);
+
+//Magick::Image *out=new Magick::Image(fmt,Magick::ColorRGB(0,0,0));
+
+	Magick::Image out(fmt, Magick::ColorRGB(0.9, 0.9, 0.9));
+//double largestvalue= pow(2.0, sizeof(Magick::Quantum)*8) -1;
+	out.modifyImage();
+	out.type(Magick::TrueColorType);
+
+	Magick::PixelPacket *pixel, *pixel_cache = out.getPixels(0, 0,
+			out.columns(), out.rows());
+
+	for (unsigned int h = 0; h < out.rows(); ++h) {
+		for (unsigned int w = 0; w < out.columns(); ++w) {
+			pixel = &pixel_cache[w + out.columns() * h];
+
+			*pixel = Magick::ColorRGB(img[0][h + out.rows() * w],
+					img[1][h + out.rows() * w], img[2][h + out.rows() * w]);
+
+		}
+	}
+
+	out.syncPixels();
+
+//out.rotate(180);
+
+	::boost::filesystem::path pt(
+			std::string(file.substr(0, (int) file.length() - 4) + ".png"));
+	if (!::boost::filesystem::exists(pt.branch_path())) {
+		::boost::filesystem::create_directories(pt.branch_path());
+	}
+
+	out.compressType(MagickCore::NoCompression);
 	out.write(pt.native());
 
 }
