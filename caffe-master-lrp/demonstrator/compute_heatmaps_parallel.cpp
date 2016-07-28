@@ -110,6 +110,8 @@ public:
 
 	void process_heatmap_multi(const std::vector<std::string> & imgfilesall, const int batchsize, const std::vector<int> & batch_class_types);
 
+	int get_batchsize_from_prototxt();
+
 protected:
 	void init_caffe();
 
@@ -523,7 +525,10 @@ if(! ::boost::filesystem::exists(pt))
 
 
 
-
+int heatmaprunner::get_batchsize_from_prototxt()
+{
+	return net_->input_blobs()[0]->shape(0);
+}
 
 void heatmaprunner::process_heatmap_multi(const std::vector<std::string> & imgfilesall, const int batchsize, const std::vector<int> & batch_class_types)
 {
@@ -1470,8 +1475,10 @@ int main(int argc, char ** argv) {
 		f.close();
 	}
 
-	int batchsize=10; // TODO: read this info from the model's deploy.prototxt. this is the number of simultaneous inputs defined there
+	int batchsize=hru.get_batchsize_from_prototxt();
 	int computation_batches = (int)ceil((float)image_file_list.size()/batchsize);
+	LOG(INFO) << " batchsize for simultaneous processing of samples as defined in model's deploy.prototxt: " << batchsize ;
+	LOG(INFO) << " With " << image_file_list.size() << " input images, that makes " << computation_batches << " batches to execute." ;
 
 	// process batches sequentially
 	for( int i=0; i< computation_batches ;++i)
@@ -1491,6 +1498,6 @@ int main(int argc, char ** argv) {
 	//brag about our achievement
 	LOG(INFO)<< "FINISHED processing batch: " << i << " ending with " << batch_file_list.back();
 	}
-	std::cout <<"finished"<<std::endl;
+	LOG(INFO) << "finished";
 	return 0;
 }
