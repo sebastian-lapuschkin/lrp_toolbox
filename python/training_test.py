@@ -32,3 +32,6 @@ nn.train(X,Y, batchsize = 5)
 
 #save the network
 model_io.write(nn, '../xor_net_small_1000.txt')
+
+
+
