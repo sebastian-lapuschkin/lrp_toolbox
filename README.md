@@ -32,7 +32,7 @@ Make sure to at least skim through the installation scripts! For more details an
 
 When using (any part) of this toolbox, please cite [our (recently accepted) paper](BROKEN LINK)(link TBA)
 
-    @article{lapusckin2016LRP,
+    @article{lapuschkin2016LRP,
       title={The LRP Toolbox for Artificial Neural Networks},
       author={Lapuschkin, Sebastian and Binder, Alexander and Montavon, Gr\'{e}goire and M\"{u}ller, Klaus-Robert and Samek, Wojciech },
       journal={The Journal of Machine Learning Research},
