@@ -1,10 +1,10 @@
 '''
-@author: Sebastian Bach
-@maintainer: Sebastian Bach
-@contact: sebastian.bach@hhi.fraunhofer.de
+@author: Sebastian Lapuschkin
+@maintainer: Sebastian Lapuschkin
+@contact: sebastian.lapuschkin@hhi.fraunhofer.de
 @date: 14.08.2015
 @version: 1.0
-@copyright: Copyright (c)  2015, Sebastian Bach, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+@copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
 @license : BSD-2-Clause
 '''
 
@@ -172,7 +172,7 @@ def _write_txt(model,path):
     print 'writing model as plain text to',path
 
     if not isinstance(model, Sequential):
-        ''' TODO: Error Handling '''
+        raise Exception('Argument "model" must be an instance of module.Sequential, wrapping a sequence of neural network computation layers, but is {0}'.format(type(model)))
 
     with open(path, 'wb') as f:
         for m in model.modules:

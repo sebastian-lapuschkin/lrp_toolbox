@@ -1,10 +1,10 @@
 '''
-@author: Sebastian Bach
-@maintainer: Sebastian Bach
-@contact: sebastian.bach@hhi.fraunhofer.de
+@author: Sebastian Lapuschkin
+@maintainer: Sebastian Lapuschkin
+@contact: sebastian.lapuschkin@hhi.fraunhofer.de
 @date: 14.08.2015
 @version: 1.0
-@copyright: Copyright (c)  2015, Sebastian Bach, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+@copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
 @license : BSD-2-Clause
 
 provides methods to draw heatmaps beautifully.
@@ -83,7 +83,7 @@ def repaint_corner_pixels(rgbimg, scaling = 3):
     The recoloring visually masks the opposing pixel values which are a product of stabilizing the scaling.
     Assumes those image ares will pretty much never show evidence.
     
-    TODO: find a smarter way to do this. I know a smarter way, yet am too lazy to bother.
+    TODO: find a smarter way to do this. I know a smarter way, yet am too lazy to bother. SEE hm_to_rgb (this file, line 191)
     
     Parameters
     ----------
@@ -188,7 +188,7 @@ def hm_to_rgb(R, X = None, scaling = 3, shape = (), sigma = 2, cmap = 'jet', nor
     R = enlarge_image(vec2im(R,shape), scaling)
     rgbimg = sm.to_rgba(R)[:,:,0:3]
     rgbimg = repaint_corner_pixels(rgbimg, scaling) 
-    
+    ''' TODO: shift relevance values to [0,1] after normalization, then directly use matplotlib.cm.<cmapname> on this input interval. then remove the now unneccessary repaint_corner_pixels'''
     
     if not X is None: #compute the outline of the input     
         X = enlarge_image(vec2im(X,shape), scaling)
