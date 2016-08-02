@@ -354,7 +354,7 @@ class Sequential(Module):
 
         def randperm(N,b):
             '''
-            helper method for picking b unique random indices from a range [0,N].
+            helper method for picking b unique random indices from a range [0,N[.
             we do not use numpy.random.permutation or numpy.random.choice
             due to known severe performance issues with drawing without replacement.
             if the ratio of N/b is high enough, we should see a huge performance gain.
