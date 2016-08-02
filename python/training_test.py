@@ -23,7 +23,6 @@ Y = (np.vstack((Y, np.invert(Y)))*1.0).T # and [NxC] labels
 
 X += np.random.randn(N,D)*0.1 # add some noise to the data.
 
-
 #build a network
 nn = modules.Sequential([modules.Linear(2,3), modules.Tanh(),modules.Linear(3,15), modules.Tanh(), modules.Linear(15,15), modules.Tanh(), modules.Linear(15,3), modules.Tanh() ,modules.Linear(3,2), modules.SoftMax()])
 
