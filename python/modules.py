@@ -1,16 +1,18 @@
 '''
-@author: Sebastian Bach
+@author: Sebastian Lapuschkin
 @author: Gregoire Montavon
-@maintainer: Sebastian Bach
-@contact: sebastian.bach@hhi.fraunhofer.de
+@maintainer: Sebastian Lapuschkin
+@contact: sebastian.lapuschkin@hhi.fraunhofer.de
 @date: 14.08.2015
 @version: 1.0
-@copyright: Copyright (c)  2015, Sebastian Bach, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+@copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
 @license : BSD-2-Clause
 '''
 
-import numpy as np
-na = np.newaxis
+import copy
+import numpy as np ; na = np.newaxis
+
+
 
 
 
@@ -25,9 +27,9 @@ class Module:
 	def __init__(self): pass
 	def update(self, lrate): pass
 	def clean(self): pass
-	def lrp(self,R,lrp_var=None,param=0): return R
+	def lrp(self,R, **kwargs): return R
 	def backward(self,DY): return DY
-	def train(self, X, Y, batchsize, iters, lrate, status, shuffle_data): pass
+	def train(self, X, Y, **kwargs): pass
 	def forward(self,X): return X
 
 
