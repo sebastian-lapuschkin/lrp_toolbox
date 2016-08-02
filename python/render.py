@@ -1,10 +1,10 @@
 '''
-@author: Sebastian Lapuschkin
-@maintainer: Sebastian Lapuschkin
-@contact: sebastian.lapuschkin@hhi.fraunhofer.de
+@author: Sebastian Bach
+@maintainer: Sebastian Bach
+@contact: sebastian.bach@hhi.fraunhofer.de
 @date: 14.08.2015
 @version: 1.0
-@copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+@copyright: Copyright (c)  2015, Sebastian Bach, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
 @license : BSD-2-Clause
 
 provides methods to draw heatmaps beautifully.
@@ -187,8 +187,7 @@ def hm_to_rgb(R, X = None, scaling = 3, shape = (), sigma = 2, cmap = 'jet', nor
     
     R = enlarge_image(vec2im(R,shape), scaling)
     rgbimg = sm.to_rgba(R)[:,:,0:3]
-    rgbimg = repaint_corner_pixels(rgbimg, scaling)
-    ''' TODO: shift heatmap values to [0,1] after normalizing, then use matplotlib.cm.<cmapname> directly. removes the need for repaint_corner_pixels. '''
+    rgbimg = repaint_corner_pixels(rgbimg, scaling) 
     
     
     if not X is None: #compute the outline of the input     
