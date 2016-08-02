@@ -17,8 +17,8 @@ D,N = 2,200000
 
 #this is the XOR problem.
 X = np.random.rand(N,D) #we want [NxD] data
-X = (X > 0.5)*1.0 
-Y = X[:,0] == X[:,1] 
+X = (X > 0.5)*1.0
+Y = X[:,0] == X[:,1]
 Y = (np.vstack((Y, np.invert(Y)))*1.0).T # and [NxC] labels
 
 X += np.random.randn(N,D)*0.1 # add some noise to the data.
