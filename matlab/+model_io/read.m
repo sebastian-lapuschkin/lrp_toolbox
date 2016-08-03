@@ -138,7 +138,7 @@ function model = read_txt(path)
         line = fgetl(fid);
     end
 
-    model = modules.Sequential(modools)
+    model = modules.Sequential(modools);
 
     fclose(fid);
 end
