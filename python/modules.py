@@ -319,7 +319,7 @@ class Sequential(Module):
             the training labels, formatted to (N,C) shape, with N being the number of samples and C the number of output classes.
 
         Xval : numpy.ndarray
-            some optional validation data. used to measure network performance during training. if not present, the training data will be used.
+            some optional validation data. used to measure network performance during training.
             shaped (M,D)
 
         Yval : numpy.ndarray
@@ -412,16 +412,20 @@ class Sequential(Module):
                 acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Y, axis=1))
                 print
                 print 'Accuracy after {0} iterations: {1}%'.format(d+1,acc*100)
+
+                #if given, also evaluate on validation data
                 if not Xval == [] and not Yval == []:
                     Ypred = self.forward(Xval)
                     acc_val = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Yval, axis=1))
-                    print 'Accuracy on validation set: {1}%'.format(d+1,acc_val*100)
+                    print 'Accuracy on validation set: {1}%'.format(acc_val*100)
 
+                #save current network parameters if we have improved
                 if acc > bestAccuracy:
                     print '    New optimal parameter set encountered. saving....'
                     bestAccuracy = acc
                     bestLayers = copy.deepcopy(self.modules)
 
+                    #adjust learning rate
                     if lrate_decay == None or lrate_decay == 'none':
                         pass # no adjustment
                     elif lrate_decay == 'sublinear':

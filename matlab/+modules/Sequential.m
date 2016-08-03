@@ -125,8 +125,7 @@ classdef Sequential < modules.Module
             %
             % Xval : matrix, default value is []
             % some optional validation data. used to measure network
-            % performance during training. if not present, the training
-            % data will be used. shaped [M,D]
+            % performance during training. shaped [M,D]
             %
             % Yval : matrix, default value is []
             % the validation labels. shaped [m,C]
@@ -215,8 +214,8 @@ classdef Sequential < modules.Module
             end
             
             if nargin < 5 || (exist('Yval','var') && isempty(Yval)) || (exist('Xval','var') && isempty(Xval))
-                Xval = X;
-                Yval = Y;
+                Xval = [];
+                Yval = [];
             end
             
             %start training
@@ -245,10 +244,63 @@ classdef Sequential < modules.Module
                 
                 %periodically evaluate network and optionally adjust
                 %learning rate or check for convergence
-                
-                
+                if mod(d,status) == 0
+                    Ypred = obj.forward(X);
+                    [~,argmaxPred]  = max(Ypred,[],2);
+                    [~,argmaxTruth] = max(Y,[],2);
+                    acc = mean(argmaxPred == argmaxTruth);
+                    disp(' ')
+                    disp(['Accuracy after ' num2str(d) ' iterations: ' num2str(acc*100) '%'])
+                    
+                    %if given, also evaluate on validation data
+                    if ~isempty(Xval) && ~isempty(Yval)
+                       Ypred = obj.forward(Xval);
+                       [~,argmaxPred]  = max(Ypred,[],2);
+                       [~,argmaxTruth] = max(Yval,[],2);
+                       acc_val = mean(argmaxPred == argmaxTruth);
+                       disp(['Accuracy on validation set: ' num2str(acc_val*100) '%'])
+                    end
+                    
+                    %save current network parameters if we have improved
+                    if acc > bestAccuracy
+                        disp('    New optional parameter set encountered. saving...')
+                        bestAccuracy = acc;
+                        bestLayers = obj.modules;
+                        
+                        %adjust learning rate
+                        if isempty(lrate_decay) || strcmp(lrate_decay,'none')
+                            %no adjustment
+                        elseif strcmp(lrate_decay,'sublinear')
+                            %slow down learning to better converge towards an optimum with increased network performance.
+                            learningFactor = 1 - acc^2;
+                            disp(['    Adjusting learning rate to ' num2str(learningFactor*lrate) ' ~ ' num2str(round(learningFactor*100,2)) '% of its initial value'])
+                        elseif strcmp(lrate_decay,'linear')
+                            learningFactor = 1 - acc; 
+                            disp(['    Adjusting learning rate to ' num2str(learningFactor*lrate) ' ~ ' num2str(round(learningFactor*100,2)) '% of its initial value'])
+                        end
+                        
+                        %refresh number of allowed search steps until
+                        %convergence
+                        untilConvergence = convergence;
+                    else
+                        untilConvergence = untilConvergence - 1;
+                        if untilConvergence == 0 && convergence > 0
+                            disp(['    No more recorded model improvements for ' num2str(convergence) ' evaluations. Accepting model convergence.']) 
+                            break
+                        end 
+                    end
+                 
+                elseif mod(d,status/10) == 0
+                    % print 'alive' signal
+                    fprintf('.')
+                end
+          
             end
             
+            %after training, either due to convergence or iteration limit:
+            %set best encountered parameters as network parameters
+            disp(['Setting network parameters to best encountered network state with ' num2str(bestAccuracy*100) '% accuracy.'])
+            obj.modules = bestLayers;  
         end
         
         
