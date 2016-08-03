@@ -303,60 +303,7 @@ classdef Sequential < modules.Module
             obj.modules = bestLayers;  
         end
         
-        
-        
-        function train_old(obj, X, Y, Xval, Yval, batchsize, iters, lrate, status, shuffle_data)
-            if nargin < 10 || (exist('shuffle_data','var') && isempty(shuffle_data))
-                shuffle_data = true;
-            end
-            
-            if nargin < 9 || (exist('status','var') && isempty(status))
-                status = 250;
-            end
-            
-            if nargin < 8 || (exist('lrate','var') && isempty(lrate))
-                lrate = 0.005;
-            end
-            
-            if nargin < 7 || (exist('iters','var') && isempty(iters))
-                iters = 10000;
-            end
-            
-            if nargin < 6 || (exist('batchsize','var') && isempty(batchsize))
-                batchsize = 25;
-            end
-            
-            if nargin < 5 || (exist('Yval','var') && isempty(Yval)) || (exist('Xval','var') && isempty(Xval))
-                Xval = X;
-                Yval = Y;
-            end
-            
-            [N,D] = size(X);
-            if shuffle_data
-               r = randperm(N);
-               X = X(r,:);
-               Y = Y(r,:);
-            end
-            
-            for i = 0:(iters-1)
-                samples = mod(i:i+batchsize-1,N)+1;
-                Ypred = obj.forward(X(samples,:));
-                obj.backward(Ypred - Y(samples,:));
-                obj.update(lrate);
-                
-                if mod(i,status) == 0
-                    Ypred = obj.forward(Xval);
-                    [~, maxpred] = max(Ypred,[],2);
-                    [~, maxtrue] = max(Yval,[],2);
-                    acc = mean(maxpred == maxtrue);
-                    fprintf('Accuracy after %i iterations: %f%%\n', i, acc*100);
-                end
-                
-            end
-            
-        end
-        
-        
+           
         function DY = backward(obj, DY)
             for i = length(obj.modules):-1:1
                 DY = obj.modules{i}.backward(DY);   
