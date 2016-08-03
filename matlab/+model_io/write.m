@@ -80,26 +80,37 @@ end
 function write_txt(model,path)
     disp(['writing model as plain text to ' path])
 
-    if ~ isa(model, 'modules.Sequential') %TODO: get module string in a better way. matlab OOP sucks
-        % TODO: ERROR HANDLING        
+    if ~ isa(model, 'modules.Sequential')
+        throw(MException(['Argument "model" must be an instance of module.Sequential. wrapping a sequence of neural network computation layers, but is ' class(model)]));
     end
-    %TODO: increase precision for writing
+    %TODO: increase precision for writing ?
 
     fid = fopen(path, 'wb');
     for i = 1:length(model.modules)
         mod = model.modules{i};
         if isa(mod, 'modules.Linear')
+            % Format of linear layer
+            % Linear <rows_of_W> <columns_of_W>
+            % <flattened weight matrix W>
+            % <flattened bias vector>
             fprintf(fid,'Linear %i %i\n',mod.m, mod.n);
-            for ri = 1:size(mod.W,1)
-                line = sprintf( '%e ',  mod.W(ri,:));
-                line(end:end+1) = '\n';
-                fprintf(fid, line);
-            end
-            line = sprintf( '%e ',  mod.B);
-            line(end:end+1) = '\n';
-            fprintf(fid, line);           
-
+            
+            W = mod.W'; %transpose W to make flattening order compatible to the python/numpy-implementation
+            line = sprintf( '%e ',  W(:));  line(end:end+1) = '\n';
+            fprintf(fid, line);
+            
+            line = sprintf( '%e ',  mod.B); line(end:end+1) = '\n';
+            fprintf(fid, line); 
+            
+        % TODO:
+        % else if isa(mod, 'modules.Convolution') ...
+        % else if isa(mod, 'modules.SumPooling') ...
+        % else if isa(mod, 'modules.MaxPooling') ...
+        % else if isa(mod, 'modules.Flatten') ...
         else
+            % all other layers are free from parameters. Format is thus:
+            % <Layername>
+            
             cname = class(mod);
             dots = find(cname == '.');
             fprintf(fid,[cname(dots+1:end) '\n']);

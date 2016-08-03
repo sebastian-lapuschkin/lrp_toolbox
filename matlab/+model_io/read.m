@@ -48,13 +48,12 @@ function model = read(path, fmt)
     %The exception formed by the linear layer implementation modules.Linear incorporates in raw text form as
     %
     %Linear m n
-    %W
-    %B
+    %W(:)'
+    %B(:)'
     %
     %with m and n being integer values describing the dimensions of the weight matrix W as [m x n] ,
-    %W being the human readable ascii-representation of the matrix, where each row of W is written out as a
-    %white space separated line of doubles.
-    %After the m lines describing W, the bias term B is written out as a single line of n white space separated double values.
+    %W being the human readable ascii-representation of the flattened matrix in m * n white space separated double values.
+    %After the line describing W, the bias term B is written out as a single line of n white space separated double values.
 
     if ~exist(path,'file')
         throw(MException('MODEL_IO_READ:invalidPath',sprintf('model_io.read : No such file or directory: %s',path)))
@@ -107,15 +106,71 @@ end
 function model = read_txt(path)
     disp(['loading plain text model from ' path])
 
-    modools = {};
+    function model = read_txt_helper(path)
+        modools = {}; % avoid overloading the modules namespace
+        fid = fopen(path);
+        line = fgetl(fid);
+        
+        while ischar(line)
+            if length(line) >= 6 && all(line(1:6) == 'Linear')
+                lineparts = strsplit(line);
+                m = str2double(lineparts{2});
+                n = str2double(lineparts{3});
+                
+                layer = modules.Linear(m,n);
+                %CAUTION HERE! matlab reshape order is different from numpy
+                %reshape order!, thus the [n m] and transpose.
+                layer.W = reshape(str2num(fgetl(fid)),[n m])';
+                layer.B = str2num(fgetl(fid));
+                modools{end+1} = layer;
+            elseif length(line) == 4 && all(line(1:4) == 'Rect')
+                modools{end+1} = modules.Rect();
+            elseif length(line) == 4 && all(line(1:4) == 'Tanh')
+                modools{end+1} = modules.Tanh();
+            elseif length(line) == 7 && all(line(1:7) == 'SoftMax')
+                modools{end+1} = modules.SoftMax();
+            % TODO
+            % elseif Convolution,Flatting,Pooling...
+            else
+                layername = strsplit(line);
+                layername = layername{1};
+                ERROR = MException('UnknownLayerType','Layer Type Identifyer %s not supported for reading from plain text file.',layername);
+                throw(ERROR);
+            end
+            %read next line
+            line = fgetl(fid);
+        end %END WHILE
+        
+        model = modules.Sequential(modools);
+    end % END read_txt_helper
+    
+    try
+        model = read_txt_helper(path);
+    catch ERROR
+        % some error with parsing the text file has occurred at this point.
+        % In this case: Try to fall back to the old plain text format.
+        disp('probable reshaping / formatting error wile reading from plain text network file')
+        disp(['Error Message: ' getReport(ERROR)])
+        disp('Attempting fall-back to legacy plain text format interpretation...')
+        model = read_txt_old(path);
+        disp('fall-back successfull!')
+        
+    end
+end
+
+
+function model = read_txt_old(path)
+    disp(['loading plain text model from ' path])
+
+    modools = {}; % avoid overloading the modules namespace
     fid = fopen(path);
     line = fgetl(fid);
 
     while ischar(line)
         if length(line) >= 6 && all(line(1:6) == 'Linear')
             lineparts = strsplit(line);
-            m = str2num(lineparts{2});
-            n = str2num(lineparts{3});
+            m = str2double(lineparts{2});
+            n = str2double(lineparts{3});
 
             mod = modules.Linear(m,n);
             for i = 1:m
@@ -126,13 +181,18 @@ function model = read_txt(path)
 
         elseif length(line) == 4 && all(line(1:4) == 'Rect')
             modools{end+1} = modules.Rect();
-
+            
         elseif length(line) == 4 && all(line(1:4) == 'Tanh')
             modools{end+1} = modules.Tanh();
-
+            
         elseif length(line) == 7 && all(line(1:7) == 'SoftMax')
             modools{end+1} = modules.SoftMax();
-
+            
+        else
+            layername = strsplit(line);
+            layername = layername{1};
+            ERROR = MException('UnknownLayerType','Layer Type Identifyer %s not supported for reading from plain text file.',layername);
+            throw(ERROR);
         end
 
         line = fgetl(fid);

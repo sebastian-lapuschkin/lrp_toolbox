@@ -80,6 +80,7 @@ def _read_pickled(path):
 
 
 def _read_txt(path):
+    print 'loading plain text model from',path
 
     def _read_txt_helper(path):
         with open(path,'rb') as f:
@@ -139,6 +140,7 @@ def _read_txt(path):
         print 'ValueError message:', e.message
         print  'Attempting fall-back to legacy plain text format interpretation...'
         return _read_txt_old(path)
+        print 'fall-back successfull!'
 
 
 def _read_txt_old(path):

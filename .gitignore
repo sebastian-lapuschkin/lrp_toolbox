@@ -5,3 +5,7 @@ heatmap.npy
 heatmap.png
 xor_net_small_1000.txt
 xor_net_small_1000_newformat.txt
+*.asv
+xor_net_small_1000m.txt
+xor_net_small_1000m_newformat.txt
+xor_net_small_1000m.txt
