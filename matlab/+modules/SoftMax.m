@@ -33,7 +33,7 @@ classdef SoftMax < modules.Module
             obj.Y = Y;
         end
 
-        function R = lrp(obj, R, lrp_var, param)
+        function R = lrp(obj, R, varargin)
             R = R .* obj.X;
         end
 

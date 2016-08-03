@@ -26,7 +26,7 @@ classdef Module < handle
             %implemented via inheriting classes
         end
 
-        function R = lrp(obj,R,lrpvar,param)
+        function R = lrp(obj,R,varargin)
             %implemented via inheriting classes
         end
 
@@ -35,8 +35,8 @@ classdef Module < handle
              %implemented via inheriting classes 
         end
         
-        function train(obj, X, Y, batchsize, iters, lrate, status, shuffle_data)
-            
+        function train(obj, X, Y, varargin)
+            %implemented via inheriting classes
         end
 
         function X = forward(obj,X)

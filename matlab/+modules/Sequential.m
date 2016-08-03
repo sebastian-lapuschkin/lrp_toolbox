@@ -30,7 +30,6 @@ classdef Sequential < modules.Module
             obj.modules = modules;
         end
         
-        
         function clean(obj)
             % Removes temporary variables from all network layers.
             for i = 1:length(obj.modules)
@@ -105,7 +104,156 @@ classdef Sequential < modules.Module
         end
         
         
-        function train(obj, X, Y, Xval, Yval, batchsize, iters, lrate, status, shuffle_data)
+        function train(obj, X, Y, Xval, Yval, batchsize, iters, lrate, lrate_decay, lfactor_initial, status, convergence, transform)
+            % Sequential.train( X, Y, Xval, Yval, batchsize, iters, lrate, lrate_decay, lfactor_initial, status, convergence, transform)
+            %
+            % Provides a method for training the nerual net (obj) based on
+            % given data. Parameters you do not wish to set manually should
+            % be specified as []
+            %
+            % Parameters
+            % ----------
+            %
+            % X : matrix
+            % the training data, formatted as a [N,D]-shaped matrix, with N
+            % being the number of samples and D their dimensionality.
+            %
+            % Y : matrix
+            % the training labels, formatted as a [N,C] shaped label matrix,
+            % with N being the number of samples and C being the training
+            % classes
+            %
+            % Xval : matrix, default value is []
+            % some optional validation data. used to measure network
+            % performance during training. if not present, the training
+            % data will be used. shaped [M,D]
+            %
+            % Yval : matrix, default value is []
+            % the validation labels. shaped [m,C]
+            %
+            % batchsize : int, default value is 25
+            % the batch size to use for training
+            %
+            % iters : int, default value is 10000
+            % max number of training iterations
+            %
+            % lrate : float, default value is 0.005
+            % the initial learning rate. the learning rate is adjusted
+            % during training with increased model performance. See
+            % lrate_decay
+            %
+            % lrate_decay : string, default value is []
+            % controls if and how the learning rate is adjusted throughout
+            % the training:
+            % 'none' or [] disables learning rate adaption.
+            % 'sublinear' adjusts the learning rate to lrate*(1-Accuracy^2)
+            %   during an evaluation step often resulting in a better
+            %   performing model
+            % 'linear' adjusts the learning rate to lrate*(1-Accuracy)
+            %   during an evaluation step, often resulting in a better
+            %   performing model
+            %
+            % lfactor_initial : float, default value is 1.0
+            % specifies an initial discount on the given learning rate, e.g. when retraining an established network in combination with a learning rate decay,
+            % it might be undesirable to use the given learning rate in the beginning. this could have been done better. TODO: do better.
+            %
+            % status : int, default value is 250
+            % number of iterations (i.e. the number of rounds of batch
+            % forward pass, gradient backward pass, parameter update) of
+            % silent training, until status print and evaluation on
+            % validation data
+            %
+            % convergence : int, default value is -1
+            % number of consecutive allowed sttatus evaluations with no
+            % more morel improvements until we accept the model has
+            % converged.
+            % Set <=0 to disable.
+            % Set to any value > 0  to control the maximal consecutive
+            % number (status * convergence) iterations allowed without
+            % model improvement, until convergence is accepted.
+            %
+            % transform : function handle, default value is []
+            % a function taking as an input a batch of training data sized
+            % [N,D] and returning a batch sized [N,D] with added noise or
+            % other various data transformations. It's up to you!
+            % the default value [] causes no data transformation.
+            % expected syntax is, with size(X) == [N,D] == size(Xt)
+            % function Xt = yourFunction(X):
+            %    Xt = someStuff(X);
+            
+            %first, set default values whereever necessary
+            if nargin < 14 || (exist('transform','var') && isempty(transform))
+               transform = []; 
+            end
+            
+            if nargin < 13 || (exist('convergence','var') && isempty(convergence))
+               convergence = -1; 
+            end
+            
+            if nargin < 12 || (exist('status','var') && isempty(status))
+               status = 250; 
+            end
+            
+            if nargin < 11 || (exist('lfactor_initial','var') && isempty(lfactor_initial))
+               lfactor_initial = 1.0; 
+            end
+            
+            if nargin < 10 || (exist('lrate_decay','var') && isempty(lrate_decay))
+               lrate_decay = []; 
+            end
+            
+            if nargin < 9 || (exist('lrate','var') && isempty(lrate))
+               lrate = 0.005;
+            end
+            
+            if nargin < 8 || (exist('iters','var') && isempty(iters))
+               iters = 10000;
+            end
+            
+            if nargin < 7 || (exist('batchsize','var') && isempty(batchsize))
+               batchsize = 25;
+            end
+            
+            if nargin < 5 || (exist('Yval','var') && isempty(Yval)) || (exist('Xval','var') && isempty(Xval))
+                Xval = X;
+                Yval = Y;
+            end
+            
+            %start training
+            untilConvergence = convergence; learningFactor = lfactor_initial;
+            bestAccuracy = 0.0;             bestLayers = obj.modules;
+            
+            N = size(X,1);
+            for d = 1:iters
+                
+                %the actual training:
+                %first, pick samples at random
+                samples = randperm(N, batchsize);
+                
+                %transform batch data (maybe)
+                if isempty(transform)
+                    batch = X(samples,:);
+                else
+                    batch = transfor(X(samples,:));
+                end
+                
+                %forward and backward propagation steps with parameter
+                %update
+                Ypred = obj.forward(batch);
+                obj.backward(Ypred - Y(samples,:));
+                obj.update(lrate*learningFactor);
+                
+                %periodically evaluate network and optionally adjust
+                %learning rate or check for convergence
+                
+                
+            end
+            
+        end
+        
+        
+        
+        function train_old(obj, X, Y, Xval, Yval, batchsize, iters, lrate, status, shuffle_data)
             if nargin < 10 || (exist('shuffle_data','var') && isempty(shuffle_data))
                 shuffle_data = true;
             end

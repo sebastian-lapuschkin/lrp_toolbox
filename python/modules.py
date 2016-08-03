@@ -307,49 +307,60 @@ class Sequential(Module):
 
     def train(self, X, Y,  Xval = [], Yval = [],  batchsize = 25, iters = 10000, lrate = 0.005, lrate_decay = None, lfactor_initial=1.0 , status = 250, convergence = -1, transform = None):
         '''
-            X : numpy.ndarray
-                the training data, formatted to (N,D) shape, with N being the number of samples and D their dimensionality
+        Provides a method for training the neural net (self) based on given data.
 
-            Y : numpy.ndarray
-                the training labels, formatted to (N,C) shape, with N being the number of samples and C the number of output classes.
+        Parameters
+        ----------
 
-            Xval : numpy.ndarray
-                some optional validation data. used to measure network performance during training. if not present, the training data will be used.
-                shaped (M,D)
-            Yval : numpy.ndarray
-                the validation labels. shaped (M,C)
+        X : numpy.ndarray
+            the training data, formatted to (N,D) shape, with N being the number of samples and D their dimensionality
 
-            batchsize : int
-                the batch size to use for training
+        Y : numpy.ndarray
+            the training labels, formatted to (N,C) shape, with N being the number of samples and C the number of output classes.
 
-            iters : int
-                max number of training iterations
+        Xval : numpy.ndarray
+            some optional validation data. used to measure network performance during training. if not present, the training data will be used.
+            shaped (M,D)
 
-            lrate : float
-                the initial learning rate. the learning rate is adjusted during training with increased model performance. See lrate_decay
+        Yval : numpy.ndarray
+            the validation labels. shaped (M,C)
 
-            lrate_decay : string
-                controls if and how the learning rate is adjusted throughout training:
-                'none' or None disables learning rate adaption. This is the DEFAULT behaviour.
-                'sublinear' adjusts the learning rate to lrate*(1-Accuracy^2) during an evaluation step, often resulting in a better performing model.
-                'linear' adjusts the learning rate to lrate*(1-Accuracy) during an evaluation step, often resulting in a better performing model.
+        batchsize : int
+            the batch size to use for training
 
-            status : int
-                number of iterations (i.e. number of rounds of batch forward pass, gradient backward pass, parameter update) of silent training
-                until status print and evaluation on validation data.
+        iters : int
+            max number of training iterations
 
-            convergence : int
-                number of consecutive allowed status evaluations with no more model improvements until we accept the model has converged.
-                Set <=0 to disable. Disabled by DEFAULT.
-                Set to any value > 0 to control the maximal consecutive number (status * convergence) iterations allowed without model improvement, until convergence is accepted.
+        lrate : float
+            the initial learning rate. the learning rate is adjusted during training with increased model performance. See lrate_decay
 
-            transform : function handle
-                a function taking as an input a batch of training data sized [N,D] and returning a batch sized [N,D] with added noise or other various data transformations.
-                default value is None for no transformation.
-                expected syntax is, with X.shape == Xt.shape == (N,D)
-                def yourFunction(X):
-                    Xt = someStuff(X)
-                    return Xt
+        lrate_decay : string
+            controls if and how the learning rate is adjusted throughout training:
+            'none' or None disables learning rate adaption. This is the DEFAULT behaviour.
+            'sublinear' adjusts the learning rate to lrate*(1-Accuracy**2) during an evaluation step, often resulting in a better performing model.
+            'linear' adjusts the learning rate to lrate*(1-Accuracy) during an evaluation step, often resulting in a better performing model.
+
+        lfactor_initial : float
+            specifies an initial discount on the given learning rate, e.g. when retraining an established network in combination with a learning rate decay,
+            it might be undesirable to use the given learning rate in the beginning. this could have been done better. TODO: do better.
+            Default value is 1.0
+
+        status : int
+            number of iterations (i.e. number of rounds of batch forward pass, gradient backward pass, parameter update) of silent training
+            until status print and evaluation on validation data.
+
+        convergence : int
+            number of consecutive allowed status evaluations with no more model improvements until we accept the model has converged.
+            Set <=0 to disable. Disabled by DEFAULT.
+            Set to any value > 0 to control the maximal consecutive number (status * convergence) iterations allowed without model improvement, until convergence is accepted.
+
+        transform : function handle
+            a function taking as an input a batch of training data sized [N,D] and returning a batch sized [N,D] with added noise or other various data transformations. It's up to you!
+            default value is None for no transformation.
+            expected syntax is, with X.shape == Xt.shape == (N,D)
+            def yourFunction(X):
+                Xt = someStuff(X)
+                return Xt
         '''
 
         def randperm(N,b):
@@ -384,6 +395,7 @@ class Sequential(Module):
             #first, pick samples at random
             samples = randperm(N,batchsize)
 
+            #transform batch data (maybe)
             if transform == None:
                 batch = X[samples,:]
             else:
