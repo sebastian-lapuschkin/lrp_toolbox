@@ -1436,10 +1436,234 @@ void Net<Dtype>::InputDebugInfo(const int input_id) {
 
 template<typename Dtype>
 void Net<Dtype>::Backward_Gradient_multi(const std::vector< std::vector<int> > & classinds,
-  vector< vector<vector<double> > > & rawhm, const relpropopts & ro){
+        vector<vector<vector<double> > > & rawhm, const relpropopts & ro) {
 
-	// this method is just a wrapper which sequentially computes the gradients for each input image.
-	// OR NOT; BECAUSE ALEX DOES NOT COMPLETE HIS WORK
+
+    int lastlayerindex=ro.lastlayerindex;
+    int firstlayerindex=ro.firstlayerindex;
+
+    for(int i= (int)layers_.size() - 1;i>=0;--i)
+    {
+        LOG(INFO) << i << " layer_types_[i] " << layer_types_[i];
+
+    }
+    //LOG(FATAL) <<"testerexit";
+
+    //TODO detect where to start, idea: check for prob layer and apply scores to bottom, or: if not, apply to highest layer at top
+    if(lastlayerindex==-1)
+    {
+        //TODO detect lowest softmaxlayer
+        int detindex=-1;
+        for(int i= (int)layers_.size() - 1;i>=0;--i)
+        {
+            if(layer_types_[i].compare("Softmax")==0)
+            {
+                detindex=i;
+            }
+        }
+        LOG(INFO) << "detindex softmax " << detindex << " lastlayerindex will be: " << detindex-1 ;
+        //LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
+
+        lastlayerindex=detindex-1; // -1 !
+
+    }
+    else if(lastlayerindex==-2)
+    {
+        //TODO detect highest innerproductlayer
+
+        int detindex=-1;
+        for(int i= (int)layers_.size() - 1;i>=0;--i)
+        {
+            if(layer_types_[i].compare("InnerProduct")==0)
+            {
+                detindex=i;
+                break;
+            }
+        }
+        LOG(INFO) << "detindex innerproduct " << detindex;
+
+        //LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
+
+        lastlayerindex=detindex;
+
+
+    }
+    else if(lastlayerindex<0)
+    {
+        //undefined value
+        LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex  << " largest possible number would be " << (int)layers_.size() - 1 <<std::endl;
+    }
+
+    if(firstlayerindex < 0)
+    {
+        LOG(FATAL)<< "firstlayerindex < 0 " << firstlayerindex;
+    }
+    if(firstlayerindex >= lastlayerindex)
+    {
+        LOG(FATAL)<< "firstlayerindex >= lastlayerindex " << firstlayerindex << " vs " << lastlayerindex;
+    }
+
+    if(top_vecs_.back().size()!=1)
+    {
+        LOG(FATAL) << " top_vecs_.back().size()!=1 ... dont know what to choose! " ;
+    }
+    int numprocessed= top_vecs_.back()[0]->count() / ro.numclasses;
+    LOG(INFO) << "max num pictures processed in parallel " << numprocessed;
+
+    double oldsu=1;
+    for (int i = lastlayerindex; i >= firstlayerindex; --i) {
+        LOG(INFO) << " at layer " << i;
+        LOG(INFO) << "layer_need_backward_[i]" << layer_need_backward_[i];
+        LOG(INFO) << layer_names_[i];
+
+        bool thenightstartshere=false;
+        if(i==lastlayerindex)
+        {
+
+            //if (true == thenightstartshere) {
+                for (int s = 0; s < top_vecs_[i].size(); ++s) {
+                LOG(INFO) << "top.size() " << top_vecs_[i].size();
+
+                Dtype* top_diff = top_vecs_[i][s]->mutable_cpu_diff();
+
+                const Dtype* top_data = top_vecs_[i][s]->cpu_data();
+
+                LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
+                        << top_vecs_[i][s]->count() << std::endl;
+
+
+                memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
+
+                for(int nim=0;nim < std::min(numprocessed, (int)classinds.size() );++nim)
+                {
+                  for (int c = 0; c < (int) classinds[nim].size(); ++c) {
+                    int classindex = classinds[nim][c];
+
+                    if( classindex >= top_vecs_[i][s]->count() )
+                    {
+                        LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
+                    }
+
+                    top_diff[classindex+nim*ro.numclasses] = top_data[classindex+nim*ro.numclasses];
+                    LOG(INFO) << "image no " << nim << " inserting in layer at classindex" <<classindex <<" value " << top_diff[classindex+nim*ro.numclasses]
+                            << std::endl;
+                  }
+                } //                for(int nim=0;nim < numprocessed;++nim)
+
+                } //for (int s = 0; s < top.size(); ++s) {
+            //}
+
+            //thenightstartshere=true;
+        }
+
+
+            for(int t=0; t< bottom_need_backward_[i].size();++t )
+            {
+                 bottom_need_backward_[i][t]=true;
+              LOG(INFO) << i << " bottom_need_backward_[i] "<< bottom_need_backward_[i][t] ;
+            }
+            layers_[i]->Backward(top_vecs_[i], bottom_need_backward_[i],
+                    bottom_vecs_[i]);
+            if (debug_info_) {
+                BackwardDebugInfo(i);
+            }
+
+
+
+        const int num = bottom_vecs_[i][0]->num();
+        const Dtype* hm = bottom_vecs_[i][0]->cpu_diff();
+        const int channels = bottom_vecs_[i][0]->channels();
+        const int hei = bottom_vecs_[i][0]->height();
+        const int wid = bottom_vecs_[i][0]->width();
+
+        LOG(INFO) << "num|chan|hei|wid " << num << " channels " << channels
+                << " hei " << hei << " wid " << wid << std::endl;
+
+        //TODO: check outside, in demo, that it fits to image
+
+        bool havenan = false;
+
+        for(int n=0;n<num;++n)
+        {
+        double su = 0;
+        for (int ch = 0; ch < channels; ++ch) {
+            //LOG(INFO)<< " channel " << ch;
+            for (int w = 0; w < wid; ++w) {
+                for (int h = 0; h < hei; ++h) {
+                    su += hm[ n * channels * hei * wid + ((channels - 1 - ch) * hei + h) * wid + w];
+                    if (isnan(hm[((channels - 1 - ch) * hei + h) * wid + w])) {
+                        LOG(INFO) << " HAVEN at " << channels - 1 - ch << " "
+                                << h << " " << w;
+                        havenan = true;
+                        break;
+                    }
+                } //for(int h=0;h<hei;++h)
+                if (true == havenan) {
+                    break;
+                }
+            } //for(int w=0;w<wid;++w)
+            if (true == havenan) {
+                break;
+            }
+        } //for(int ch=0;ch<channels;++ch)
+        if (true == havenan) {
+            LOG(INFO) << "layer " << i << " HAVENANHAVENANHAVENANHAVENAN ";
+        }
+
+        LOG(INFO) << "image no " << n << " layer " << i << " Relevance sum " << su;
+
+        oldsu=su;
+        }
+
+        if(i==firstlayerindex)
+        {
+            //plot out heatmap
+            std::cout << "bottom_vecs_[0].size()" << bottom_vecs_[0].size()<<std::endl;
+
+            const int hei=bottom_vecs_[0][0]->height();
+            const int wid=bottom_vecs_[0][0]->width();
+            const int channels=bottom_vecs_[0][0]->channels();
+
+            std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl;
+
+            const Dtype* img=bottom_vecs_[0][0]->cpu_data();
+            const Dtype* hm=bottom_vecs_[0][0]->cpu_diff();
+
+            //vector<vector<double> > img2(channels) , hm2(channels);
+
+            vector<vector<double> > hm2(channels);
+
+
+            std::cout << "here0"<<std::endl;
+
+            rawhm.resize(numprocessed);
+            for(int nim=0;nim < numprocessed;++nim)
+            {
+
+            for(int ch=0;ch<channels;++ch)
+            {
+            //img2[ch].resize(hei*wid);
+            hm2[ch].resize(hei*wid);
+
+            for(int w=0;w<wid;++w)
+            {
+            for(int h=0;h<hei;++h)
+            {
+                //img2[ch][h+w*hei]=(double)img[( (channels-1-ch) * hei + h) * wid + w ];
+                hm2[ch][h+w*hei]=(double)hm[ nim*channels*hei*wid+   ( (channels-1-ch) * hei + h) * wid + w ];
+
+            }
+            }
+            }
+
+            std::cout << "here1"<<std::endl;
+            rawhm[nim]=hm2;
+            }//            for(int nim=0;nim < numprocessed;++nim)
+
+
+        }
+
+    } //  for (int i = layers_.size() - 1; i >= 0; --i) {
 
 }
 

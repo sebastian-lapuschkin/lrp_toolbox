@@ -727,8 +727,7 @@ if (ro.relpropformulatype == 99){
 }
 if (ro.relpropformulatype == 11){
 	//this defaults to a wrapper, which only sequentially computes the gradient for all inputs at the moment
-	//net_->Backward_Gradient_multi(allclassinds, allrawhm, ro)
-	LOG(ERROR) << "FORMULA TYPE " << ro.relpropformulatype << " NOT SUPPORTED YET!";
+	net_->Backward_Gradient_multi(allclassinds, allrawhm, ro);
 	//Then l2-normalize. See compute_heatmaps.cpp:624+ for the whole deal
 }
 else{
