@@ -220,7 +220,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
 	for (int layer_id = layers_.size() - 1; layer_id >= 0; --layer_id) {
 		bool layer_contributes_loss = false;
 		bool layer_skip_propagate_down = true;
-		for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {f
+		for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
 			const string& blob_name =
 					blob_names_[top_id_vecs_[layer_id][top_id]];
 			if (layers_[layer_id]->loss(top_id)
@@ -797,17 +797,17 @@ template<typename Dtype>
 void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		vector<vector<double> > & rawhm, const relpropopts & ro) {
 
-	
+
 	int lastlayerindex=ro.lastlayerindex;
 	int firstlayerindex=ro.firstlayerindex;
-	
+
 	for(int i= (int)layers_.size() - 1;i>=0;--i)
 	{
 		LOG(INFO) << i << " layer_types_[i] " << layer_types_[i];
-		
+
 	}
 	//LOG(FATAL) <<"testerexit";
-	
+
 	//TODO detect where to start, idea: check for prob layer and apply scores to bottom, or: if not, apply to highest layer at top
 	if(lastlayerindex==-1)
 	{
@@ -822,14 +822,14 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		}
 		LOG(INFO) << "detindex softmax " << detindex << " lastlayerindex will be: " << detindex-1 ;
 		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
-		
+
 		lastlayerindex=detindex-1; // -1 !
-		
+
 	}
 	else if(lastlayerindex==-2)
 	{
 		//TODO detect highest innerproductlayer
-		
+
 		int detindex=-1;
 		for(int i= (int)layers_.size() - 1;i>=0;--i)
 		{
@@ -842,17 +842,17 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		LOG(INFO) << "detindex innerproduct " << detindex;
 
 		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
-		
+
 		lastlayerindex=detindex;
 
-		
+
 	}
 	else if(lastlayerindex<0)
 	{
 		//undefined value
 		LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex  << " largest possible number would be " << (int)layers_.size() - 1 <<std::endl;
 	}
-	
+
 	if(firstlayerindex < 0)
 	{
 		LOG(FATAL)<< "firstlayerindex < 0 " << firstlayerindex;
@@ -861,17 +861,17 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 	{
 		LOG(FATAL)<< "firstlayerindex >= lastlayerindex " << firstlayerindex << " vs " << lastlayerindex;
 	}
-	
+
 	double oldsu=1;
 	for (int i = lastlayerindex; i >= firstlayerindex; --i) {
 		LOG(INFO) << " at layer " << i;
 		LOG(INFO) << "layer_need_backward_[i]" << layer_need_backward_[i];
 		LOG(INFO) << layer_names_[i];
-		
+
 		bool thenightstartshere=false;
 		if(i==lastlayerindex)
 		{
-			
+
 			//if (true == thenightstartshere) {
 				for (int s = 0; s < top_vecs_[i].size(); ++s) {
 				LOG(INFO) << "top.size() " << top_vecs_[i].size();
@@ -882,30 +882,30 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 
 				LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
 						<< top_vecs_[i][s]->count() << std::endl;
-				
-			
+
+
 				memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
 
 				  for (int c = 0; c < (int) classinds.size(); ++c) {
 					int classindex = classinds[c];
-					
+
 					if( classindex >= top_vecs_[i][s]->count() )
 					{
 						LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
 					}
-					
+
 					top_diff[classindex] = top_data[classindex];
 					LOG(INFO) << "inserting in layer at classindex" <<classindex <<" value " << top_diff[classindex]
 							<< std::endl;
 				  }
 				} //for (int s = 0; s < top.size(); ++s) {
 			//}
-			
+
 			//thenightstartshere=true;
 		}
 
-		
-		
+
+
 		//if (layer_need_backward_[i]) {
 
 			layers_[i]->Backward_Relevance_cpu(top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i],
@@ -922,7 +922,7 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 
 		LOG(INFO) << "num|chan|hei|wid " << num << " channels " << channels
 				<< " hei " << hei << " wid " << wid << std::endl;
-		
+
 		//TODO: check outside, in demo, that it fits to image
 
 		bool havenan = false;
@@ -958,7 +958,7 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 			LOG(INFO) << "layer " << i << " Relsumquot " << su/oldsu;
 		}
 		oldsu=su;
-		
+
 		if(i==firstlayerindex)
 		{
 			//plot out heatmap
@@ -968,10 +968,10 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 			const int wid=bottom_vecs_[0][0]->width();
 			const int channels=bottom_vecs_[0][0]->channels();
 
-			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl; 
+			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl;
 
-			const Dtype* img=bottom_vecs_[0][0]->cpu_data(); 
-			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff(); 
+			const Dtype* img=bottom_vecs_[0][0]->cpu_data();
+			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff();
 
 			vector<vector<double> > img2(channels), hm2(channels);
 			std::cout << "here0"<<std::endl;
@@ -997,7 +997,7 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 
 
 		}
-		
+
 	} //  for (int i = layers_.size() - 1; i >= 0; --i) {
 
 }
@@ -1244,7 +1244,7 @@ void Net<Dtype>::Backward_Relevance_multi_winit(const std::vector< std::vector<f
 	int lastlayerindex=toplayerindex;
 
 		LOG(INFO) << "inserting at the top of: " <<layer_names_[lastlayerindex];
-	
+
 
 	for(int i= (int)layers_.size() - 1;i>=0;--i)
 	{
@@ -1303,12 +1303,12 @@ void Net<Dtype>::Backward_Relevance_multi_winit(const std::vector< std::vector<f
 					}
 
 					top_diff[classindex+nim*allinitvecs[nim].size()] = allinitvecs[nim][classindex];
-	
+
 				  }
 				} //				for(int nim=0;nim < numprocessed;++nim)
 
 		} //for (int s = 0; s < top.size(); ++s) {
-		
+
 
 
 		}
@@ -1435,7 +1435,7 @@ void Net<Dtype>::InputDebugInfo(const int input_id) {
 }
 
 template<typename Dtype>
-void Net<Dtype>::Backward_Gradient_multi(const std::vector< std::vector<int> > & classinds, 
+void Net<Dtype>::Backward_Gradient_multi(const std::vector< std::vector<int> > & classinds,
   vector< vector<vector<double> > > & rawhm, const relpropopts & ro){
 
 	// this method is just a wrapper which sequentially computes the gradients for each input image.
@@ -1447,17 +1447,17 @@ template<typename Dtype>
 void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 		vector<vector<double> > & rawhm, const relpropopts & ro) {
 
-	
+
 	int lastlayerindex=ro.lastlayerindex;
 	int firstlayerindex=ro.firstlayerindex;
-	
+
 	for(int i= (int)layers_.size() - 1;i>=0;--i)
 	{
 		LOG(INFO) << i << " layer_types_[i] " << layer_types_[i];
-		
+
 	}
 	//LOG(FATAL) <<"testerexit";
-	
+
 	//TODO detect where to start, idea: check for prob layer and apply scores to bottom, or: if not, apply to highest layer at top
 	if(lastlayerindex==-1)
 	{
@@ -1472,14 +1472,14 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 		}
 		LOG(INFO) << "detindex softmax " << detindex << " lastlayerindex will be: " << detindex-1 ;
 		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
-		
+
 		lastlayerindex=detindex-1; // -1 !
-		
+
 	}
 	else if(lastlayerindex==-2)
 	{
 		//TODO detect highest innerproductlayer
-		
+
 		int detindex=-1;
 		for(int i= (int)layers_.size() - 1;i>=0;--i)
 		{
@@ -1492,17 +1492,17 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 		LOG(INFO) << "detindex innerproduct " << detindex;
 
 		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
-		
+
 		lastlayerindex=detindex;
 
-		
+
 	}
 	else if(lastlayerindex<0)
 	{
 		//undefined value
 		LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex  << " largest possible number would be " << (int)layers_.size() - 1 <<std::endl;
 	}
-	
+
 	if(firstlayerindex < 0)
 	{
 		LOG(FATAL)<< "firstlayerindex < 0 " << firstlayerindex;
@@ -1511,17 +1511,17 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 	{
 		LOG(FATAL)<< "firstlayerindex >= lastlayerindex " << firstlayerindex << " vs " << lastlayerindex;
 	}
-	
-	
+
+
 	for (int i = lastlayerindex; i >= firstlayerindex; --i) {
 		LOG(INFO) << " at layer " << i;
 		LOG(INFO) << "layer_need_backward_[i]" << layer_need_backward_[i];
 		LOG(INFO) << layer_names_[i];
-		
+
 		bool thenightstartshere=false;
 		if(i==lastlayerindex)
 		{
-			
+
 			//if (true == thenightstartshere) {
 				for (int s = 0; s < top_vecs_[i].size(); ++s) {
 				LOG(INFO) << "top.size() " << top_vecs_[i].size();
@@ -1532,25 +1532,25 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 
 				LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
 						<< top_vecs_[i][s]->count() << std::endl;
-				
-			
+
+
 				memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
 
 				  for (int c = 0; c < (int) classinds.size(); ++c) {
 					int classindex = classinds[c];
-					
+
 					if( classindex >= top_vecs_[i][s]->count() )
 					{
 						LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
 					}
-					
+
 					top_diff[classindex] = top_data[classindex];
 					LOG(INFO) << "inserting in layer at classindex" <<classindex <<" value " << top_diff[classindex]
 							<< std::endl;
 				  }
 				} //for (int s = 0; s < top.size(); ++s) {
 			//}
-			
+
 			//thenightstartshere=true;
 		}
 
@@ -1573,7 +1573,7 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 
 		LOG(INFO) << "num|chan|hei|wid " << num << " channels " << channels
 				<< " hei " << hei << " wid " << wid << std::endl;
-		
+
 		//TODO: check outside, in demo, that it fits to image
 
 		bool havenan = false;
@@ -1604,8 +1604,8 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 		}
 
 		LOG(INFO) << "layer " << i << " Relevance sum " << su;
-		
-		
+
+
 		if(i==firstlayerindex)
 		{
 			//plot out heatmap
@@ -1615,10 +1615,10 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 			const int wid=bottom_vecs_[0][0]->width();
 			const int channels=bottom_vecs_[0][0]->channels();
 
-			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl; 
+			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl;
 
-			const Dtype* img=bottom_vecs_[0][0]->cpu_data(); 
-			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff(); 
+			const Dtype* img=bottom_vecs_[0][0]->cpu_data();
+			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff();
 
 			vector<vector<double> > img2(channels), hm2(channels);
 			std::cout << "here0"<<std::endl;
@@ -1644,7 +1644,7 @@ void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
 
 
 		}
-		
+
 	} //  for (int i = layers_.size() - 1; i >= 0; --i) {
 
 }

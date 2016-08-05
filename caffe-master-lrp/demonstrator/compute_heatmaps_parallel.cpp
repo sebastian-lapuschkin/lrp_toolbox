@@ -723,7 +723,7 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 std::vector < std::vector < std::vector<double> > > allrawhm;
 
 if (ro.relpropformulatype == 99){
-	if ro.relpropformulatype = 11;
+	ro.relpropformulatype = 11;
 }
 if (ro.relpropformulatype == 11){
 	//this defaults to a wrapper, which only sequentially computes the gradient for all inputs at the moment
