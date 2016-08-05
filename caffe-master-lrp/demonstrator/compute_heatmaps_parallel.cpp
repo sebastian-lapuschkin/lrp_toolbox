@@ -728,7 +728,19 @@ if (ro.relpropformulatype == 99){
 if (ro.relpropformulatype == 11){
 	//this defaults to a wrapper, which only sequentially computes the gradient for all inputs at the moment
 	net_->Backward_Gradient_multi(allclassinds, allrawhm, ro);
-	//Then l2-normalize. See compute_heatmaps.cpp:624+ for the whole deal
+	// allrahm is formatted as [Nsamples][3colorchannels][Npixels]
+
+	// compute gradient l2norm for all heatmaps
+	for(int i = 0; i < allrawhm.size(); ++i)
+	{
+		for(int p = 0; p<allrawhm[i][0].size(); ++p)
+            {
+                double norm = sqrt(allrawhm[i][0][p]*allrawhm[i][0][p] + allrawhm[i][1][p]*allrawhm[i][1][p] + allrawhm[i][2][p]*allrawhm[i][2][p]);
+                allrawhm[i][0][p] = norm;
+                allrawhm[i][1][p] = norm;
+                allrawhm[i][2][p] = norm;
+            }
+	}
 }
 else{
 	net_->Backward_Relevance_multi(allclassinds, allrawhm, ro);
