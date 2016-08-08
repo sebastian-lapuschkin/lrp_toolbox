@@ -47,5 +47,5 @@ When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/p
     
 ### Misc
 
-For further research and projects involving LRP, visit [heatmapping.or](http://heatmapping.org)
+For further research and projects involving LRP, visit [heatmapping.org](http://heatmapping.org)
 
