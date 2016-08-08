@@ -33,15 +33,15 @@ Make sure to at least skim through the installation scripts! For more details an
 When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/papers/volume17/15-618/15-618.pdf)
 
     @article{JMLR:v17:15-618,
-    author  = {Sebastian Lapuschkin and Alexander Binder and Gr{{\'e}}goire Montavon and Klaus-Robert M{{{\"u}}}ller and Wojciech Samek},
-    title   = {The LRP Toolbox for Artificial Neural Networks},
-    journal = {Journal of Machine Learning Research},
-    year    = {2016},
-    volume  = {17},
-    number  = {114},
-    pages   = {1-5},
-    url     = {http://jmlr.org/papers/v17/15-618.html}
-}
+        author  = {Sebastian Lapuschkin and Alexander Binder and Gr{{\'e}}goire Montavon and Klaus-Robert M{{{\"u}}}ller and Wojciech Samek},
+        title   = {The LRP Toolbox for Artificial Neural Networks},
+        journal = {Journal of Machine Learning Research},
+        year    = {2016},
+        volume  = {17},
+        number  = {114},
+        pages   = {1-5},
+        url     = {http://jmlr.org/papers/v17/15-618.html}
+    }
 
 
     
