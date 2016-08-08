@@ -30,20 +30,22 @@ Make sure to at least skim through the installation scripts! For more details an
 
 ### The LRP Toolbox Paper
 
-When using (any part) of this toolbox, please cite [our (recently accepted) paper](BROKEN LINK)(link TBA)
+When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/papers/volume17/15-618/15-618.pdf)
 
-    @article{lapuschkin2016LRP,
-      title={The LRP Toolbox for Artificial Neural Networks},
-      author={Lapuschkin, Sebastian and Binder, Alexander and Montavon, Gr\'{e}goire and M\"{u}ller, Klaus-Robert and Samek, Wojciech },
-      journal={The Journal of Machine Learning Research},
-      year={2016},
-      volume={?17?},
-      number={????}
-      pages={????},
-      publisher={JMLR. org}
-    }
+    @article{JMLR:v17:15-618,
+    author  = {Sebastian Lapuschkin and Alexander Binder and Gr{{\'e}}goire Montavon and Klaus-Robert M{{{\"u}}}ller and Wojciech Samek},
+    title   = {The LRP Toolbox for Artificial Neural Networks},
+    journal = {Journal of Machine Learning Research},
+    year    = {2016},
+    volume  = {17},
+    number  = {114},
+    pages   = {1-5},
+    url     = {http://jmlr.org/papers/v17/15-618.html}
+}
+
+
     
 ### Misc
 
-For further research and projects involving LRP, visit [heatmapping.org (WIP. the ugly will vanish soon.)](http://heatmapping.org)
+For further research and projects involving LRP, visit [heatmapping.or](http://heatmapping.org)
 
