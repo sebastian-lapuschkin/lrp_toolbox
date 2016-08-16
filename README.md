@@ -1,4 +1,4 @@
-# The LRP Toolbox for Artificial Neural Networks
+# The LRP Toolbox for Artificial Neural Networks (1.0.1)
 
 The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
 specific  to  a  given  data  point  by  attributing
