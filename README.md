@@ -26,7 +26,7 @@ For whichever language / purpose you wish to make use of this toolbox download t
     cd lrp_toolbox/$yourChoice
     bash install.sh
 
-Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/manual.pdf).
+Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/doc/manual/manual.pdf).
 
 ### The LRP Toolbox Paper
 
