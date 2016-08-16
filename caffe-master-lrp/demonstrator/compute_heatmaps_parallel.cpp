@@ -1,8 +1,8 @@
-// 
+//
 
 /*
 
-g++ heatmapcomp_nogui_filelist2_multicomp.cpp -o hmcomp_lrp_filelist_multicomp -I ../include/ -I ../build/src/  -I /usr/include/ImageMagick/ -I /usr/local/cuda-6.5/include -I /home/binder/installed_sw/open_cv_2_4_11/include/    -L /home/binder/installed_sw/open_cv_2_4_11/lib/ -L/usr/local/cuda-6.5/lib64   -Wl,--whole-archive  ../build/lib/libcaffe.a  -Wl,--no-whole-archive -lcudart -lcublas -lcurand -lpthread -lglog -lgflags -lprotobuf -lleveldb -lsnappy -lboost_system -lhdf5_hl -lhdf5 -llmdb -lopencv_core -lopencv_highgui -lopencv_imgproc -latlas -lcblas  -Wall -lMagick++ -lMagickWand -lMagickCore -lboost_filesystem -lboost_system -lboost_thread  -lpthread 
+g++ heatmapcomp_nogui_filelist2_multicomp.cpp -o hmcomp_lrp_filelist_multicomp -I ../include/ -I ../build/src/  -I /usr/include/ImageMagick/ -I /usr/local/cuda-6.5/include -I /home/binder/installed_sw/open_cv_2_4_11/include/    -L /home/binder/installed_sw/open_cv_2_4_11/lib/ -L/usr/local/cuda-6.5/lib64   -Wl,--whole-archive  ../build/lib/libcaffe.a  -Wl,--no-whole-archive -lcudart -lcublas -lcurand -lpthread -lglog -lgflags -lprotobuf -lleveldb -lsnappy -lboost_system -lhdf5_hl -lhdf5 -llmdb -lopencv_core -lopencv_highgui -lopencv_imgproc -latlas -lcblas  -Wall -lMagick++ -lMagickWand -lMagickCore -lboost_filesystem -lboost_system -lboost_thread  -lpthread
 
 //`pkg-config gtkmm-3.0 --cflags --libs`
 */
@@ -44,11 +44,14 @@ void loadimagealex(std::vector<std::vector<double> > & img, int & hei,
 		int & wid, const std::string & imgfile, const int maxdim);
 
 //reads a mean file blob into floats
-void readablob3d(std::vector<std::vector<float> > & channels, int & imgmeanhei, int & imgmeanwid, 
+void readablob3d(std::vector<std::vector<float> > & channels, int & imgmeanhei, int & imgmeanwid,
 		const std::string & mean_file);
 
 
 void saveimgasjpg(const std::string & file, const int hei, const int wid,
+		const std::vector<std::vector<double> > & img);
+
+void saveimgaspng(const std::string & file, const int hei, const int wid,
 		const std::vector<std::vector<double> > & img);
 
 class configstuff {
@@ -64,25 +67,25 @@ public:
 
 	int netinhei;
 	int netinwid;
-	
+
 	int use_mean_file_asbinaryprotoblob;
-	
+
 	int lastlayerindex;
 	int firstlayerindex;
-	
+
 	int biastreatmenttype;
 	int baseimgsize;
-	
+
 	//added over gui version
 	std::string standalone_outpath;
 	std::string standalone_rootpath;
 	float epsstab;
 	float alphabeta_beta;
 	int relpropformulatype;
-	
+
 	//int classindstype;
 	int numclasses;
-	
+
 	void readconfig2(const std::string & configfile);
 
 	bool filexists_check(const std::string & file);
@@ -103,18 +106,20 @@ public:
 class heatmaprunner
 {
 public:
-	
+
 	heatmaprunner();
 
 	void init(const std::string & configfile);
 
-	void process_heatmap_multi(const std::vector<std::string> & imgfilesall, const int numprocessed, const std::vector<int> & classindstypesvec2);
-	
+	void process_heatmap_multi(const std::vector<std::string> & imgfilesall, const int batchsize, const std::vector<int> & batch_class_types);
+
+	int get_batchsize_from_prototxt();
+
 protected:
 	void init_caffe();
 
 	configstuff configs;
-	
+
 	int baseimghei, baseimgwid;
 
 	std::vector<std::vector<float> > imgmean;
@@ -130,7 +135,7 @@ protected:
 
 	int inhei;
 	int inwid;
-	
+
 	int baseimgsize;
 
 	int imgmeanhei;
@@ -140,7 +145,7 @@ protected:
 
 	int classindstype;
 	int numclasses;
-	
+
 
 
 	std::vector<std::vector<double> > img_asinputted;
@@ -154,46 +159,46 @@ heatmaprunner::heatmaprunner():inhei(-1), inwid(-1),baseimgsize(-1),
 		imgmeanhei(-1),imgmeanwid(-1), classindstype(
 		-1)
 {
-	
+
 }
 
 void heatmaprunner::init(const std::string & configfile)
 {
 	configs.readconfig2(configfile);
-	
+
 	ro.codeexectype = 0;
 	ro.biastreatmenttype=configs.biastreatmenttype;
 
 	ro.lrn_forward_type = 0;
-	ro.lrn_backward_type = 0;
-	
+	ro.lrn_backward_type = 1;
+
 	ro.lastlayerindex=configs.lastlayerindex;
 	ro.firstlayerindex=configs.firstlayerindex;
 
-	
+
 	baseimgsize=configs.baseimgsize;
-	
+
 	ro.alphabeta_beta=configs.alphabeta_beta;
 	ro.epsstab = configs.epsstab;
 	ro.relpropformulatype = configs.relpropformulatype;
-	
+
 	numclasses=configs.numclasses;
 	ro.numclasses=configs.numclasses;
 	ro.maxpoolingtoavgpoolinginbackwardpass=configs.maxpoolingtoavgpoolinginbackwardpass;
 
-	
+
 	init_caffe();
-	
+
 }
 
 void heatmaprunner::init_caffe()
 {
 	//inhei=configs.netinhei;
 	//inwid=configs.netinwid;
-	
-//read imgmean
+
+	//read imgmean
 	switch (configs.use_mean_file_asbinaryprotoblob)
-	{	
+	{
 	case 0:
 	{
 		std::ifstream f;
@@ -217,12 +222,12 @@ void heatmaprunner::init_caffe()
 		}
 		imgmeanhei=tmphei;
 		imgmeanwid=tmpwid;
-		
+
 
 		f.close();
 	}
 	break;
-	
+
 	case 1:
 	{
 		//bgr
@@ -239,7 +244,7 @@ void heatmaprunner::init_caffe()
 		{
 			imgmean[ch]=tmpchannels[2-ch];
 		}
-		
+
 	}
 	break;
 	default:
@@ -248,15 +253,15 @@ void heatmaprunner::init_caffe()
 		exit(1);
 	}
 	}
-	
+
 	std::cout << "imagemeanfile canvas size (hei,wid) "<< imgmeanhei << " "<< imgmeanwid<<std::endl;
-	
+
 	if( (imgmeanhei<=0)||(imgmeanwid<=0))
 	{
 		std::cerr << "imagemean file not read properly!! (imgmeanhei<=0)||(imgmeanwid<=0) "  << std::endl;
 		exit(1);
 	}
-	
+
 	if( (imgmeanhei< inhei )||(imgmeanwid < inwid))
 	{
 		std::cerr << "imagemean canvas size smaller than  nnet receptive field size (imgmeanhei< inhei )||(imgmeanwid < inwid) " <<
@@ -347,7 +352,7 @@ void heatmaprunner::painfully_processimage(const std::string & imgfile)
 	int wid = -1;
 
 	loadimagealex(img, hei, wid, imagefile, baseimgsize);
-	
+
 	baseimghei= hei;
 	baseimgwid = wid;
 
@@ -380,12 +385,12 @@ void heatmaprunner::painfully_processimage(const std::string & imgfile)
 //crop img! t
 
 	int bordersize=(baseimgsize- std::max(inhei,inwid))/2;
-	int bordersize_imgmean= std::min((imgmeanhei-inhei)/2,(imgmeanwid-inwid)/2); 
+	int bordersize_imgmean= std::min((imgmeanhei-inhei)/2,(imgmeanwid-inwid)/2);
 	std::cout << "bordersize" << bordersize <<std::endl;
 	std::cout << "bordersize_imgmean" << bordersize_imgmean <<std::endl;
 	std::cout << "inhei inwid" << inhei << " " << inwid <<std::endl;
 
-	
+
 	for (int ch = 0; ch < (int) imgmean.size(); ++ch) {
 		img2[ch].resize(inhei*inwid);
 		std::fill(img2[ch].begin(), img2[ch].end(), 0.0);
@@ -523,39 +528,39 @@ if(! ::boost::filesystem::exists(pt))
 
 
 
+int heatmaprunner::get_batchsize_from_prototxt()
+{
+	return net_->input_blobs()[0]->shape(0);
+}
 
-
-void heatmaprunner::process_heatmap_multi(const std::vector<std::string> & imgfilesall,
-		const int numprocessed, const std::vector<int> & classindstypesvec2)
+void heatmaprunner::process_heatmap_multi(const std::vector<std::string> & imgfilesall, const int batchsize, const std::vector<int> & batch_class_types)
 {
 
-
-	
 	const std::vector<Blob<float>*>& input_blobs = net_->input_blobs();
 
-	if(numprocessed != input_blobs[0]->shape(0))
+	if(batchsize != input_blobs[0]->shape(0))
 	{
-		LOG(FATAL) << "numprocessed != input_blobs[0]->shape(0)" ;
+		LOG(FATAL) << "batchsize != input_blobs[0]->shape(0)" ;
 	}
-	if(numprocessed < (int)imgfilesall.size())
+	if(batchsize < (int)imgfilesall.size())
 	{
-		LOG(FATAL) << "numprocessed < imgfilesall.size()";
+		LOG(FATAL) << "batchsize < imgfilesall.size()";
 	}
 
 	for (unsigned int i = 0; i < input_blobs.size(); ++i) {
-		
-		if(input_blobs[i]->count()!=numprocessed * 3 * inhei * inwid)
+
+		if(input_blobs[i]->count()!=batchsize * 3 * inhei * inwid)
 		{
-			LOG(WARNING) <<" input_blobs[i]->count()!=numprocessed * 3 * inhei * inwid. You might be using an oversized network.  " << numprocessed * 3 * inhei * inwid << " numprocessed " << numprocessed <<  " inhei " << inhei << " inwid " << inwid << " input_blobs[i]->count() " << input_blobs[i]->count() <<std::endl;
+			LOG(WARNING) <<" input_blobs[i]->count()!=batchsize * 3 * inhei * inwid. You might be using an oversized network.  " << batchsize * 3 * inhei * inwid << " batchsize " << batchsize <<  " inhei " << inhei << " inwid " << inwid << " input_blobs[i]->count() " << input_blobs[i]->count() <<std::endl;
 
 		}
 	}
-	
+
 	float* paddedimg = new float[3 * inhei * inwid];
 
 
 	for(int nim=0; nim< (int) imgfilesall.size();++nim )
-	{ 
+	{
 
 		std::string imgfile=imgfilesall[nim];
 	::boost::filesystem::path pt(imgfile);
@@ -564,10 +569,10 @@ void heatmaprunner::process_heatmap_multi(const std::vector<std::string> & imgfi
 		std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
 				exit(1);
 	}
-	
+
 	std::string outputname;
 	getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
-	
+
 	painfully_processimage(imgfile);
 
 	std::fill(paddedimg, paddedimg + 3 * inhei * inwid, 0.0);
@@ -586,18 +591,20 @@ void heatmaprunner::process_heatmap_multi(const std::vector<std::string> & imgfi
 				sizeof(float) *  3 *  inhei * inwid);
 	}
 
-		std::string outfile2 = outputname+"_as_inputted_into_the_dnn.jpg";
+		//std::string outfile2 = outputname+"_as_inputted_into_the_dnn.jpg";
+		std::string outfile2 = outputname+"_as_inputted_into_the_dnn.png";
 		if (img_asinputted.size() == 3) {
 			if (((int) img_asinputted[0].size() == inhei * inwid)
 					&& ((int) img_asinputted[1].size() == inhei * inwid)
 					&& ((int) img_asinputted[2].size() == inhei * inwid)) {
-				saveimgasjpg(outfile2, inhei, inwid, img_asinputted);
+				//saveimgasjpg(outfile2, inhei, inwid, img_asinputted);
+				saveimgaspng(outfile2, inhei, inwid, img_asinputted);
 			}
 		}
 
 
 	}//	for(int nim=0; nim< (int) imgfilesall.size();++nim )
-	
+
 
 	delete[] paddedimg;
 
@@ -645,7 +652,7 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 
 		}
 
-		
+
 
 //force_redraw();
 
@@ -667,7 +674,7 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 	{
 		std::cout << "heatmapping for " << permutation[numclasses - 1] << std::endl;
 		std::vector<int> classinds2(1, permutation[numclasses - 1]);
-		classindstype=classindstypesvec2[nim];
+		classindstype=batch_class_types[nim];
 		if (classindstype == -2) {
 			classinds2.resize(std::min(5,numclasses));
 			for (int i = 0; i < (int) classinds2.size(); ++i) {
@@ -693,10 +700,10 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 		std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
 				exit(1);
 	}
-	
+
 	std::string outputname;
 	getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
-	
+
 
 
 	{
@@ -715,26 +722,50 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 
 std::vector < std::vector < std::vector<double> > > allrawhm;
 
-		net_->Backward_Relevance_multi(allclassinds, allrawhm, ro);
-	std::cout << "posthm " << std::endl;
+if (ro.relpropformulatype == 99){
+	ro.relpropformulatype = 11;
+}
+if (ro.relpropformulatype == 11){
+	//this defaults to a wrapper, which only sequentially computes the gradient for all inputs at the moment
+	net_->Backward_Gradient_multi(allclassinds, allrawhm, ro);
+	// allrahm is formatted as [Nsamples][3colorchannels][Npixels]
 
-	for(int nim=0; nim< (int) imgfilesall.size();++nim )
+	// compute gradient l2norm for all heatmaps
+	for(int i = 0; i < allrawhm.size(); ++i)
 	{
-		std::string imgfile=imgfilesall[nim];
-	::boost::filesystem::path pt(imgfile);
-	if(! ::boost::filesystem::is_regular_file(pt))
-	{
-		std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
-				exit(1);
+		for(int p = 0; p<allrawhm[i][0].size(); ++p)
+            {
+                double norm = sqrt(allrawhm[i][0][p]*allrawhm[i][0][p] + allrawhm[i][1][p]*allrawhm[i][1][p] + allrawhm[i][2][p]*allrawhm[i][2][p]);
+                allrawhm[i][0][p] = norm;
+                allrawhm[i][1][p] = norm;
+                allrawhm[i][2][p] = norm;
+            }
 	}
-	
-	std::string outputname;
-	getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
-	
+}
+else{
+	net_->Backward_Relevance_multi(allclassinds, allrawhm, ro);
+}
+
+
+std::cout << "posthm " << std::endl;
+
+for(int nim=0; nim< (int) imgfilesall.size();++nim )
+{
+	std::string imgfile=imgfilesall[nim];
+::boost::filesystem::path pt(imgfile);
+if(! ::boost::filesystem::is_regular_file(pt))
+{
+	std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
+			exit(1);
+}
+
+std::string outputname;
+getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
+
 
 	std::vector < std::vector<double> > rawhm(allrawhm[nim]);
 	{
-		
+
 		std::vector<double> vs(rawhm[0].size(), 0);
 		double maxabs = 0;
 		for (int i = 0; i < (int) vs.size(); ++i) {
@@ -742,13 +773,13 @@ std::vector < std::vector < std::vector<double> > > allrawhm;
 			//maxabs=std::max(maxabs,fabs(hues[i]));
 			maxabs = std::max(maxabs, vs[i]);
 		}
-		
+
 		std::vector < std::vector<double> > img5(3);
 		for (int ch = 0; ch < 3; ++ch) {
 			img5[ch].resize(rawhm[ch].size());
 			std::fill(img5[ch].begin(),img5[ch].end(),0);
 		}
-		
+
 		if(maxabs>0)
 		{
 			for (int h = 0; h < inhei; ++h) {
@@ -762,19 +793,22 @@ std::vector < std::vector < std::vector<double> > > allrawhm;
 						img5[0][(h) + w * inhei]=vs[(h) + w * inhei]/maxabs;
 						img5[1][(h) + w * inhei]=vs[(h) + w * inhei]/maxabs;
 					}
-					
+
 					//img5[ch][(h) + w * inhei] = jethm[ch][(h) + w * inhei];
 				}
 			}
 		}
-		
+
 
 		std::cout << "postimg5create " << std::endl;
-		std::string outf=outputname+"_heatmap.jpg";
-		saveimgasjpg(outf, inhei, inwid, img5);
+		//std::string outf=outputname+"_heatmap.jpg";
+		//saveimgasjpg(outf, inhei, inwid, img5);
+		std::string outf=outputname+"_heatmap.png";
+		saveimgaspng(outf, inhei, inwid, img5);
+
 
 	}
-	
+
 
 
 
@@ -804,7 +838,7 @@ std::vector < std::vector < std::vector<double> > > allrawhm;
 
 
 	} //	for(int nim=0; num< (int) imgfilesall.size();++nim )
-	
+
 	//outputname+"_heatmap.jpg"
 }
 
@@ -827,9 +861,9 @@ void readablob3d(std::vector<std::vector<float> > & channels, int & imgmeanhei, 
 
   channels.resize(num_channels);
   /* The format of the mean file is planar 32-bit float BGR or grayscale. */
-  
+
   float* data = mean_blob.mutable_cpu_data();
-  
+
   imgmeanhei=mean_blob.height();
   imgmeanwid=mean_blob.width();
   for (int ch = 0; ch < num_channels; ++ch) {
@@ -941,12 +975,12 @@ void loadimagealex(std::vector<std::vector<double> > & img, int & hei,
 			}
 
 		}
-		
+
 		//create a 3-d image
 		img.push_back(img[0]);
 		img.push_back(img[0]);
 
-		
+
 	} else {
 		std::cerr << "unknown image type" << std::endl;
 		exit(1);
@@ -1104,7 +1138,7 @@ bool configstuff::readattributefromstring(vartype & variable,
 		curlength += (int) filestr.gcount();
 		//curlength+=line.length()+endlinelength; // filestr.gcount() does not work whyever
 
-		//::std::cout <<curlength <<"---"<< totallength <<std::endl; 
+		//::std::cout <<curlength <<"---"<< totallength <<std::endl;
 
 		deblankbeginandend(line);
 
@@ -1209,8 +1243,8 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << "is not a regular file: " << mean_file << std::endl;
 			exit(1);
 		}
-		
-		
+
+
 		attribute = "use_mean_file_asbinaryprotoblob";
 		if (false == readattributefromstring(use_mean_file_asbinaryprotoblob, str, attribute)) {
 			error
@@ -1221,7 +1255,7 @@ void configstuff::readconfig2(const std::string & configfile) {
 		}
 		//	int lastlayerindex;
 		//int firstlayerindex;
-		
+
 		attribute = "lastlayerindex";
 		if (false == readattributefromstring(lastlayerindex, str, attribute)) {
 			error
@@ -1230,7 +1264,7 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-		
+
 		attribute = "firstlayerindex";
 		if (false == readattributefromstring(firstlayerindex, str, attribute)) {
 			error
@@ -1239,10 +1273,10 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-		
+
 
 		biastreatmenttype=0;
-		
+
 		attribute = "synsetfile";
 		if (false == readattributefromstring(synsetfile, str, attribute)) {
 			error
@@ -1270,9 +1304,9 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-		
 
-				
+
+
 		attribute = "standalone_outpath";
 		if (false
 				== readattributefromstring(standalone_outpath, str,
@@ -1283,8 +1317,8 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-				
-		
+
+
 		attribute = "standalone_rootpath";
 		if (false
 				== readattributefromstring(standalone_rootpath, str,
@@ -1295,7 +1329,7 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-		
+
 		attribute = "relpropformulatype";
 		if (false
 				== readattributefromstring(relpropformulatype, str,
@@ -1306,7 +1340,7 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-		
+
 
 		attribute = "epsstab";
 		if (false
@@ -1329,7 +1363,7 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-		
+
 		attribute = "numclasses";
 		if (false
 				== readattributefromstring(numclasses, str,
@@ -1340,7 +1374,7 @@ void configstuff::readconfig2(const std::string & configfile) {
 			std::cerr << error.str();
 			exit(1);
 		}
-		
+
 		/*
 		attribute = "classindstype";
 		if (false
@@ -1414,6 +1448,46 @@ void saveimgasjpg(const std::string & file, const int hei, const int wid,
 
 }
 
+void saveimgaspng(const std::string & file, const int hei, const int wid,
+		const std::vector<std::vector<double> > & img) {
+
+	Magick::Geometry fmt(wid, hei);
+
+//Magick::Image *out=new Magick::Image(fmt,Magick::ColorRGB(0,0,0));
+
+	Magick::Image out(fmt, Magick::ColorRGB(0.9, 0.9, 0.9));
+//double largestvalue= pow(2.0, sizeof(Magick::Quantum)*8) -1;
+	out.modifyImage();
+	out.type(Magick::TrueColorType);
+
+	Magick::PixelPacket *pixel, *pixel_cache = out.getPixels(0, 0,
+			out.columns(), out.rows());
+
+	for (unsigned int h = 0; h < out.rows(); ++h) {
+		for (unsigned int w = 0; w < out.columns(); ++w) {
+			pixel = &pixel_cache[w + out.columns() * h];
+
+			*pixel = Magick::ColorRGB(img[0][h + out.rows() * w],
+					img[1][h + out.rows() * w], img[2][h + out.rows() * w]);
+
+		}
+	}
+
+	out.syncPixels();
+
+//out.rotate(180);
+
+	::boost::filesystem::path pt(
+			std::string(file.substr(0, (int) file.length() - 4) + ".png"));
+	if (!::boost::filesystem::exists(pt.branch_path())) {
+		::boost::filesystem::create_directories(pt.branch_path());
+	}
+
+	out.compressType(MagickCore::NoCompression);
+	out.write(pt.native());
+
+}
+
 // *******************************************************
 
 int main(int argc, char ** argv) {
@@ -1426,7 +1500,7 @@ int main(int argc, char ** argv) {
 	std::string configfile(argv[1]);
 	std::string imageLIST(argv[2]);
 	std::string prependpath(argv[3]);
-	
+
 	heatmaprunner hru;
 	hru.init(configfile);
 
@@ -1438,9 +1512,9 @@ int main(int argc, char ** argv) {
 		std::cerr << "file is no regular file " << imageLIST <<std::endl;
 		exit(1);
 	}
-	
-	std::vector<std::string> flist;
-	std::vector<int> classindstypesvec;
+
+	std::vector<std::string> image_file_list;
+	std::vector<int> class_index_types;
 
 	{
 	  std::ifstream f;
@@ -1465,31 +1539,37 @@ int main(int argc, char ** argv) {
 		{
 			LOG(FATAL) << "classindstype==-1000. failed to read it ";
 		}
-		classindstypesvec.push_back(classindstype);
-		flist.push_back(prependpath+"/"+tmpfil);
+		class_index_types.push_back(classindstype);
+		image_file_list.push_back(prependpath+"/"+tmpfil);
 		}
 
    	  }
 		f.close();
 	}
 
-	int numprocessed=2;
-	int numcomp= (int)ceil((float)flist.size()/numprocessed);
+	int batchsize=hru.get_batchsize_from_prototxt();
+	int computation_batches = (int)ceil((float)image_file_list.size()/batchsize);
+	LOG(INFO) << " batchsize for simultaneous processing of samples as defined in model's deploy.prototxt: " << batchsize ;
+	LOG(INFO) << " With " << image_file_list.size() << " input images, that makes " << computation_batches << " batches to execute." ;
 
-	for( int i=0; i< numcomp;++i)
+	// process batches sequentially
+	for( int i=0; i< computation_batches ;++i)
 	{
-	  std::vector<std::string> flist2;
-		std::vector<int> classindstypesvec2;
+		std::vector<std::string> batch_file_list;
+		std::vector<int> batch_class_types;
 
-	  for(int k= i*numprocessed ; k < std::min( (i+1)*numprocessed,(int)flist.size() ) ;++k)
-	  {
-	 	flist2.push_back(flist[k]);
-	 	classindstypesvec2.push_back(classindstypesvec[k]);
-      }
-	  LOG(INFO)<< "processing batch: " << i << " starting with " << flist2.front() << " classindstype " << classindstypesvec2.front();
-	  hru.process_heatmap_multi(flist2,numprocessed,classindstypesvec2);
-	  LOG(INFO)<< "FINISHED processing batch: " << i << " ending with " << flist2.back();
-	}	
-	std::cout <<"finished"<<std::endl;
+	//prepare the next batch
+	for(int k= i*batchsize ; k < std::min( (i+1)*batchsize,(int)image_file_list.size() ) ;++k)
+	{
+		batch_file_list.push_back(image_file_list[k]);
+		batch_class_types.push_back(class_index_types[k]);
+	}
+	LOG(INFO)<< "processing batch: " << i << " starting with " << batch_file_list.front() << " classindstype " << batch_class_types.front();
+	//do the actual work here
+	hru.process_heatmap_multi(batch_file_list,batchsize,batch_class_types);
+	//brag about our achievement
+	LOG(INFO)<< "FINISHED processing batch: " << i << " ending with " << batch_file_list.back();
+	}
+	LOG(INFO) << "finished";
 	return 0;
 }

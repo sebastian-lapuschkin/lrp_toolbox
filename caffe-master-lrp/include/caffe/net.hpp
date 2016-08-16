@@ -61,6 +61,10 @@ class Net {
    */
   string Forward(const string& input_blob_protos, Dtype* loss = NULL);
 
+
+const vector<Blob<Dtype>*>& ForwardPrefilled_LastlayerScores( vector<Blob<Dtype>*> & blob );
+
+
   /**
    * @brief Zeroes out the diffs of all net parameters.
    *        Should be run before Backward.
@@ -84,6 +88,17 @@ class Net {
   void Backward_Relevance_multi(const std::vector< std::vector<int> > & classinds, 
   vector< vector<vector<double> > > & rawhm, 
   const relpropopts & ro);
+
+  void Backward_Gradient(const std::vector<int> & classinds, 
+  vector<vector<double> > & rawhm, 
+  const relpropopts & ro);
+
+  void Backward_Gradient_multi(const std::vector< std::vector<int> > & classinds, 
+  vector< vector<vector<double> > > & rawhm, 
+  const relpropopts & ro);
+
+  void Backward_Relevance_multi_winit(const std::vector< std::vector<float> > & allinitvecs, const int toplayerindex,
+		vector<vector<vector<double> > > & rawhm, const relpropopts & ro);
 
   /**
    * @brief Reshape all layers from bottom to top.

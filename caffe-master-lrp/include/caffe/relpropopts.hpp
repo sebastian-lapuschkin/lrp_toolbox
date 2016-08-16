@@ -9,7 +9,8 @@ namespace caffe {
 	  relpropopts():codeexectype(-1),relpropformulatype(-1),
 	     lrn_forward_type(-1),lrn_backward_type(-1),
 	     maxpoolingtoavgpoolinginbackwardpass(0),biastreatmenttype(0),
-	     epsstab(1.0),alphabeta_beta(0.1),lastlayerindex(-1),firstlayerindex(-1)
+	     epsstab(1.0),alphabeta_beta(0.1),lastlayerindex(-1),firstlayerindex(-1),
+	     auxiliaryvariable_maxlayerindexforflatdistinconv(-1)
       {
 		  
       }
@@ -28,7 +29,11 @@ namespace caffe {
 	  int lastlayerindex;
 	  int firstlayerindex;
 
+	  std::vector<std::vector <float> > imagemeancopy;
+
 	  int numclasses;
+
+	  int auxiliaryvariable_maxlayerindexforflatdistinconv;
   };
 
 }

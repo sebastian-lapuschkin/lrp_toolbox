@@ -10,6 +10,8 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
 
+//#include <glog/logging.h>
+
 namespace caffe {
 
 template<typename Dtype>
@@ -18,15 +20,40 @@ DataTransformer<Dtype>::DataTransformer(const TransformationParameter& param,
     : param_(param), phase_(phase) {
   // check if we want to use mean_file
   if (param_.has_mean_file()) {
+
     CHECK_EQ(param_.mean_value_size(), 0) <<
       "Cannot specify mean_file and mean_value at the same time";
     const string& mean_file = param.mean_file();
+	LOG(INFO) << "HAS mean file " << mean_file;
     if (Caffe::root_solver()) {
       LOG(INFO) << "Loading mean file from: " << mean_file;
     }
     BlobProto blob_proto;
     ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
     data_mean_.FromProto(blob_proto);
+	
+const Dtype* meandata=data_mean_.cpu_data();
+float meanavg=0;
+//LOG(INFO) << "data_mean_.count()" << data_mean_.count();
+    for(int i=0;i<data_mean_.count();++i)
+   {
+//LOG(INFO) << i << " meandata[i] " <<meandata[i];
+	if(meandata[i]<1)
+{
+	LOG(WARNING) << "at index i " << i  << " meandata[i]<1 " << meandata[i] ;
+}
+	meanavg+=meandata[i]/(float)data_mean_.count();
+   }
+LOG(INFO) << "datamean average"<< meanavg;
+if(meanavg==0)
+{
+LOG(ERROR) <<  "datamean average is zero";
+}
+
+  }
+  else
+  {
+	LOG(INFO) << "NO mean file detected";
   }
   // check if we want to use mean_value
   if (param_.mean_value_size() > 0) {
@@ -111,6 +138,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
           datum_element = datum.float_data(data_index);
         }
         if (has_mean_file) {
+	//	LOG(INFO) << "using datamean " << mean[data_index];
           transformed_data[top_index] =
             (datum_element - mean[data_index]) * scale;
         } else {
@@ -308,7 +336,9 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
         // int top_index = (c * height + h) * width + w;
         Dtype pixel = static_cast<Dtype>(ptr[img_index++]);
         if (has_mean_file) {
+
           int mean_index = (c * img_height + h_off + h) * img_width + w_off + w;
+		//LOG(INFO) << "using datamean " << mean[mean_index];
           transformed_data[top_index] =
             (pixel - mean[mean_index]) * scale;
         } else {
@@ -387,6 +417,7 @@ void DataTransformer<Dtype>::Transform(Blob<Dtype>* input_blob,
     CHECK_EQ(input_width, data_mean_.width());
     for (int n = 0; n < input_num; ++n) {
       int offset = input_blob->offset(n);
+		//LOG(INFO) << "using datameanexx " << *(data_mean_.cpu_data()+0);
       caffe_sub(data_mean_.count(), input_data + offset,
             data_mean_.cpu_data(), input_data + offset);
     }

@@ -1,2 +1,2 @@
 ./someimages/scooter10.jpg -2
-./someimages/volcano2.jpg -1
+./someimages/volcano2.jpg -2

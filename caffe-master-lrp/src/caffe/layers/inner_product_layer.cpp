@@ -149,9 +149,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 	}
 		break;
 	case 2: {
-		//epsstab
+		//alphabeta
 		switch (ro.codeexectype) {
-		case 0: 
+		case 0:
 		case 1:
 		{
 			//slowneasy
@@ -169,6 +169,97 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 
 	}
 		break;
+	case 6: 
+	case 10:
+	case 14:
+		{
+		//alphabeta
+		switch (ro.codeexectype) {
+		case 0: 
+		case 1:
+		{
+			//slowneasy
+			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+					bottom, layerindex, ro);
+		}
+			break;
+		default: {
+			LOG(FATAL) << "unknown value for ro.codeexectype "
+					<< ro.codeexectype << std::endl;
+			exit(1);
+		}
+			break;
+
+		} //	switch(ro.codeexectype)
+
+		}
+		break;
+
+
+	case 8:
+	case 12:
+	{
+		switch (ro.codeexectype) {
+		case 0: {
+			//slowneasy
+			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
+					bottom, layerindex, ro);
+		}
+			break;
+		default: {
+			LOG(FATAL) << "unknown value for ro.codeexectype "
+					<< ro.codeexectype << std::endl;
+			exit(1);
+		}
+			break;
+		} //	switch(ro.codeexectype)
+	}
+		break;
+
+
+	case 18:
+	case 22:
+		{
+			int fc6layerindex=15;
+			if (layerindex > fc6layerindex )
+			{
+				relpropopts ro2=ro;
+				ro2.relpropformulatype=0;
+				ro2.alphabeta_beta=0;
+				Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+					bottom, layerindex, ro2);
+			}
+			else
+			{
+				relpropopts ro2=ro;
+				ro2.relpropformulatype=0;
+				ro2.alphabeta_beta=1;
+				Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+					bottom, layerindex, ro2);
+			}
+		}
+		break;
+	case 26: {
+		//zeiler
+		switch (ro.codeexectype) {
+		case 0: {
+			//slowneasy
+			Backward_Relevance_cpu_zeilerlike_slowneasy(top, propagate_down,
+					bottom, layerindex, ro);
+		}
+			break;
+		default: {
+			LOG(FATAL) << "unknown value for ro.codeexectype "
+					<< ro.codeexectype << std::endl;
+			exit(1);
+		}
+			break;
+		} //	switch(ro.codeexectype)
+
+	}
+		break;
+
+
 	default: {
 		LOG(FATAL) << "unknown value for ro.relpropformulatype "
 				<< ro.relpropformulatype << std::endl;
@@ -199,7 +290,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(
 
 		LOG(INFO) << "top.size()" << top.size() << "part of it:" << i
 				<< " weight shape: " << topdata_witheps.shape_string();
-
+		LOG(INFO) << "M_, K_, N_" << M_ << " "<< K_ << " "<< N_;
 		int outcount = topdata_witheps.count();
 		if (topdata_witheps.count() != M_ * N_) {
 			LOG(FATAL) << "Incorrect weight shape: "
@@ -222,6 +313,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(
 			}
 		} //for(int c=0;c< M * N ;++c)
 
+	      //for (int n = 0; n < this->num_; ++n) {
 		caffe_cpu_gemm < Dtype
 				> (CblasNoTrans, CblasNoTrans, M_, K_, N_, (Dtype) 1., topdata_witheps_data, this->blobs_[0]->cpu_data(), (Dtype) 0., bottom[i]->mutable_cpu_diff());
 
@@ -229,9 +321,59 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(
 		for (int d = 0; d < M_ * K_; ++d) {
 			bottom_diff[d] *= bottom_data[d]; // R_i = x_i * stuff_i
 		}
+	   // } for (int n = 0; n < this->num_; ++n) {
 
 	} //for (int i = 0; i < top.size(); ++i)
 }
+
+
+template<typename Dtype>
+void InnerProductLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(
+		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
+		const vector<Blob<Dtype>*>& bottom, const int layerindex,
+		const relpropopts & ro) {
+
+	for (int i = 0; i < top.size(); ++i) {
+		const Dtype* top_diff = top[i]->cpu_diff();
+		const Dtype* bottom_data = bottom[i]->cpu_data();
+		Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
+		//memset(bottom_diff, 0, sizeof(Dtype) * bottom[i]->count());
+	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
+
+		
+		const Dtype* top_data = top[i]->cpu_data();
+		Blob < Dtype > topdata_witheps((top[i])->shape());
+
+		LOG(INFO) << "top.size()" << top.size() << "part of it:" << i
+				<< " weight shape: " << topdata_witheps.shape_string();
+		LOG(INFO) << "M_, K_, N_" << M_ << " "<< K_ << " "<< N_;
+		int outcount = topdata_witheps.count();
+		if (topdata_witheps.count() != M_ * N_) {
+			LOG(FATAL) << "Incorrect weight shape: "
+					<< topdata_witheps.shape_string()
+					<< " Incorrect weight count: " << topdata_witheps.count()
+					<< " " << outcount << " expected count " << M_ * N_;
+
+			exit(1);
+		}
+
+		Dtype* topdata_witheps_data = topdata_witheps.mutable_cpu_data();
+		caffe_copy < Dtype > (outcount, top_diff, topdata_witheps_data);
+
+	      //for (int n = 0; n < this->num_; ++n) {
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, M_, K_, N_, (Dtype) 1., topdata_witheps_data, this->blobs_[0]->cpu_data(), (Dtype) 0., bottom[i]->mutable_cpu_diff());
+
+		// now bottom_diff * bottom_data
+		//for (int d = 0; d < M_ * K_; ++d) {
+		//	bottom_diff[d] *= bottom_data[d]; // R_i = x_i * stuff_i
+		//}
+	   // } for (int n = 0; n < this->num_; ++n) {
+
+	} //for (int i = 0; i < top.size(); ++i)
+}
+
+
 
 template<typename Dtype>
 void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
