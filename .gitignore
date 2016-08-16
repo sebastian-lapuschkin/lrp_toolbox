@@ -1,1 +1,8 @@
 *.pyc
+*.bbl
+doc/manual/manual.aux
+doc/manual/manual.blg
+doc/manual/manual.synctex.gz
+doc/manual/manual.log
+doc/manual/manual.out
+doc/manual/manual.toc

@@ -31,7 +31,7 @@
 
 \begin{document}
 
-\title{LRP Toolbox for Artificial Neural Networks 1.0 -- Manual}
+\title{LRP Toolbox for Artificial Neural Networks 1.0.1 -- Manual}
 
 \author{Sebastian Lapuschkin \and Alexander Binder \and Gr\'egoire Montavon \and Klaus-Robert M\"uller \and Wojciech Samek}
 
@@ -466,6 +466,7 @@ For implementing LRP for the Caffe open source framework, several source files h
 \item \texttt{include/caffe/} : Contains the following modified header files which now define interfaces for LRP functionality
 \begin{itemize}
 	\item \texttt{common\_layers.hpp}
+	\item \texttt{data\_layers.hpp}
 	\item \texttt{layer.hpp}
 	\item \texttt{loss\_layers.hpp}
 	\item \texttt{net.hpp}
@@ -485,10 +486,14 @@ For implementing LRP for the Caffe open source framework, several source files h
 			\item \texttt{base\_conv\_layer.cpp}
 			\item \texttt{concat\_layer.cpp}
 			\item \texttt{conv\_layer.cpp}
+			\item \texttt{data\_transformer.cpp}
 			\item \texttt{dropout\_layer.cpp}
+			\item \texttt{hinge\_loss\_multilabel\_layer.cpp} : added with version 1.0.1
+			\item \texttt{image\_data\_layer\_multilabel.cpp} : added with version 1.0.1
 			\item \texttt{inner\_product\_layer.cpp}
 			\item \texttt{loss\_layer.cpp}
 			\item \texttt{lrn\_layer.cpp}
+			\item \texttt{lrn\_layer.cu}
 			\item \texttt{neuron\_layer.cpp}
 			\item \texttt{pooling\_layer.cpp}
 			\item \texttt{relu\_layer.cpp}
@@ -541,7 +546,14 @@ The second interface is a vectorized version of the first interface, i.e. \textt
 
 \texttt{relpropopts.numclasses} the number of classes of  the classification problem
 
-\texttt{relpropopts.relpropformulatype}: 0 for the $\epsilon$-type formula, 2 for the $\alpha-\beta$-type formula.
+\texttt{relpropopts.relpropformulatype}:
+\begin{itemize}
+\item 0 for the $\epsilon$-type formula
+\item 2 for the $\alpha-\beta$-type formula
+\item 11 or 99 for Sensitivity Analysis \cite{DBLP:journals/corr/SimonyanVZ13}
+\item 26 for Deconvolution \cite{DBLP:conf/eccv/ZeilerF14}
+\end{itemize}
+
 
 \texttt{relpropopts.alphabeta\_beta} the beta for the $\alpha-\beta$-type formula
 
@@ -624,9 +636,9 @@ The C++ version outputs four files into the path specified in the configuration 
 
 The first two files are 
 
-\texttt{$\langle imagefilename\rangle$\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.jpg} and 
+\texttt{$\langle imagefilename\rangle$\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.png} and 
 
-\texttt{$\langle imagefilename\rangle$\textunderscore heatmap.jpg}. Those files are simply the image as it enters the quadratic receptive field of the neural network, and the resulting heatmap. While they are easily to be read in image viewers, they are unsuited for further processing of the heatmap.
+\texttt{$\langle imagefilename\rangle$\textunderscore heatmap.png}. Those files are simply the image as it enters the quadratic receptive field of the neural network, and the resulting heatmap. While they are easily to be read in image viewers, they are unsuited for further processing of the heatmap.
 
 For that reason the file 
 
@@ -706,7 +718,7 @@ Then, outfiles are written as e.g. \texttt{~/home/user99/results/03102015/data25
 
 
 \item \texttt{relpropformulatype} (integer) \\
-Set to 0 for the $\epsilon$-type formula, 2 for the $\alpha$-$\beta$-type formula
+Set to 0 for the $\epsilon$-type formula, 2 for the $\alpha$-$\beta$-type formula, 11 or 99 for Sensitivity Analysis and 26 for Deconvolution.
 
 \item \texttt{epsstab} (float) \\
 Value of $\epsilon$ for the $\epsilon$-type formula. Must be non-negative.
