@@ -383,6 +383,10 @@ class InnerProductLayer : public Layer<Dtype> {
   		const vector<Blob<Dtype>*>& bottom, const int layerindex,
   		const relpropopts & ro);
 
+  virtual void Backward_Relevance_cpu_zeilerlike_slowneasy(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+  	  const int layerindex, const relpropopts & ro ) ;
+
   int M_;
   int K_;
   int N_;

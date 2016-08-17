@@ -643,6 +643,43 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
 	for (int i = start; i <= end; ++i) {
 		// LOG(ERROR) << "Forwarding " << layer_names_[i];
 		Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
+		bool testhere=true;
+		if(true==testhere)
+		{
+			//LOG(INFO) << "i" << i << " " << bottom_vecs_[i].size();
+			if(bottom_vecs_[i].size()>0)
+			{
+				const Dtype* data=bottom_vecs_[i][0]->cpu_data();
+
+				for(int k=0; k < bottom_vecs_[i][0]->count();++k)
+				{
+					if(isnan( data[k] ))
+					{
+						//LOG(ERROR) << "FORWARD: !!!below layer index i= " << i  << " NaN occurred. layername: "<<layer_names_[i];
+					}
+				}
+			}
+
+			if(top_vecs_[i].size()>0)
+			{
+			const Dtype* data=top_vecs_[i][0]->cpu_data();
+		int ct=0;
+			for(int k=0; k < top_vecs_[i][0]->count();++k)
+			{
+				if(isnan( data[k] ))
+				{
+					//LOG(ERROR) << "FORWARD: at layer index i= " << i  << " NaN occurred. layername: "<<layer_names_[i];
+					++ct;
+				}
+			}
+			if(ct>0)
+			{
+LOG(ERROR) << "FORWARD: at layer index i= " << i  << " name " <<layer_names_[i] << " " << ct << "numofNaNs occurred." ;
+			}
+
+			}
+		}
+
 		loss += layer_loss;
 		if (debug_info_) {
 			ForwardDebugInfo(i);
@@ -681,6 +718,26 @@ const vector<Blob<Dtype>*>& Net<Dtype>::Forward(
 	return ForwardPrefilled(loss);
 }
 
+template <typename Dtype>
+const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled_LastlayerScores( vector<Blob<Dtype>*> & blob ) {
+
+	//for (int i = start; i <= end; ++i) {
+		// LOG(ERROR) << "Forwarding " << layer_names_[i];
+	//	Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
+
+  for (int i = 0; i < layers_.size(); ++i) {
+    // LOG(ERROR) << "Forwarding " << layer_names_[i];
+    //Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], &top_vecs_[i]);
+    Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
+
+    if(i==(int)layers_.size()-1)
+    {
+      blob=bottom_vecs_[i];
+    }
+  }
+  return net_output_blobs_;
+}
+
 template<typename Dtype>
 string Net<Dtype>::Forward(const string& input_blob_protos, Dtype* loss) {
 	BlobProtoVector blob_proto_vec;
@@ -710,6 +767,25 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
 		if (layer_need_backward_[i]) {
 			layers_[i]->Backward(top_vecs_[i], bottom_need_backward_[i],
 					bottom_vecs_[i]);
+			bool testhere=true;
+			if(true==testhere)
+			{
+
+				if(bottom_vecs_[i].size()>0)
+				{
+				const Dtype* data=bottom_vecs_[i][0]->cpu_data();
+
+				for(int k=0; k < bottom_vecs_[i][0]->count();++k)
+				{
+					if(isnan( data[k] ))
+					{
+						LOG(FATAL) << " BACKWARD: BELOW layer index i= " << i  << " Backward NaN occurred. exiting. layername: "<<layer_names_[i];
+					}
+				}
+				}
+			}
+
+
 			if (debug_info_) {
 				BackwardDebugInfo(i);
 			}
@@ -721,17 +797,17 @@ template<typename Dtype>
 void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		vector<vector<double> > & rawhm, const relpropopts & ro) {
 
-	
+
 	int lastlayerindex=ro.lastlayerindex;
 	int firstlayerindex=ro.firstlayerindex;
-	
+
 	for(int i= (int)layers_.size() - 1;i>=0;--i)
 	{
 		LOG(INFO) << i << " layer_types_[i] " << layer_types_[i];
-		
+
 	}
 	//LOG(FATAL) <<"testerexit";
-	
+
 	//TODO detect where to start, idea: check for prob layer and apply scores to bottom, or: if not, apply to highest layer at top
 	if(lastlayerindex==-1)
 	{
@@ -746,14 +822,14 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		}
 		LOG(INFO) << "detindex softmax " << detindex << " lastlayerindex will be: " << detindex-1 ;
 		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
-		
+
 		lastlayerindex=detindex-1; // -1 !
-		
+
 	}
 	else if(lastlayerindex==-2)
 	{
 		//TODO detect highest innerproductlayer
-		
+
 		int detindex=-1;
 		for(int i= (int)layers_.size() - 1;i>=0;--i)
 		{
@@ -766,17 +842,17 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		LOG(INFO) << "detindex innerproduct " << detindex;
 
 		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
-		
+
 		lastlayerindex=detindex;
 
-		
+
 	}
 	else if(lastlayerindex<0)
 	{
 		//undefined value
 		LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex  << " largest possible number would be " << (int)layers_.size() - 1 <<std::endl;
 	}
-	
+
 	if(firstlayerindex < 0)
 	{
 		LOG(FATAL)<< "firstlayerindex < 0 " << firstlayerindex;
@@ -785,17 +861,17 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 	{
 		LOG(FATAL)<< "firstlayerindex >= lastlayerindex " << firstlayerindex << " vs " << lastlayerindex;
 	}
-	
-	
+
+	double oldsu=1;
 	for (int i = lastlayerindex; i >= firstlayerindex; --i) {
 		LOG(INFO) << " at layer " << i;
 		LOG(INFO) << "layer_need_backward_[i]" << layer_need_backward_[i];
 		LOG(INFO) << layer_names_[i];
-		
+
 		bool thenightstartshere=false;
 		if(i==lastlayerindex)
 		{
-			
+
 			//if (true == thenightstartshere) {
 				for (int s = 0; s < top_vecs_[i].size(); ++s) {
 				LOG(INFO) << "top.size() " << top_vecs_[i].size();
@@ -806,32 +882,37 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 
 				LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
 						<< top_vecs_[i][s]->count() << std::endl;
-				
-			
+
+
 				memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
 
 				  for (int c = 0; c < (int) classinds.size(); ++c) {
 					int classindex = classinds[c];
-					
+
 					if( classindex >= top_vecs_[i][s]->count() )
 					{
 						LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
 					}
-					
+
 					top_diff[classindex] = top_data[classindex];
 					LOG(INFO) << "inserting in layer at classindex" <<classindex <<" value " << top_diff[classindex]
 							<< std::endl;
 				  }
 				} //for (int s = 0; s < top.size(); ++s) {
 			//}
-			
+
 			//thenightstartshere=true;
 		}
 
-		
-		
-		layers_[i]->Backward_Relevance_cpu(top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i],
+
+
+		//if (layer_need_backward_[i]) {
+
+			layers_[i]->Backward_Relevance_cpu(top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i],
 				i, ro, classinds, thenightstartshere);
+
+
+		//}
 
 		const int num = bottom_vecs_[i][0]->num();
 		const Dtype* hm = bottom_vecs_[i][0]->cpu_diff();
@@ -841,7 +922,7 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 
 		LOG(INFO) << "num|chan|hei|wid " << num << " channels " << channels
 				<< " hei " << hei << " wid " << wid << std::endl;
-		
+
 		//TODO: check outside, in demo, that it fits to image
 
 		bool havenan = false;
@@ -872,8 +953,12 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		}
 
 		LOG(INFO) << "layer " << i << " Relevance sum " << su;
-		
-		
+		if((i != lastlayerindex)&&( oldsu>1e-6 ))
+		{
+			LOG(INFO) << "layer " << i << " Relsumquot " << su/oldsu;
+		}
+		oldsu=su;
+
 		if(i==firstlayerindex)
 		{
 			//plot out heatmap
@@ -883,10 +968,10 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 			const int wid=bottom_vecs_[0][0]->width();
 			const int channels=bottom_vecs_[0][0]->channels();
 
-			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl; 
+			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl;
 
-			const Dtype* img=bottom_vecs_[0][0]->cpu_data(); 
-			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff(); 
+			const Dtype* img=bottom_vecs_[0][0]->cpu_data();
+			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff();
 
 			vector<vector<double> > img2(channels), hm2(channels);
 			std::cout << "here0"<<std::endl;
@@ -912,7 +997,7 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 
 
 		}
-		
+
 	} //  for (int i = layers_.size() - 1; i >= 0; --i) {
 
 }
@@ -1062,6 +1147,7 @@ void Net<Dtype>::Backward_Relevance_multi(const std::vector< std::vector<int> > 
 		//TODO: check outside, in demo, that it fits to image
 
 		bool havenan = false;
+
 		for(int n=0;n<num;++n)
 		{
 		double su = 0;
@@ -1091,9 +1177,196 @@ void Net<Dtype>::Backward_Relevance_multi(const std::vector< std::vector<int> > 
 
 		LOG(INFO) << "image no " << n << " layer " << i << " Relevance sum " << su;
 
+		oldsu=su;
+		}
+
+		if(i==firstlayerindex)
+		{
+			//plot out heatmap
+			std::cout << "bottom_vecs_[0].size()" << bottom_vecs_[0].size()<<std::endl;
+
+			const int hei=bottom_vecs_[0][0]->height();
+			const int wid=bottom_vecs_[0][0]->width();
+			const int channels=bottom_vecs_[0][0]->channels();
+
+			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl;
+
+			const Dtype* img=bottom_vecs_[0][0]->cpu_data();
+			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff();
+
+			//vector<vector<double> > img2(channels) , hm2(channels);
+
+			vector<vector<double> > hm2(channels);
+
+
+			std::cout << "here0"<<std::endl;
+
+			rawhm.resize(numprocessed);
+			for(int nim=0;nim < numprocessed;++nim)
+			{
+
+			for(int ch=0;ch<channels;++ch)
+			{
+			//img2[ch].resize(hei*wid);
+			hm2[ch].resize(hei*wid);
+
+			for(int w=0;w<wid;++w)
+			{
+			for(int h=0;h<hei;++h)
+			{
+				//img2[ch][h+w*hei]=(double)img[( (channels-1-ch) * hei + h) * wid + w ];
+				hm2[ch][h+w*hei]=(double)hm[ nim*channels*hei*wid+   ( (channels-1-ch) * hei + h) * wid + w ];
+
+			}
+			}
+			}
+
+			std::cout << "here1"<<std::endl;
+			rawhm[nim]=hm2;
+			}//			for(int nim=0;nim < numprocessed;++nim)
+
+
+		}
+
+	} //  for (int i = layers_.size() - 1; i >= 0; --i) {
+
+}
+
+
+template<typename Dtype>
+void Net<Dtype>::Backward_Relevance_multi_winit(const std::vector< std::vector<float> > & allinitvecs, const int toplayerindex,
+		vector<vector<vector<double> > > & rawhm, const relpropopts & ro) {
+
+
+	std::vector<int> fakeclassinds;
+
+	int firstlayerindex=ro.firstlayerindex;
+	int lastlayerindex=toplayerindex;
+
+		LOG(INFO) << "inserting at the top of: " <<layer_names_[lastlayerindex];
+
+
+	for(int i= (int)layers_.size() - 1;i>=0;--i)
+	{
+		LOG(INFO) << i << " layer_types_[i] " << layer_types_[i];
+
+	}
+
+
+	if(firstlayerindex < 0)
+	{
+		LOG(FATAL)<< "firstlayerindex < 0 " << firstlayerindex;
+	}
+	if(firstlayerindex >= lastlayerindex)
+	{
+		LOG(FATAL)<< "firstlayerindex >= lastlayerindex " << firstlayerindex << " vs " << lastlayerindex;
+	}
+
+	if(top_vecs_.back().size()!=1)
+	{
+		LOG(FATAL) << " top_vecs_.back().size()!=1 ... dont know what to choose! " ;
+	}
+	int numprocessed= top_vecs_.back()[0]->count() / ro.numclasses;
+	LOG(INFO) << "max num pictures processed in parallel " << numprocessed;
+
+	double oldsu=1;
+	for (int i = lastlayerindex; i >= firstlayerindex; --i) {
+		LOG(INFO) << " at layer " << i;
+		LOG(INFO) << "layer_need_backward_[i]" << layer_need_backward_[i];
+		LOG(INFO) << layer_names_[i];
+
+		bool thenightstartshere=false;
+		if(i==lastlayerindex)
+		{
+
+		for (int s = 0; s < top_vecs_[i].size(); ++s) {
+				LOG(INFO) << "top.size() " << top_vecs_[i].size();
+
+				Dtype* top_diff = top_vecs_[i][s]->mutable_cpu_diff();
+
+				//const Dtype* top_data = top_vecs_[i][s]->cpu_data();
+
+				LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
+						<< top_vecs_[i][s]->count() << std::endl;
+
+
+				memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
+
+				for(int nim=0;nim < std::min(numprocessed, (int)allinitvecs.size() );++nim)
+				{
+				  for (int c = 0; c < (int) allinitvecs[nim].size(); ++c) {
+					int classindex = c;
+
+					if( classindex >= top_vecs_[i][s]->count() )
+					{
+						LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
+					}
+
+					top_diff[classindex+nim*allinitvecs[nim].size()] = allinitvecs[nim][classindex];
+
+				  }
+				} //				for(int nim=0;nim < numprocessed;++nim)
+
+		} //for (int s = 0; s < top.size(); ++s) {
+
+
+
+		}
+
+
+
+		//if (layer_need_backward_[i]) {
+
+			layers_[i]->Backward_Relevance_cpu(top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i],
+				i, ro, fakeclassinds, thenightstartshere);
+
+
+		//}
+
+		const int num = bottom_vecs_[i][0]->num();
+		const Dtype* hm = bottom_vecs_[i][0]->cpu_diff();
+		const int channels = bottom_vecs_[i][0]->channels();
+		const int hei = bottom_vecs_[i][0]->height();
+		const int wid = bottom_vecs_[i][0]->width();
+
+		LOG(INFO) << "num|chan|hei|wid " << num << " channels " << channels
+				<< " hei " << hei << " wid " << wid << std::endl;
+
+		//TODO: check outside, in demo, that it fits to image
+
+		bool havenan = false;
+
+		for(int n=0;n<num;++n)
+		{
+		double su = 0;
+		for (int ch = 0; ch < channels; ++ch) {
+			//LOG(INFO)<< " channel " << ch;
+			for (int w = 0; w < wid; ++w) {
+				for (int h = 0; h < hei; ++h) {
+					su += hm[ n * channels * hei * wid + ((channels - 1 - ch) * hei + h) * wid + w];
+					if (isnan(hm[((channels - 1 - ch) * hei + h) * wid + w])) {
+						LOG(INFO) << " HAVEN at " << channels - 1 - ch << " "
+								<< h << " " << w;
+						havenan = true;
+						break;
+					}
+				} //for(int h=0;h<hei;++h)
+				if (true == havenan) {
+					break;
+				}
+			} //for(int w=0;w<wid;++w)
+			if (true == havenan) {
+				break;
+			}
+		} //for(int ch=0;ch<channels;++ch)
+		if (true == havenan) {
+			LOG(INFO) << "layer " << i << " HAVENANHAVENANHAVENANHAVENAN ";
+		}
+
+		LOG(INFO) << "image no " << n << " layer " << i << " Relevance sum " << su;
 
 		oldsu=su;
-		} //		for(int n=0;n<num;++n)
+		}
 
 		if(i==firstlayerindex)
 		{
@@ -1149,6 +1422,7 @@ void Net<Dtype>::Backward_Relevance_multi(const std::vector< std::vector<int> > 
 
 
 
+
 template<typename Dtype>
 void Net<Dtype>::InputDebugInfo(const int input_id) {
 	const Blob<Dtype>& blob = *net_input_blobs_[input_id];
@@ -1159,6 +1433,446 @@ void Net<Dtype>::InputDebugInfo(const int input_id) {
 				<< data_abs_val_mean;
 	}
 }
+
+template<typename Dtype>
+void Net<Dtype>::Backward_Gradient_multi(const std::vector< std::vector<int> > & classinds,
+        vector<vector<vector<double> > > & rawhm, const relpropopts & ro) {
+
+
+    int lastlayerindex=ro.lastlayerindex;
+    int firstlayerindex=ro.firstlayerindex;
+
+    for(int i= (int)layers_.size() - 1;i>=0;--i)
+    {
+        LOG(INFO) << i << " layer_types_[i] " << layer_types_[i];
+
+    }
+    //LOG(FATAL) <<"testerexit";
+
+    //TODO detect where to start, idea: check for prob layer and apply scores to bottom, or: if not, apply to highest layer at top
+    if(lastlayerindex==-1)
+    {
+        //TODO detect lowest softmaxlayer
+        int detindex=-1;
+        for(int i= (int)layers_.size() - 1;i>=0;--i)
+        {
+            if(layer_types_[i].compare("Softmax")==0)
+            {
+                detindex=i;
+            }
+        }
+        LOG(INFO) << "detindex softmax " << detindex << " lastlayerindex will be: " << detindex-1 ;
+        //LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
+
+        lastlayerindex=detindex-1; // -1 !
+
+    }
+    else if(lastlayerindex==-2)
+    {
+        //TODO detect highest innerproductlayer
+
+        int detindex=-1;
+        for(int i= (int)layers_.size() - 1;i>=0;--i)
+        {
+            if(layer_types_[i].compare("InnerProduct")==0)
+            {
+                detindex=i;
+                break;
+            }
+        }
+        LOG(INFO) << "detindex innerproduct " << detindex;
+
+        //LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
+
+        lastlayerindex=detindex;
+
+
+    }
+    else if(lastlayerindex<0)
+    {
+        //undefined value
+        LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex  << " largest possible number would be " << (int)layers_.size() - 1 <<std::endl;
+    }
+
+    if(firstlayerindex < 0)
+    {
+        LOG(FATAL)<< "firstlayerindex < 0 " << firstlayerindex;
+    }
+    if(firstlayerindex >= lastlayerindex)
+    {
+        LOG(FATAL)<< "firstlayerindex >= lastlayerindex " << firstlayerindex << " vs " << lastlayerindex;
+    }
+
+    if(top_vecs_.back().size()!=1)
+    {
+        LOG(FATAL) << " top_vecs_.back().size()!=1 ... dont know what to choose! " ;
+    }
+    int numprocessed= top_vecs_.back()[0]->count() / ro.numclasses;
+    LOG(INFO) << "max num pictures processed in parallel " << numprocessed;
+
+    double oldsu=1;
+    for (int i = lastlayerindex; i >= firstlayerindex; --i) {
+        LOG(INFO) << " at layer " << i;
+        LOG(INFO) << "layer_need_backward_[i]" << layer_need_backward_[i];
+        LOG(INFO) << layer_names_[i];
+
+        bool thenightstartshere=false;
+        if(i==lastlayerindex)
+        {
+
+            //if (true == thenightstartshere) {
+                for (int s = 0; s < top_vecs_[i].size(); ++s) {
+                LOG(INFO) << "top.size() " << top_vecs_[i].size();
+
+                Dtype* top_diff = top_vecs_[i][s]->mutable_cpu_diff();
+
+                const Dtype* top_data = top_vecs_[i][s]->cpu_data();
+
+                LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
+                        << top_vecs_[i][s]->count() << std::endl;
+
+
+                memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
+
+                for(int nim=0;nim < std::min(numprocessed, (int)classinds.size() );++nim)
+                {
+                  for (int c = 0; c < (int) classinds[nim].size(); ++c) {
+                    int classindex = classinds[nim][c];
+
+                    if( classindex >= top_vecs_[i][s]->count() )
+                    {
+                        LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
+                    }
+
+                    top_diff[classindex+nim*ro.numclasses] = top_data[classindex+nim*ro.numclasses];
+                    LOG(INFO) << "image no " << nim << " inserting in layer at classindex" <<classindex <<" value " << top_diff[classindex+nim*ro.numclasses]
+                            << std::endl;
+                  }
+                } //                for(int nim=0;nim < numprocessed;++nim)
+
+                } //for (int s = 0; s < top.size(); ++s) {
+            //}
+
+            //thenightstartshere=true;
+        }
+
+
+            for(int t=0; t< bottom_need_backward_[i].size();++t )
+            {
+                 bottom_need_backward_[i][t]=true;
+              LOG(INFO) << i << " bottom_need_backward_[i] "<< bottom_need_backward_[i][t] ;
+            }
+            layers_[i]->Backward(top_vecs_[i], bottom_need_backward_[i],
+                    bottom_vecs_[i]);
+            if (debug_info_) {
+                BackwardDebugInfo(i);
+            }
+
+
+
+        const int num = bottom_vecs_[i][0]->num();
+        const Dtype* hm = bottom_vecs_[i][0]->cpu_diff();
+        const int channels = bottom_vecs_[i][0]->channels();
+        const int hei = bottom_vecs_[i][0]->height();
+        const int wid = bottom_vecs_[i][0]->width();
+
+        LOG(INFO) << "num|chan|hei|wid " << num << " channels " << channels
+                << " hei " << hei << " wid " << wid << std::endl;
+
+        //TODO: check outside, in demo, that it fits to image
+
+        bool havenan = false;
+
+        for(int n=0;n<num;++n)
+        {
+        double su = 0;
+        for (int ch = 0; ch < channels; ++ch) {
+            //LOG(INFO)<< " channel " << ch;
+            for (int w = 0; w < wid; ++w) {
+                for (int h = 0; h < hei; ++h) {
+                    su += hm[ n * channels * hei * wid + ((channels - 1 - ch) * hei + h) * wid + w];
+                    if (isnan(hm[((channels - 1 - ch) * hei + h) * wid + w])) {
+                        LOG(INFO) << " HAVEN at " << channels - 1 - ch << " "
+                                << h << " " << w;
+                        havenan = true;
+                        break;
+                    }
+                } //for(int h=0;h<hei;++h)
+                if (true == havenan) {
+                    break;
+                }
+            } //for(int w=0;w<wid;++w)
+            if (true == havenan) {
+                break;
+            }
+        } //for(int ch=0;ch<channels;++ch)
+        if (true == havenan) {
+            LOG(INFO) << "layer " << i << " HAVENANHAVENANHAVENANHAVENAN ";
+        }
+
+        LOG(INFO) << "image no " << n << " layer " << i << " Relevance sum " << su;
+
+        oldsu=su;
+        }
+
+        if(i==firstlayerindex)
+        {
+            //plot out heatmap
+            std::cout << "bottom_vecs_[0].size()" << bottom_vecs_[0].size()<<std::endl;
+
+            const int hei=bottom_vecs_[0][0]->height();
+            const int wid=bottom_vecs_[0][0]->width();
+            const int channels=bottom_vecs_[0][0]->channels();
+
+            std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl;
+
+            const Dtype* img=bottom_vecs_[0][0]->cpu_data();
+            const Dtype* hm=bottom_vecs_[0][0]->cpu_diff();
+
+            //vector<vector<double> > img2(channels) , hm2(channels);
+
+            vector<vector<double> > hm2(channels);
+
+
+            std::cout << "here0"<<std::endl;
+
+            rawhm.resize(numprocessed);
+            for(int nim=0;nim < numprocessed;++nim)
+            {
+
+            for(int ch=0;ch<channels;++ch)
+            {
+            //img2[ch].resize(hei*wid);
+            hm2[ch].resize(hei*wid);
+
+            for(int w=0;w<wid;++w)
+            {
+            for(int h=0;h<hei;++h)
+            {
+                //img2[ch][h+w*hei]=(double)img[( (channels-1-ch) * hei + h) * wid + w ];
+                hm2[ch][h+w*hei]=(double)hm[ nim*channels*hei*wid+   ( (channels-1-ch) * hei + h) * wid + w ];
+
+            }
+            }
+            }
+
+            std::cout << "here1"<<std::endl;
+            rawhm[nim]=hm2;
+            }//            for(int nim=0;nim < numprocessed;++nim)
+
+
+        }
+
+    } //  for (int i = layers_.size() - 1; i >= 0; --i) {
+
+}
+
+template<typename Dtype>
+void Net<Dtype>::Backward_Gradient(const std::vector<int> & classinds,
+		vector<vector<double> > & rawhm, const relpropopts & ro) {
+
+
+	int lastlayerindex=ro.lastlayerindex;
+	int firstlayerindex=ro.firstlayerindex;
+
+	for(int i= (int)layers_.size() - 1;i>=0;--i)
+	{
+		LOG(INFO) << i << " layer_types_[i] " << layer_types_[i];
+
+	}
+	//LOG(FATAL) <<"testerexit";
+
+	//TODO detect where to start, idea: check for prob layer and apply scores to bottom, or: if not, apply to highest layer at top
+	if(lastlayerindex==-1)
+	{
+		//TODO detect lowest softmaxlayer
+		int detindex=-1;
+		for(int i= (int)layers_.size() - 1;i>=0;--i)
+		{
+			if(layer_types_[i].compare("Softmax")==0)
+			{
+				detindex=i;
+			}
+		}
+		LOG(INFO) << "detindex softmax " << detindex << " lastlayerindex will be: " << detindex-1 ;
+		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
+
+		lastlayerindex=detindex-1; // -1 !
+
+	}
+	else if(lastlayerindex==-2)
+	{
+		//TODO detect highest innerproductlayer
+
+		int detindex=-1;
+		for(int i= (int)layers_.size() - 1;i>=0;--i)
+		{
+			if(layer_types_[i].compare("InnerProduct")==0)
+			{
+				detindex=i;
+				break;
+			}
+		}
+		LOG(INFO) << "detindex innerproduct " << detindex;
+
+		//LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex <<std::endl;
+
+		lastlayerindex=detindex;
+
+
+	}
+	else if(lastlayerindex<0)
+	{
+		//undefined value
+		LOG(FATAL)<< "bad value for lastlayerindex " << lastlayerindex  << " largest possible number would be " << (int)layers_.size() - 1 <<std::endl;
+	}
+
+	if(firstlayerindex < 0)
+	{
+		LOG(FATAL)<< "firstlayerindex < 0 " << firstlayerindex;
+	}
+	if(firstlayerindex >= lastlayerindex)
+	{
+		LOG(FATAL)<< "firstlayerindex >= lastlayerindex " << firstlayerindex << " vs " << lastlayerindex;
+	}
+
+
+	for (int i = lastlayerindex; i >= firstlayerindex; --i) {
+		LOG(INFO) << " at layer " << i;
+		LOG(INFO) << "layer_need_backward_[i]" << layer_need_backward_[i];
+		LOG(INFO) << layer_names_[i];
+
+		bool thenightstartshere=false;
+		if(i==lastlayerindex)
+		{
+
+			//if (true == thenightstartshere) {
+				for (int s = 0; s < top_vecs_[i].size(); ++s) {
+				LOG(INFO) << "top.size() " << top_vecs_[i].size();
+
+				Dtype* top_diff = top_vecs_[i][s]->mutable_cpu_diff();
+
+				const Dtype* top_data = top_vecs_[i][s]->cpu_data();
+
+				LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
+						<< top_vecs_[i][s]->count() << std::endl;
+
+
+				memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
+
+				  for (int c = 0; c < (int) classinds.size(); ++c) {
+					int classindex = classinds[c];
+
+					if( classindex >= top_vecs_[i][s]->count() )
+					{
+						LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
+					}
+
+					top_diff[classindex] = top_data[classindex];
+					LOG(INFO) << "inserting in layer at classindex" <<classindex <<" value " << top_diff[classindex]
+							<< std::endl;
+				  }
+				} //for (int s = 0; s < top.size(); ++s) {
+			//}
+
+			//thenightstartshere=true;
+		}
+
+			for(int t=0; t< bottom_need_backward_[i].size();++t )
+			{
+ 				bottom_need_backward_[i][t]=true;
+			  LOG(INFO) << i << " bottom_need_backward_[i] "<< bottom_need_backward_[i][t] ;
+			}
+			layers_[i]->Backward(top_vecs_[i], bottom_need_backward_[i],
+					bottom_vecs_[i]);
+			if (debug_info_) {
+				BackwardDebugInfo(i);
+			}
+
+		const int num = bottom_vecs_[i][0]->num();
+		const Dtype* hm = bottom_vecs_[i][0]->cpu_diff();
+		const int channels = bottom_vecs_[i][0]->channels();
+		const int hei = bottom_vecs_[i][0]->height();
+		const int wid = bottom_vecs_[i][0]->width();
+
+		LOG(INFO) << "num|chan|hei|wid " << num << " channels " << channels
+				<< " hei " << hei << " wid " << wid << std::endl;
+
+		//TODO: check outside, in demo, that it fits to image
+
+		bool havenan = false;
+
+		double su = 0;
+		for (int ch = 0; ch < channels; ++ch) {
+			//LOG(INFO)<< " channel " << ch;
+			for (int w = 0; w < wid; ++w) {
+				for (int h = 0; h < hei; ++h) {
+					su += hm[((channels - 1 - ch) * hei + h) * wid + w];
+					if (isnan(hm[((channels - 1 - ch) * hei + h) * wid + w])) {
+						LOG(INFO) << " HAVEN at " << channels - 1 - ch << " "
+								<< h << " " << w;
+						havenan = true;
+						break;
+					}
+				} //for(int h=0;h<hei;++h)
+				if (true == havenan) {
+					break;
+				}
+			} //for(int w=0;w<wid;++w)
+			if (true == havenan) {
+				break;
+			}
+		} //for(int ch=0;ch<channels;++ch)
+		if (true == havenan) {
+			LOG(INFO) << "layer " << i << " HAVENANHAVENANHAVENANHAVENAN ";
+		}
+
+		LOG(INFO) << "layer " << i << " Relevance sum " << su;
+
+
+		if(i==firstlayerindex)
+		{
+			//plot out heatmap
+			std::cout << "bottom_vecs_[0].size()" << bottom_vecs_[0].size()<<std::endl;
+
+			const int hei=bottom_vecs_[0][0]->height();
+			const int wid=bottom_vecs_[0][0]->width();
+			const int channels=bottom_vecs_[0][0]->channels();
+
+			std::cout << " c|h|w " << channels << " hei " << hei << " wid " << wid <<std::endl;
+
+			const Dtype* img=bottom_vecs_[0][0]->cpu_data();
+			const Dtype* hm=bottom_vecs_[0][0]->cpu_diff();
+
+			vector<vector<double> > img2(channels), hm2(channels);
+			std::cout << "here0"<<std::endl;
+
+			for(int ch=0;ch<channels;++ch)
+			{
+			img2[ch].resize(hei*wid);
+			hm2[ch].resize(hei*wid);
+
+			for(int w=0;w<wid;++w)
+			{
+			for(int h=0;h<hei;++h)
+			{
+				img2[ch][h+w*hei]=(double)img[( (channels-1-ch) * hei + h) * wid + w ];
+				hm2[ch][h+w*hei]=(double)hm[( (channels-1-ch) * hei + h) * wid + w ];
+
+			}
+			}
+			}
+
+			std::cout << "here1"<<std::endl;
+			rawhm=hm2;
+
+
+		}
+
+	} //  for (int i = layers_.size() - 1; i >= 0; --i) {
+
+}
+
 
 template<typename Dtype>
 void Net<Dtype>::ForwardDebugInfo(const int layer_id) {

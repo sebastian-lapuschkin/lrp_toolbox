@@ -1,4 +1,4 @@
-# The LRP Toolbox for Artificial Neural Networks
+# The LRP Toolbox for Artificial Neural Networks (1.0.1)
 
 The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
 specific  to  a  given  data  point  by  attributing
@@ -26,24 +26,26 @@ For whichever language / purpose you wish to make use of this toolbox download t
     cd lrp_toolbox/$yourChoice
     bash install.sh
 
-Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/manual.pdf).
+Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/doc/manual/manual.pdf).
 
 ### The LRP Toolbox Paper
 
-When using (any part) of this toolbox, please cite [our (recently accepted) paper](BROKEN LINK)(link TBA)
+When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/papers/volume17/15-618/15-618.pdf)
 
-    @article{lapusckin2016LRP,
-      title={The LRP Toolbox for Artificial Neural Networks},
-      author={Lapuschkin, Sebastian and Binder, Alexander and Montavon, Gr\'{e}goire and M\"{u}ller, Klaus-Robert and Samek, Wojciech },
-      journal={The Journal of Machine Learning Research},
-      year={2016},
-      volume={?17?},
-      number={????}
-      pages={????},
-      publisher={JMLR. org}
+    @article{JMLR:v17:15-618,
+        author  = {Sebastian Lapuschkin and Alexander Binder and Gr{{\'e}}goire Montavon and Klaus-Robert M{{{\"u}}}ller and Wojciech Samek},
+        title   = {The LRP Toolbox for Artificial Neural Networks},
+        journal = {Journal of Machine Learning Research},
+        year    = {2016},
+        volume  = {17},
+        number  = {114},
+        pages   = {1-5},
+        url     = {http://jmlr.org/papers/v17/15-618.html}
     }
+
+
     
 ### Misc
 
-For further research and projects involving LRP, visit [heatmapping.org (WIP. the ugly will vanish soon.)](http://heatmapping.org)
+For further research and projects involving LRP, visit [heatmapping.org](http://heatmapping.org)
 

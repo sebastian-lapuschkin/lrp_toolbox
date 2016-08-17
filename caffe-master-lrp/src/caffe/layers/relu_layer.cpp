@@ -47,6 +47,15 @@ void ReLULayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
 	{
 		case 0:
 		case 2:
+		case 6:
+		case 8:
+		case 10:
+		case 11: // 11 is gradient in the demonstrator
+		case 12:
+		case 14:
+		case 18:
+		case 20:
+		case 22:
 		{
 			  //if (propagate_down[0]) {
 			    const Dtype* bottom_data = bottom[0]->cpu_data();
@@ -59,6 +68,18 @@ void ReLULayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
 			    }
 			 // }
 
+		}
+		break;
+		case 26: //zeiler
+		{
+			    const Dtype* bottom_data = bottom[0]->cpu_data();
+			    const Dtype* top_diff = top[0]->cpu_diff();
+			    Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
+			    const int count = bottom[0]->count();
+			    //Dtype negative_slope = this->layer_param_.relu_param().negative_slope();
+			    for (int i = 0; i < count; ++i) {
+			      bottom_diff[i] = std::max(top_diff[i],Dtype(0.));
+			    }
 		}
 		break;
 		default:

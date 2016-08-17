@@ -1,4 +1,4 @@
-// 
+//
 
 /*
 
@@ -48,6 +48,9 @@ void readablob3d(std::vector<std::vector<float> > & channels, int & imgmeanhei,
 		int & imgmeanwid, const std::string & mean_file);
 
 void saveimgasjpg(const std::string & file, const int hei, const int wid,
+		const std::vector<std::vector<double> > & img);
+
+void saveimgaspng(const std::string & file, const int hei, const int wid,
 		const std::vector<std::vector<double> > & img);
 
 class configstuff {
@@ -156,7 +159,7 @@ void heatmaprunner::init(const std::string & configfile) {
 	ro.biastreatmenttype = configs.biastreatmenttype;
 
 	ro.lrn_forward_type = 0;
-	ro.lrn_backward_type = 0;
+	ro.lrn_backward_type = 1;
 
 	ro.lastlayerindex = configs.lastlayerindex;
 	ro.firstlayerindex = configs.firstlayerindex;
@@ -171,26 +174,18 @@ void heatmaprunner::init(const std::string & configfile) {
 	numclasses = configs.numclasses;
 	ro.numclasses = numclasses;
 
-	ro.maxpoolingtoavgpoolinginbackwardpass =
-			configs.maxpoolingtoavgpoolinginbackwardpass;
-
-	/*
-	 std::string standalone_outpath;
-	 std::string standalone_rootpath;
-	 float epsstab;
-	 float alphabeta_beta;
-	 int relpropformulatype;
-	 */
+	ro.maxpoolingtoavgpoolinginbackwardpass=configs.maxpoolingtoavgpoolinginbackwardpass;
 
 	init_caffe();
 
 }
 
-void heatmaprunner::init_caffe() {
+void heatmaprunner::init_caffe()
+{
 	//inhei=configs.netinhei;
 	//inwid=configs.netinwid;
 
-//read imgmean
+	//read imgmean
 	switch (configs.use_mean_file_asbinaryprotoblob) {
 	case 0: {
 		std::ifstream f;
@@ -276,7 +271,7 @@ void heatmaprunner::init_caffe() {
 		f.close();
 	}
 
-// in process heatmap??
+
 	std::cout << "loading net" << std::endl;
 	{
 		net_.reset(new Net<float>(configs.param_file, caffe::TEST));
@@ -524,8 +519,7 @@ void getoutputpath_createdir(std::string & curoutpath,
 
 }
 
-void heatmaprunner::process_heatmap(const std::string & imgfile,
-		const int classindstype2) {
+void heatmaprunner::process_heatmap(const std::string & imgfile, const int classindstype2) {
 	classindstype = classindstype2;
 
 	::boost::filesystem::path pt(imgfile);
@@ -624,8 +618,33 @@ void heatmaprunner::process_heatmap(const std::string & imgfile,
 			std::cout << "heatmapping for " << classinds2[0] << std::endl;
 		}
 
-		net_->Backward_Relevance(classinds2, rawhm, ro);
+		if(ro.relpropformulatype == 99){
+			ro.relpropformulatype = 11;
+		}
+        if (ro.relpropformulatype == 11)
+        {
+            net_->Backward_Gradient(classinds2, rawhm, ro);
+            //compute gradient l2 norm
+            for(int p = 0; p<rawhm[0].size(); ++p)
+            {
+                double norm = sqrt(rawhm[0][p]*rawhm[0][p] + rawhm[1][p]*rawhm[1][p] + rawhm[2][p]*rawhm[2][p]);
+                /*if (norm < 0)
+                {
+                    std::cout << "IMPOSSSIBLE! NORM IS " << norm << std::endl ;
+                }else
+                {
+                    std::cout << norm << std::endl;
+                }*/
+                rawhm[0][p] = norm;
+                rawhm[1][p] = norm;
+                rawhm[2][p] = norm;
+            }
 
+        }
+        else
+        {
+		    net_->Backward_Relevance(classinds2, rawhm, ro);
+        }
 	}
 
 	std::cout << "posthm " << std::endl;
@@ -663,8 +682,10 @@ void heatmaprunner::process_heatmap(const std::string & imgfile,
 		}
 
 		std::cout << "postimg5create " << std::endl;
-		std::string outf = outputname + "_heatmap.jpg";
-		saveimgasjpg(outf, inhei, inwid, img5);
+		//std::string outf1 = outputname + "_heatmap.jpg";
+		//saveimgasjpg(outf1, inhei, inwid, img5);
+		std::string outf = outputname + "_heatmap.png";
+		saveimgaspng(outf, inhei, inwid, img5);
 
 	}
 
@@ -700,12 +721,14 @@ void heatmaprunner::process_heatmap(const std::string & imgfile,
 
 		f.close();
 
-		std::string outfile2 = outputname + "_as_inputted_into_the_dnn.jpg";
+		//std::string outfile2 = outputname + "_as_inputted_into_the_dnn.jpg";
+		std::string outfile2 = outputname + "_as_inputted_into_the_dnn.png";
 		if (img_asinputted.size() == 3) {
 			if (((int) img_asinputted[0].size() == inhei * inwid)
 					&& ((int) img_asinputted[1].size() == inhei * inwid)
 					&& ((int) img_asinputted[2].size() == inhei * inwid)) {
-				saveimgasjpg(outfile2, inhei, inwid, img_asinputted);
+				//saveimgasjpg(outfile2, inhei, inwid, img_asinputted);
+				saveimgaspng(outfile2, inhei, inwid, img_asinputted);
 			}
 		}
 
@@ -1001,7 +1024,7 @@ bool configstuff::readattributefromstring(vartype & variable,
 		curlength += (int) filestr.gcount();
 		//curlength+=line.length()+endlinelength; // filestr.gcount() does not work whyever
 
-		//::std::cout <<curlength <<"---"<< totallength <<std::endl; 
+		//::std::cout <<curlength <<"---"<< totallength <<std::endl;
 
 		deblankbeginandend(line);
 
@@ -1277,6 +1300,50 @@ void saveimgasjpg(const std::string & file, const int hei, const int wid,
 	out.write(pt.native());
 
 }
+
+
+
+
+void saveimgaspng(const std::string & file, const int hei, const int wid,
+		const std::vector<std::vector<double> > & img) {
+
+	Magick::Geometry fmt(wid, hei);
+
+//Magick::Image *out=new Magick::Image(fmt,Magick::ColorRGB(0,0,0));
+
+	Magick::Image out(fmt, Magick::ColorRGB(0.9, 0.9, 0.9));
+//double largestvalue= pow(2.0, sizeof(Magick::Quantum)*8) -1;
+	out.modifyImage();
+	out.type(Magick::TrueColorType);
+
+	Magick::PixelPacket *pixel, *pixel_cache = out.getPixels(0, 0,
+			out.columns(), out.rows());
+
+	for (unsigned int h = 0; h < out.rows(); ++h) {
+		for (unsigned int w = 0; w < out.columns(); ++w) {
+			pixel = &pixel_cache[w + out.columns() * h];
+
+			*pixel = Magick::ColorRGB(img[0][h + out.rows() * w],
+					img[1][h + out.rows() * w], img[2][h + out.rows() * w]);
+
+		}
+	}
+
+	out.syncPixels();
+
+//out.rotate(180);
+
+	::boost::filesystem::path pt(
+			std::string(file.substr(0, (int) file.length() - 4) + ".png"));
+	if (!::boost::filesystem::exists(pt.branch_path())) {
+		::boost::filesystem::create_directories(pt.branch_path());
+	}
+
+	out.compressType(MagickCore::NoCompression);
+	out.write(pt.native());
+
+}
+
 
 // *******************************************************
 

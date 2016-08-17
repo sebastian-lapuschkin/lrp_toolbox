@@ -94,3 +94,8 @@ LOCK
 LOG*
 CURRENT
 MANIFEST-*
+
+# compiled LRP demonstrator
+demonstrator/lrp_demo
+demonstrator/lrp_parallel_demo
+
