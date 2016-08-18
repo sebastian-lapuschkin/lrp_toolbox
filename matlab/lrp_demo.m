@@ -2,7 +2,7 @@
 % @maintainer: Sebastian Lapuschkin
 % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
 % @date: 14.08.2015
-% @version: 1.0
+% @version: 1.2+
 % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
 % @license : BSD-2-Clause
 %
@@ -14,7 +14,7 @@
 %
 %finally, the resulting heatmap is rendered as an image and (over)written out to disk and displayed.%
 
-clear 
+clear
 import model_io.*
 import data_io.*
 import render.*
@@ -42,23 +42,23 @@ I = 1:size(X,1);
 Ri = zeros(0,784);
 for i = I(1:10)
     x = X(i,:);
-    
+
     %forward pass and prediction
     ypred = nn.forward(x);
     [~,yt] = max(Y(i,:));
     [~,yp] = max(ypred);
-    
+
     fprintf('True Class:      %d\n', yt-1);
     fprintf('Predicted Class: %d\n\n', yp-1);
-    
+
     %compute first layer relevance according to prediction
     R = nn.lrp(ypred);                 %as Eq(56) from DOI: 10.1371/journal.pone.0130140
     %R = nn.lrp(ypred,'epsilon',100);   %as Eq(58) from DOI: 10.1371/journal.pone.0130140
     %R = nn.lrp(ypred,'alphabeta',2);    %as Eq(60) from DOI: 10.1371/journal.pone.0130140
-    
+
 
     %R = nn.lrp(Y(i,:)); %compute first layer relevance according to the true class label
-    
+
     %yselect = 4;
     %yselect = (1:size(Y,2) == yselect)*1.;
     %R = nn.lrp(yselect); %compute first layer relevance for an arbitrarily selected class

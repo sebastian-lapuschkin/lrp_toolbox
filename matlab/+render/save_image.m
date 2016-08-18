@@ -3,37 +3,37 @@ function image = save_image(rgb_images, path, gap)
     % @maintainer: Sebastian Lapuschkin
     % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
     % @date: 14.08.2015
-    % @version: 1.0
+    % @version: 1.2+
     % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
     % @license : BSD-2-Clause
     %
     %save_image(rgb_images, path, gap)
     %
     %Takes as input a list of rgb images, places them next to each other with a gap and writes out the result.
-    %     
+    %
     %Parameters
     %----------
-    %     
+    %
     %rgb_images : cell array of three-dimensional rgb images
     %each item in the collection is expected to be an rgb image of dimensions [H x _ x 3]
     %where the width is variable
-    %     
+    %
     %path : str
     %the output path of the assembled image
-    %         
+    %
     %gap : int
     %optional. sets the width of a black area of pixels realized as an image shaped [H x gap x 3] in between the input images
-    %         
+    %
     %Returns
     %-------
-    %     
+    %
     %image : rgb image
     %the assembled image as written out to path
 
     if nargin < 3 || (exists('gap','var') && isempty(gap))
         gap = 2;
     end
-    
+
     sz = [];
     image = [];
     for i = 1:length(rgb_images)
@@ -53,7 +53,7 @@ function image = save_image(rgb_images, path, gap)
            image = horzcat(image, gap, rgb_images{i});
        end
     end
-    
+
     fprintf('saving image to %s\n\n',path)
     imwrite(image, path)
 

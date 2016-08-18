@@ -1,33 +1,33 @@
 function write(model, path, fmt)
-	% @author: Sebastian Lapuschkin
+    % @author: Sebastian Lapuschkin
     % @maintainer: Sebastian Lapuschkin
     % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
     % @date: 14.08.2015
-    % @version: 1.0
+    % @version: 1.2+
     % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
     % @license : BSD-2-Clause
-	%
+    %
     %write(model, path, fmt)
     %
     %neural a network model to a given path. Supported are either
     %plain text or mat files.
     %The model is cleaned of any temporary variables , e.g. hidden layer inputs or outputs, prior to writing
-    %     
+    %
     %Parameters
     %----------
-    %     
+    %
     %model : modules.Sequential
     %the object representing the model.
-    %     
+    %
     %path : str
     %the path to the file to read
-    %     
+    %
     %fmt : str
     %optional. explicitly state how to write the file. if not given, format is inferred from path.
     %options are 'txt' for a plain text and 'mat' to produce a mat
     %file
     %the plain text format is shared with the python implementation of the toolbox
-    %         
+    %
     %Notes
     %-----
     %see the Notes - Section in the function documentation of model_io.read for general info and a format
@@ -94,14 +94,14 @@ function write_txt(model,path)
             % <flattened weight matrix W>
             % <flattened bias vector>
             fprintf(fid,'Linear %i %i\n',mod.m, mod.n);
-            
-            W = mod.W'; %transpose W to make flattening order compatible to the python/numpy-implementation
+
+            W = mod.W'; %transpose W to use C-order while flattening for compatibility to the python/numpy-implementation
             line = sprintf( '%e ',  W(:));  line(end:end+1) = '\n';
             fprintf(fid, line);
-            
+
             line = sprintf( '%e ',  mod.B); line(end:end+1) = '\n';
-            fprintf(fid, line); 
-            
+            fprintf(fid, line);
+
         % TODO:
         % else if isa(mod, 'modules.Convolution') ...
         % else if isa(mod, 'modules.SumPooling') ...
@@ -110,7 +110,7 @@ function write_txt(model,path)
         else
             % all other layers are free from parameters. Format is thus:
             % <Layername>
-            
+
             cname = class(mod);
             dots = find(cname == '.');
             fprintf(fid,[cname(dots+1:end) '\n']);

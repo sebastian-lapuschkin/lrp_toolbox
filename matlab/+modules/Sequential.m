@@ -4,19 +4,19 @@ classdef Sequential < modules.Module
     % @maintainer: Sebastian Lapuschkin
     % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
     % @date: 14.08.2015
-    % @version: 1.0
+    % @version: 1.2+
     % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
     % @license : BSD-2-Clause
     %
     %  Top level access point and incorporation of the neural network implementation.
     %  Sequential manages a sequence of computational neural network modules and passes
     %  along in- and outputs.
-    
+
     properties
         % model parameters
         modules
     end
-    
+
     methods
         function obj = Sequential(modules)
             %obj = Sequential(modules)
@@ -29,14 +29,14 @@ classdef Sequential < modules.Module
             %a cell array of instances of class Module
             obj.modules = modules;
         end
-        
+
         function clean(obj)
             % Removes temporary variables from all network layers.
             for i = 1:length(obj.modules)
                 obj.modules{i}.clean()
             end
         end
-        
+
         function R = lrp(obj,R, lrp_var, param)
             %R = lrp(obj,R)
             %
@@ -51,11 +51,11 @@ classdef Sequential < modules.Module
             %
             %lrp_var : str
             %either 'none' or 'simple' or [] for standard Lrp ,
-			%'epsilon' for an added epsilon slack in the denominator
-			%'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
+            %'epsilon' for an added epsilon slack in the denominator
+            %'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
             %
             %param : double
-			%the respective parameter for the lrp method of choice
+            %the respective parameter for the lrp method of choice
             %
             %Returns
             %-------
@@ -76,13 +76,13 @@ classdef Sequential < modules.Module
             if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
                 lrp_var = [];
             end
-            
+
             for i = length(obj.modules):-1:1
                 R = obj.modules{i}.lrp(R,lrp_var,param);
             end
         end
-        
-        
+
+
         function X = forward(obj,X)
             %X = forward(obj,X)
             %
@@ -97,13 +97,13 @@ classdef Sequential < modules.Module
             %-------
             %X : matrix
             %the output of the network's final layer
-            
+
             for i = 1:length(obj.modules)
                 X = obj.modules{i}.forward(X);
             end
         end
-        
-        
+
+
         function train(obj, X, Y, Xval, Yval, batchsize, iters, lrate, lrate_decay, lfactor_initial, status, convergence, transform)
             % Sequential.train( X, Y, Xval, Yval, batchsize, iters, lrate, lrate_decay, lfactor_initial, status, convergence, transform)
             %
@@ -179,69 +179,69 @@ classdef Sequential < modules.Module
             % expected syntax is, with size(X) == [N,D] == size(Xt)
             % function Xt = yourFunction(X):
             %    Xt = someStuff(X);
-            
+
             %first, set default values whereever necessary
             if nargin < 14 || (exist('transform','var') && isempty(transform))
-               transform = []; 
+               transform = [];
             end
-            
+
             if nargin < 13 || (exist('convergence','var') && isempty(convergence))
-               convergence = -1; 
+               convergence = -1;
             end
-            
+
             if nargin < 12 || (exist('status','var') && isempty(status))
-               status = 250; 
+               status = 250;
             end
-            
+
             if nargin < 11 || (exist('lfactor_initial','var') && isempty(lfactor_initial))
-               lfactor_initial = 1.0; 
+               lfactor_initial = 1.0;
             end
-            
+
             if nargin < 10 || (exist('lrate_decay','var') && isempty(lrate_decay))
-               lrate_decay = []; 
+               lrate_decay = [];
             end
-            
+
             if nargin < 9 || (exist('lrate','var') && isempty(lrate))
                lrate = 0.005;
             end
-            
+
             if nargin < 8 || (exist('iters','var') && isempty(iters))
                iters = 10000;
             end
-            
+
             if nargin < 7 || (exist('batchsize','var') && isempty(batchsize))
                batchsize = 25;
             end
-            
+
             if nargin < 5 || (exist('Yval','var') && isempty(Yval)) || (exist('Xval','var') && isempty(Xval))
                 Xval = [];
                 Yval = [];
             end
-            
+
             %start training
             untilConvergence = convergence; learningFactor = lfactor_initial;
             bestAccuracy = 0.0;             bestLayers = obj.modules;
-            
+
             N = size(X,1);
             for d = 1:iters
-                
+
                 %the actual training:
                 %first, pick samples at random
                 samples = randperm(N, batchsize);
-                
+
                 %transform batch data (maybe)
                 if isempty(transform)
                     batch = X(samples,:);
                 else
                     batch = transfor(X(samples,:));
                 end
-                
+
                 %forward and backward propagation steps with parameter
                 %update
                 Ypred = obj.forward(batch);
                 obj.backward(Ypred - Y(samples,:));
                 obj.update(lrate*learningFactor);
-                
+
                 %periodically evaluate network and optionally adjust
                 %learning rate or check for convergence
                 if mod(d,status) == 0
@@ -251,7 +251,7 @@ classdef Sequential < modules.Module
                     acc = mean(argmaxPred == argmaxTruth);
                     disp(' ')
                     disp(['Accuracy after ' num2str(d) ' iterations: ' num2str(acc*100) '%'])
-                    
+
                     %if given, also evaluate on validation data
                     if ~isempty(Xval) && ~isempty(Yval)
                        Ypred = obj.forward(Xval);
@@ -260,13 +260,13 @@ classdef Sequential < modules.Module
                        acc_val = mean(argmaxPred == argmaxTruth);
                        disp(['Accuracy on validation set: ' num2str(acc_val*100) '%'])
                     end
-                    
+
                     %save current network parameters if we have improved
                     if acc > bestAccuracy
                         disp('    New optional parameter set encountered. saving...')
                         bestAccuracy = acc;
                         bestLayers = obj.modules;
-                        
+
                         %adjust learning rate
                         if isempty(lrate_decay) || strcmp(lrate_decay,'none')
                             %no adjustment
@@ -275,48 +275,48 @@ classdef Sequential < modules.Module
                             learningFactor = 1 - acc^2;
                             disp(['    Adjusting learning rate to ' num2str(learningFactor*lrate) ' ~ ' num2str(round(learningFactor*100,2)) '% of its initial value'])
                         elseif strcmp(lrate_decay,'linear')
-                            learningFactor = 1 - acc; 
+                            learningFactor = 1 - acc;
                             disp(['    Adjusting learning rate to ' num2str(learningFactor*lrate) ' ~ ' num2str(round(learningFactor*100,2)) '% of its initial value'])
                         end
-                        
+
                         %refresh number of allowed search steps until
                         %convergence
                         untilConvergence = convergence;
                     else
                         untilConvergence = untilConvergence - 1;
                         if untilConvergence == 0 && convergence > 0
-                            disp(['    No more recorded model improvements for ' num2str(convergence) ' evaluations. Accepting model convergence.']) 
+                            disp(['    No more recorded model improvements for ' num2str(convergence) ' evaluations. Accepting model convergence.'])
                             break
-                        end 
+                        end
                     end
-                 
+
                 elseif mod(d,status/10) == 0
                     % print 'alive' signal
                     fprintf('.')
                 end
-          
+
             end
-            
+
             %after training, either due to convergence or iteration limit:
             %set best encountered parameters as network parameters
             disp(['Setting network parameters to best encountered network state with ' num2str(bestAccuracy*100) '% accuracy.'])
-            obj.modules = bestLayers;  
+            obj.modules = bestLayers;
         end
-        
-           
+
+
         function DY = backward(obj, DY)
             for i = length(obj.modules):-1:1
-                DY = obj.modules{i}.backward(DY);   
+                DY = obj.modules{i}.backward(DY);
             end
         end
-        
-        
+
+
         function update(obj, lrate)
             for i = 1:length(obj.modules)
-                obj.modules{i}.update(lrate);   
+                obj.modules{i}.update(lrate);
             end
         end
-        
+
     end
-    
+
 end

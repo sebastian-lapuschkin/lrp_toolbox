@@ -11,7 +11,7 @@ classdef SoftMax < modules.Module
     % Softmax Layer
 
 
-    properties    
+    properties
         %temporary variables
         X
         Y

@@ -3,7 +3,7 @@ function model = read(path, fmt)
     % @maintainer: Sebastian Lapuschkin
     % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
     % @date: 14.08.2015
-    % @version: 1.0
+    % @version: 1.2+
     % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
     % @license : BSD-2-Clause
     %
@@ -52,7 +52,7 @@ function model = read(path, fmt)
     %B(:)'
     %
     %with m and n being integer values describing the dimensions of the weight matrix W as [m x n] ,
-    %W being the human readable ascii-representation of the flattened matrix in m * n white space separated double values.
+    %W being the human readable ascii-representation of the flattened matrix (C-order) in m * n white space separated double values.
     %After the line describing W, the bias term B is written out as a single line of n white space separated double values.
 
     if ~exist(path,'file')
@@ -110,13 +110,13 @@ function model = read_txt(path)
         modools = {}; % avoid overloading the modules namespace
         fid = fopen(path);
         line = fgetl(fid);
-        
+
         while ischar(line)
             if length(line) >= 6 && all(line(1:6) == 'Linear')
                 lineparts = strsplit(line);
                 m = str2double(lineparts{2});
                 n = str2double(lineparts{3});
-                
+
                 layer = modules.Linear(m,n);
                 %CAUTION HERE! matlab reshape order is different from numpy
                 %reshape order!, thus the [n m] and transpose.
@@ -140,10 +140,10 @@ function model = read_txt(path)
             %read next line
             line = fgetl(fid);
         end %END WHILE
-        
+
         model = modules.Sequential(modools);
     end % END read_txt_helper
-    
+
     try
         model = read_txt_helper(path);
     catch ERROR
@@ -154,7 +154,7 @@ function model = read_txt(path)
         disp('Attempting fall-back to legacy plain text format interpretation...')
         model = read_txt_old(path);
         disp('fall-back successfull!')
-        
+
     end
 end
 
@@ -181,13 +181,13 @@ function model = read_txt_old(path)
 
         elseif length(line) == 4 && all(line(1:4) == 'Rect')
             modools{end+1} = modules.Rect();
-            
+
         elseif length(line) == 4 && all(line(1:4) == 'Tanh')
             modools{end+1} = modules.Tanh();
-            
+
         elseif length(line) == 7 && all(line(1:7) == 'SoftMax')
             modools{end+1} = modules.SoftMax();
-            
+
         else
             layername = strsplit(line);
             layername = layername{1};

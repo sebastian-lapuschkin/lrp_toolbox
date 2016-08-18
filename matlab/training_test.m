@@ -15,7 +15,7 @@ D = 2 ; N = 200000 ;
 %this is the XOR problem.
 X = rand(N,D); % we want [NxD] data
 X = (X > 0.5)*1.0;
-Y = X(:,1) == X(:,2); 
+Y = X(:,1) == X(:,2);
 Y = [Y ~Y]; % and [NxC] labels
 
 X = X + randn(N,D)*0.1; % add some noise to the data

@@ -10,7 +10,7 @@ classdef Tanh < modules.Module
     %
     % Tanh Layer
 
-    properties    
+    properties
         %temporary variables
         Y
     end
@@ -24,7 +24,7 @@ classdef Tanh < modules.Module
         end
 
         function DY = backward(obj,DY)
-           DY = DY.*(1.0 - obj.Y.^2); 
+           DY = DY.*(1.0 - obj.Y.^2);
         end
 
         function Y = forward(obj,X)

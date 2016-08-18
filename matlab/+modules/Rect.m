@@ -10,7 +10,7 @@ classdef Rect < modules.Module
     %
     % Rectification Layer
 
-    properties    
+    properties
         %temporary variables
         Y
     end
