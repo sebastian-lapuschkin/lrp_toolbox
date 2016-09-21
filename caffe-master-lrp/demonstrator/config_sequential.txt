@@ -44,6 +44,8 @@ alphabeta_beta
 relpropformulatype
 2
 
+auxiliaryvariable_maxlayerindexforflatdistinconv
+0
 
 
 

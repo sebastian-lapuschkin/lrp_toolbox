@@ -100,6 +100,8 @@ public:
 
 	int maxpoolingtoavgpoolinginbackwardpass;
 
+        int auxiliaryvariable_maxlayerindexforflatdistinconv;
+
 
 };
 
@@ -186,6 +188,7 @@ void heatmaprunner::init(const std::string & configfile)
 	ro.numclasses=configs.numclasses;
 	ro.maxpoolingtoavgpoolinginbackwardpass=configs.maxpoolingtoavgpoolinginbackwardpass;
 
+        ro.auxiliaryvariable_maxlayerindexforflatdistinconv = configs.auxiliaryvariable_maxlayerindexforflatdistinconv;
 
 	init_caffe();
 
@@ -660,7 +663,20 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 
 	}
 
+	std::string imgfile=imgfilesall[nim];
+	::boost::filesystem::path pt(imgfile);
+	if(! ::boost::filesystem::is_regular_file(pt))
 	{
+		std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
+			exit(1);
+	}
+
+	std::string outputname;
+	getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
+
+
+	{
+
 		std::string outf=outputname+"_top10scores.txt";
 		std::ofstream f;
 		f.open(outf.c_str());
@@ -708,19 +724,11 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 
 
 
-		std::string imgfile=imgfilesall[nim];
-	::boost::filesystem::path pt(imgfile);
-	if(! ::boost::filesystem::is_regular_file(pt))
-	{
-		std::cerr << "imagefile is no regular file " << imgfile <<std::endl;
-				exit(1);
-	}
-
+	/*
 	std::string outputname;
 	getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
 
 
-	/*
 	{
 		std::string outf=outputname+"_top10scores.txt";
 		std::ofstream f;
@@ -747,9 +755,9 @@ if (ro.relpropformulatype == 11){
 	// allrahm is formatted as [Nsamples][3colorchannels][Npixels]
 
 	// compute gradient l2norm for all heatmaps
-	for(int i = 0; i < allrawhm.size(); ++i)
+	for(int i = 0; i < (int) allrawhm.size(); ++i)
 	{
-		for(int p = 0; p<allrawhm[i][0].size(); ++p)
+		for(int p = 0; p< (int) allrawhm[i][0].size(); ++p)
             {
                 double norm = sqrt(allrawhm[i][0][p]*allrawhm[i][0][p] + allrawhm[i][1][p]*allrawhm[i][1][p] + allrawhm[i][2][p]*allrawhm[i][2][p]);
                 allrawhm[i][0][p] = norm;
@@ -778,8 +786,9 @@ if(! ::boost::filesystem::is_regular_file(pt))
 std::string outputname;
 getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalone_rootpath, imgfile );
 
-	/*
+
 	std::vector < std::vector<double> > rawhm(allrawhm[nim]);
+	/*
 	{
 
 		std::vector<double> vs(rawhm[0].size(), 0);
@@ -821,10 +830,11 @@ getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalo
 		//saveimgasjpg(outf, inhei, inwid, img5);
 		std::string outf=outputname+"_heatmap.png";
 		saveimgaspng(outf, inhei, inwid, img5);
-		*/
+
 
 
 	}
+	*/
 
 
 
@@ -854,11 +864,12 @@ getoutputpath_createdir(outputname, configs.standalone_outpath, configs.standalo
 	} //if(configs.outputheatmapstocurrentpath>0)
 
 
-	} //	for(int nim=0; num< (int) imgfilesall.size();++nim )
+	//	for(int nim=0; num< (int) imgfilesall.size();++nim )
 
 	//outputname+"_heatmap.jpg"
 }
 
+}
 
 
 
@@ -1419,6 +1430,16 @@ void configstuff::readconfig2(const std::string & configfile) {
 		}
 		*/
 		maxpoolingtoavgpoolinginbackwardpass=0;
+
+		attribute = "auxiliaryvariable_maxlayerindexforflatdistinconv";
+		if (false == readattributefromstring(auxiliaryvariable_maxlayerindexforflatdistinconv, str, attribute)) {
+			error
+					<< "generalparams::loadoptionsfromfile: failed to load attribute: "
+					<< attribute << std::endl;
+			std::cerr << error.str();
+			exit(1);
+		}
+
 
 	}
 }

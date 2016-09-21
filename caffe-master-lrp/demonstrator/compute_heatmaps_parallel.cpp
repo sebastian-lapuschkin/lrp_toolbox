@@ -100,6 +100,8 @@ public:
 
 	int maxpoolingtoavgpoolinginbackwardpass;
 
+        int auxiliaryvariable_maxlayerindexforflatdistinconv;
+
 
 };
 
@@ -186,6 +188,7 @@ void heatmaprunner::init(const std::string & configfile)
 	ro.numclasses=configs.numclasses;
 	ro.maxpoolingtoavgpoolinginbackwardpass=configs.maxpoolingtoavgpoolinginbackwardpass;
 
+        ro.auxiliaryvariable_maxlayerindexforflatdistinconv = configs.auxiliaryvariable_maxlayerindexforflatdistinconv;
 
 	init_caffe();
 
@@ -731,9 +734,9 @@ if (ro.relpropformulatype == 11){
 	// allrahm is formatted as [Nsamples][3colorchannels][Npixels]
 
 	// compute gradient l2norm for all heatmaps
-	for(int i = 0; i < allrawhm.size(); ++i)
+	for(int i = 0; i < (int)allrawhm.size(); ++i)
 	{
-		for(int p = 0; p<allrawhm[i][0].size(); ++p)
+		for(int p = 0; p< (int)allrawhm[i][0].size(); ++p)
             {
                 double norm = sqrt(allrawhm[i][0][p]*allrawhm[i][0][p] + allrawhm[i][1][p]*allrawhm[i][1][p] + allrawhm[i][2][p]*allrawhm[i][2][p]);
                 allrawhm[i][0][p] = norm;
@@ -1402,6 +1405,16 @@ void configstuff::readconfig2(const std::string & configfile) {
 		}
 		*/
 		maxpoolingtoavgpoolinginbackwardpass=0;
+
+		attribute = "auxiliaryvariable_maxlayerindexforflatdistinconv";
+		if (false == readattributefromstring(auxiliaryvariable_maxlayerindexforflatdistinconv, str, attribute)) {
+			error
+					<< "generalparams::loadoptionsfromfile: failed to load attribute: "
+					<< attribute << std::endl;
+			std::cerr << error.str();
+			exit(1);
+		}
+
 
 	}
 }

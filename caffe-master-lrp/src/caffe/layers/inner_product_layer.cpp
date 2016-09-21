@@ -170,8 +170,50 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 	}
 		break;
 	case 6: 
-	case 10:
-	case 14:
+	case 56: {
+		//epsstab
+		switch (ro.codeexectype) {
+		case 0: {
+			//slowneasy
+			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
+					bottom, layerindex, ro);
+		}
+			break;
+		default: {
+			LOG(FATAL) << "unknown value for ro.codeexectype "
+					<< ro.codeexectype << std::endl;
+			exit(1);
+		}
+			break;
+		} //	switch(ro.codeexectype)
+
+	}
+	case 11: //gradient in demonstrator
+	case 58:
+		{
+		//alphabeta
+		switch (ro.codeexectype) {
+		case 0: 
+		case 1:
+		{
+			//slowneasy
+			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+					bottom, layerindex, ro);
+		}
+			break;
+		default: {
+			LOG(FATAL) << "unknown value for ro.codeexectype "
+					<< ro.codeexectype << std::endl;
+			exit(1);
+		}
+			break;
+
+		} //	switch(ro.codeexectype)
+
+		}
+		break;
+
+	case 60:
 		{
 		//alphabeta
 		switch (ro.codeexectype) {
@@ -197,7 +239,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 
 
 	case 8:
-	case 12:
+	case 54:
 	{
 		switch (ro.codeexectype) {
 		case 0: {

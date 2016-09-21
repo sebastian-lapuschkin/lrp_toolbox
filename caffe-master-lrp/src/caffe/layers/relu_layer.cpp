@@ -55,6 +55,10 @@ void ReLULayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
 		case 14:
 		case 18:
 		case 20:
+		case 54: 
+		case 56: 
+		case 58: 
+		case 60: 
 		case 22:
 		{
 			  //if (propagate_down[0]) {

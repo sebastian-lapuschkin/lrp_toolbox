@@ -112,7 +112,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		
 		case 2:
 		{
-			//epsstab
+			//alphabeta
 			switch(ro.codeexectype)
 			{
 				case 0:
@@ -178,9 +178,44 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-		case 10:
+		case 56:
 		{
-			if(layerindex== ro.firstlayerindex)
+			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+			{	
+				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+			}
+
+			if(layerindex<= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			{
+				Backward_Relevance_cpu_wsquare(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+			else
+			{
+				Backward_Relevance_cpu_epsstab_slowneasy(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+		}
+		break;
+
+	        case 11:
+	        {
+		    // reserved for sensitivtiy (gradient back grop. called in executable
+			
+	        }
+
+
+		case 60:
+		{
+
+			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+			{	
+				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+			}
+
+			if(layerindex<= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
 				Backward_Relevance_cpu_wsquare(top,
 					 propagate_down, bottom,
@@ -196,7 +231,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		break;
 
 
-		case 12:
+		case 54:
 		{
 			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
 			{	
@@ -217,7 +252,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-		case 14:
+		case 58:
 		{
 			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
 			{
