@@ -248,6 +248,9 @@ def save_image(rgb_images, path, gap = 2):
         else:
             image = np.hstack((image,gap,rgb_images[i]))
 
+    image *= 255
+    image = image.astype(np.uint8)
+
     print 'saving image to ', path
     io.imsave(path,image)
     return image
