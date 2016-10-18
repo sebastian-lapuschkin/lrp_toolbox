@@ -129,7 +129,7 @@ class Linear(Module):
         beta = 1 - alpha
         Z = self.W[na,:,:]*self.X[:,:,na] # localized preactivations
 
-        Zp = Z * (Z > 0);
+        Zp = Z * (Z > 0)
         Zsp = Zp.sum(axis=1)[:,na,:] + (self.B * (self.B > 0))[na,na,:]
 
         Zn = Z * (Z < 0)
@@ -220,6 +220,186 @@ class SoftMax(Module):
         self.Y = None
 
 
+# -------------------------------
+# Max Pooling layer
+# -------------------------------
+
+class MaxPooling(Module):
+    def __init__(self,pool=(2,2),stride=(2,2)):
+        self.pool = pool
+        self.stride = stride
+
+    def clean(self):
+        self.X = None
+        self.Y = None
+
+    def forward(self,X):
+        '''
+        Realizes the forward pass of an input through the max pooling layer.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            a network input, shaped (N,H,W,D), with
+            N = batch size
+            H, W, D = input size in heigth, width, depth
+
+        Returns
+        -------
+        Y : numpy.ndarray
+            the max-pooled outputs, reduced in size due to given stride and pooling size
+        '''
+
+        self.X = X
+        N,H,W,D = X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #initialize pooled output
+        self.Y = np.zeros((N,Hout,Wout,D), dtype = X.dtype)
+
+        for i in xrange(0,Hout):
+            for j in xrange(0,Wout):
+                x = X.[:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ]
+                self.Y[:,i::,j::,:] = np.amax(np.amax(x,axis=2,keepdims=True),axis=1,keepdims=True) # :: for assignment indexing to not drop axis information
+
+        return self.Y
+
+
+    def lrp(self,R, *args, **kwargs):
+        #this should behave exactly the same as backward, just with relevance. so let's use what we already have
+        return self.backward(R)
+
+
+    def backward(self,DY):
+
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #distribute the gradient towards the max activation (evenly in case of ambiguities)
+        #the max activation value is already known via self.Y
+
+        #this implementation seems wasteful.....
+        DYout = np.zeros_like(self.X)
+        for i in xrange(0,Hout):
+            for j in xrange(0,Wout):
+                y = self.Y[:,i,j,:] #y is the max activation for this poolig OP. outputs a 2-axis array. over N and D
+                x = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
+
+                #attribute gradient weights per input depth and sample
+                for n in xrange(N):
+                    for d in xrange(D):
+                        activators = x[n,...,d] == y[n,d]
+                        DYout[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += (activators * DY[n,i,j,d]) * (1./activators.sum()) #last bit to distribute gradient evenly in case of multiple activations. (?)
+                        #TODO: vignesh, plz verify: does this splitting between equally active inputs for gradient make sense? In hindsight I think not.
+        return DYout
+
+# -------------------------------
+# Sum Pooling layer
+# -------------------------------
+
+class SumPooling(Module):
+    def __init__(self,pool=(2,2),stride=(2,2)):
+        self.pool = pool
+        self.stride = stride
+
+    def clean(self):
+        self.X = None
+        self.Y = None
+
+    def forward(self,X):
+        '''
+        Realizes the forward pass of an input through the sum pooling layer.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            a network input, shaped (N,H,W,D), with
+            N = batch size
+            H, W, D = input size in heigth, width, depth
+
+        Returns
+        -------
+        Y : numpy.ndarray
+            the sum-pooled outputs, reduced in size due to given stride and pooling size
+        '''
+
+        self.X = X
+        N,H,W,D = X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #initialize pooled output
+        self.Y = np.zeros((N,Hout,Wout,D), dtype = X.dtype)
+
+        for i in xrange(0,Hout):
+            for j in xrange(0,Wout):
+                self.Y[:,i,j,:] = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=1,keepdims=True).sum(axis=2,keepdims=True)
+
+        return self.Y
+
+
+    def lrp(self,R, *args, **kwargs):
+
+        #copypasta from backward. check for errors if changes made to backward!
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #distribute the gradient towards across all inputs evenly
+        #assumes non-zero values for each input, which should be mostly true -> gradient at each input is 1
+
+        Rout = np.zeros_like(self.X)
+        for i in xrange(0,Hout):
+            for j in xrange(0,Wout):
+                x = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
+                x += 1e-12 * np.sign(x) #be save and stabilize. avoid zero division.
+                z = x / x.sum(axis=1,keepdims=True).sum(axis=2,keepdims=True) #proportional input activations per layer.
+
+                Rout[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += z * R[:,i::,j::,:]  #distribute relevance propoprtional to input activations per layer
+
+        return Rout
+
+    def backward(self,DY):
+
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #distribute the gradient towards across all inputs evenly
+        #assumes non-zero values for each input, which should be mostly true -> gradient at each input is 1
+
+        DX = np.zeros_like(self.X)
+        for i in xrange(0,Hout):
+            for j in xrange(0,Wout):
+                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i::,j::,:]  #the :: to not lose axis information and allow for broadcasting.
+        return DX
 
 
 # -------------------------------
