@@ -263,12 +263,13 @@ class MaxPooling(Module):
         #initialize pooled output
         self.Y = np.zeros((N,Hout,Wout,D), dtype = X.dtype)
 
-        for i in xrange(0,Hout):
-            for j in xrange(0,Wout):
-                x = X.[:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ]
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                x = X[:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ]
                 self.Y[:,i::,j::,:] = np.amax(np.amax(x,axis=2,keepdims=True),axis=1,keepdims=True) # :: for assignment indexing to not drop axis information
 
         return self.Y
+
 
 
     def lrp(self,R, *args, **kwargs):
@@ -292,8 +293,8 @@ class MaxPooling(Module):
 
         #this implementation seems wasteful.....
         DYout = np.zeros_like(self.X)
-        for i in xrange(0,Hout):
-            for j in xrange(0,Wout):
+        for i in xrange(Hout):
+            for j in xrange(Wout):
                 y = self.Y[:,i,j,:] #y is the max activation for this poolig OP. outputs a 2-axis array. over N and D
                 x = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
 
@@ -302,7 +303,7 @@ class MaxPooling(Module):
                     for d in xrange(D):
                         activators = x[n,...,d] == y[n,d]
                         DYout[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += (activators * DY[n,i,j,d]) * (1./activators.sum()) #last bit to distribute gradient evenly in case of multiple activations. (?)
-                        #TODO: vignesh, plz verify: does this splitting between equally active inputs for gradient make sense? In hindsight I think not.
+                        #TODO: vignesh, plz verify: does this splitting between equally active inputs for gradient make sense? In hindsight I think not. not sure though
         return DYout
 
 # -------------------------------
@@ -348,8 +349,8 @@ class SumPooling(Module):
         #initialize pooled output
         self.Y = np.zeros((N,Hout,Wout,D), dtype = X.dtype)
 
-        for i in xrange(0,Hout):
-            for j in xrange(0,Wout):
+        for i in xrange(Hout):
+            for j in xrange(Wout):
                 self.Y[:,i,j,:] = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=1,keepdims=True).sum(axis=2,keepdims=True)
 
         return self.Y
@@ -370,16 +371,16 @@ class SumPooling(Module):
         #distribute the gradient towards across all inputs evenly
         #assumes non-zero values for each input, which should be mostly true -> gradient at each input is 1
 
-        Rout = np.zeros_like(self.X)
-        for i in xrange(0,Hout):
-            for j in xrange(0,Wout):
-                x = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
-                x += 1e-12 * np.sign(x) #be save and stabilize. avoid zero division.
+        Rx = np.zeros_like(self.X)
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                x = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations. N,hpool,wpool,D
                 z = x / x.sum(axis=1,keepdims=True).sum(axis=2,keepdims=True) #proportional input activations per layer.
+                #STABILIZATION. ADD sign2-fxn
 
-                Rout[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += z * R[:,i::,j::,:]  #distribute relevance propoprtional to input activations per layer
+                Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += z * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 
-        return Rout
+        return Rx
 
     def backward(self,DY):
 
@@ -396,10 +397,123 @@ class SumPooling(Module):
         #assumes non-zero values for each input, which should be mostly true -> gradient at each input is 1
 
         DX = np.zeros_like(self.X)
-        for i in xrange(0,Hout):
-            for j in xrange(0,Wout):
-                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i::,j::,:]  #the :: to not lose axis information and allow for broadcasting.
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:]  #the :: to not lose axis information and allow for broadcasting.
         return DX
+
+# -------------------------------
+# 2D Convolution layer
+# -------------------------------
+
+class Convolution(Module):
+
+    def __init__(self, filtersize=(5,5,3,32), stride = (2,2)):
+        '''
+        filtersize = (h,w,d,n)
+        '''
+
+        self.fh, self.fw, self.fd, self.n = filtersize
+        self.stride = stride
+
+        self.W = np.random.normal(0,1/(self.fh,self.fw,self.fd)**.5, filtersize)
+        self.B = np.zeros([self.n])
+
+
+    def forward(self,X):
+        '''
+        Realizes the forward pass of an input through the convolution layer.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            a network input, shaped (N,H,W,D), with
+            N = batch size
+            H, W, D = input size in heigth, width, depth
+
+        Returns
+        -------
+        Y : numpy.ndarray
+            the layer outputs.
+        '''
+
+        self.X = X
+        N,H,W,D = X.shape
+
+        hf, wf, df, nf  = self.W.shape
+        hstride, wstride = self.stride
+        numfilters = self.n
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hf) / hstride + 1
+        Wout = (W - wf) / wstride + 1
+
+        #initialize pooled output
+        self.Y = np.zeros((N,Hout,Wout,numfilters), dtype = X.dtype)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                x = X[:, i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ]
+                y = np.tensordot(x,self.W,axes = ([1,2,3],[0,1,2]))
+                self.Y[:,i,j,:] = y + self.B
+
+        return self.Y
+
+
+    def backward(self,DY):
+
+        self.DY = DY
+        N,Hout,Wout,numfilters = DY.shape
+
+        hf, wf, df, numfilters = self.W.shape
+        hstride, wstride = self.stride
+
+        W = self.W[None,...] # extend for N axis in input. is 5-tensor now: N,hf,wf,df,numfilters
+
+        DX = np.zeros_like(self.X)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                dy = DY[:,i:i+1,j:j+1,None,:] # N,1,1,numfilters, extended to N,1,1,df,numfilters
+                DX[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (W * dy).sum(axis=4)  #sum over all the filters
+
+        return DX
+
+
+    def lrp(self,R, *args, **kwargs):
+
+        N,Hout,Wout,numfilters = R.shape
+
+        hf,wf,df,numfilters = self.W.shape
+        hstride, wstride = self.stride
+
+        W = self.W[None,...] # extend for N axis in input. is 5-tensor now: N,hf,wf,df,numfilters
+
+        Rx = np.zeros_like(self.X)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                x = X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , None] # N,hf,wf,df,numfilters . extended for numfilters = 1.
+                Z = W * x #input activations
+                Zsum = Z.sum(axis=1,keepdims=True).sum(axis=2,keepdims=True).sum(axis=3,keepdims=True)
+                Z = Z / Zsum #proportional input activations per filter.
+                #STABILIZATION. ADD sign2-fxn
+
+                # might cause relevance increase, sneaking in another axis?
+                r = R[:,i:i+1,j:j+1,None,:] #N, 1, 1, numfilters, extended to N,1,1,df,numfilters
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (Z * r).sum(axis=4)  #distribute relevance propoprtional to input activations per filter
+
+        return Rx
+
+    def update(self,lrate):
+
+        N,Hx,Wx,Dx = self.X.shape
+        N,Hy,Wy,Dy = self.DY.shape
+        # TODO: FINISH.
+
+        DW = np.zeros_like(self.W)
+
+
 
 
 # -------------------------------
