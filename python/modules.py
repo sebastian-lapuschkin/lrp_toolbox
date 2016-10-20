@@ -261,12 +261,12 @@ class MaxPooling(Module):
         Wout = (W - wpool) / wstride + 1
 
         #initialize pooled output
-        self.Y = np.zeros((N,Hout,Wout,D), dtype = X.dtype)
+        self.Y = np.zeros((N,Hout,Wout,D))
 
         for i in xrange(Hout):
             for j in xrange(Wout):
                 x = X[:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ]
-                self.Y[:,i::,j::,:] = np.amax(np.amax(x,axis=2,keepdims=True),axis=1,keepdims=True) # :: for assignment indexing to not drop axis information
+                self.Y[:,i,j,:] = np.amax(np.amax(x,axis=2),axis=1)
 
         return self.Y
 
@@ -292,18 +292,17 @@ class MaxPooling(Module):
         #the max activation value is already known via self.Y
 
         #this implementation seems wasteful.....
-        DYout = np.zeros_like(self.X)
+        DYout = np.zeros_like(self.X,dtype=np.float)
         for i in xrange(Hout):
             for j in xrange(Wout):
                 y = self.Y[:,i,j,:] #y is the max activation for this poolig OP. outputs a 2-axis array. over N and D
-                x = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
+                x = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
 
                 #attribute gradient weights per input depth and sample
                 for n in xrange(N):
                     for d in xrange(D):
                         activators = x[n,...,d] == y[n,d]
-                        DYout[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += (activators * DY[n,i,j,d]) * (1./activators.sum()) #last bit to distribute gradient evenly in case of multiple activations. (?)
-                        #TODO: vignesh, plz verify: does this splitting between equally active inputs for gradient make sense? In hindsight I think not. not sure though
+                        DYout[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += (activators * DY[n,i,j,d]) * (1./activators.sum()) #last bit to distribute gradient evenly in case of multiple activations.
         return DYout
 
 # -------------------------------
@@ -347,11 +346,11 @@ class SumPooling(Module):
         Wout = (W - wpool) / wstride + 1
 
         #initialize pooled output
-        self.Y = np.zeros((N,Hout,Wout,D), dtype = X.dtype)
+        self.Y = np.zeros((N,Hout,Wout,D))
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                self.Y[:,i,j,:] = X.[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=1,keepdims=True).sum(axis=2,keepdims=True)
+                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=1,keepdims=True).sum(axis=2,keepdims=True)
 
         return self.Y
 
@@ -449,7 +448,7 @@ class Convolution(Module):
         Wout = (W - wf) / wstride + 1
 
         #initialize pooled output
-        self.Y = np.zeros((N,Hout,Wout,numfilters), dtype = X.dtype)
+        self.Y = np.zeros((N,Hout,Wout,numfilters))
 
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -470,7 +469,7 @@ class Convolution(Module):
 
         W = self.W[None,...] # extend for N axis in input. is 5-tensor now: N,hf,wf,df,numfilters
 
-        DX = np.zeros_like(self.X)
+        DX = np.zeros_like(self.X,dtype=np.float)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -489,32 +488,75 @@ class Convolution(Module):
 
         W = self.W[None,...] # extend for N axis in input. is 5-tensor now: N,hf,wf,df,numfilters
 
-        Rx = np.zeros_like(self.X)
+        Rx = np.zeros_like(self.X,dtype=np.float)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
                 x = X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , None] # N,hf,wf,df,numfilters . extended for numfilters = 1.
                 Z = W * x #input activations
-                Zsum = Z.sum(axis=1,keepdims=True).sum(axis=2,keepdims=True).sum(axis=3,keepdims=True)
+                Zsum = Z.sum(axis=(1,2,3),keepdims=True) # sum over filter tensors to proportionally distribute over each filter's input
                 Z = Z / Zsum #proportional input activations per filter.
                 #STABILIZATION. ADD sign2-fxn
 
                 # might cause relevance increase, sneaking in another axis?
                 r = R[:,i:i+1,j:j+1,None,:] #N, 1, 1, numfilters, extended to N,1,1,df,numfilters
-                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (Z * r).sum(axis=4)  #distribute relevance propoprtional to input activations per filter
+                r = (Z * r).sum(axis=4) # N, hf, wf, df  ; df = Dx
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += r #distribute relevance propoprtional to input activations per filter
 
         return Rx
 
     def update(self,lrate):
 
         N,Hx,Wx,Dx = self.X.shape
-        N,Hy,Wy,Dy = self.DY.shape
-        # TODO: FINISH.
+        N,Hout,Wout,Dout = self.DY.shape
 
-        DW = np.zeros_like(self.W)
+        hf,wf,df,numfilters = self.W.shape
+        hstride, wstride = self.stride
+
+        DW = np.zeros_like(self.W,dtype=np.float) # hf, wf, df, numfilters
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                x = X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # N,hf,wf,df
+                x = x[...,None] # N, hf, wf, df, nf=1
+
+                dy = DY[:,i:i+1,j:j+1,None,:] # N, Hout=1, Wout=1, df=1, nf
+
+                # hf, wf, df, nf
+                self.DW += (x * dy).sum(axis=0) # hf, wf, df, nf
+
+        self.DB = self.DY.sum(axis=(0,1,2))
 
 
+        self.W -= lr * self.DW
+        self.B -= lr * self.DB
 
+
+        def clean(self):
+            self.X = None
+            self.Y = None
+            self.DW = None
+            self.DB = None
+
+
+# -------------------------------
+# Flattening Layer
+# -------------------------------
+
+class Flatten(Module):
+
+    def __init__(self):
+        self.inputshape = []
+
+    def lrp(self,R, *args, **kwargs):
+        return np.reshape(R,self.inputshape)
+
+    def backward(self,DY):
+        return np.reshape(DY,self.inputshape)
+
+    def forward(self,X):
+        self.inputshape = X.shape # N x H x W x D
+        return np.reshape(X,[self.inputshape[0],np.prod(self.inputshape[1:])])
 
 # -------------------------------
 # Sequential layer
