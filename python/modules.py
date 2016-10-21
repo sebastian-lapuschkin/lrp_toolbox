@@ -350,7 +350,7 @@ class SumPooling(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=1,keepdims=True).sum(axis=2,keepdims=True)
+                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2))
 
         return self.Y
 
@@ -370,12 +370,12 @@ class SumPooling(Module):
         #distribute the gradient towards across all inputs evenly
         #assumes non-zero values for each input, which should be mostly true -> gradient at each input is 1
 
-        Rx = np.zeros_like(self.X)
+        Rx = np.zeros(self.X.shape)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                x = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations. N,hpool,wpool,D
-                z = x / x.sum(axis=1,keepdims=True).sum(axis=2,keepdims=True) #proportional input activations per layer.
-                #STABILIZATION. ADD sign2-fxn
+                x = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations. N,hpool,wpool,D
+                z = x / x.sum(axis=(1,2),keepdims=True) #proportional input activations per layer.
+                z[np.isnan(z)] = 1e-12 #do smarter!. isnan is slow.
 
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += z * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 

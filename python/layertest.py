@@ -77,6 +77,7 @@ print '# ----------------------'
 
 def maxpooltest(x,e,pool,stride):
     print ''
+    print 'MAX POOL FORWARD TEST:'
     print 'x.shape', x.shape
     print 'pool', pool
     print 'stride', stride
@@ -92,7 +93,9 @@ def maxpooltest(x,e,pool,stride):
     assert(np.all(e == y))
 
 def maxpoolRtest(x,Rin,Rex,pool,stride):
+
     print ''
+    print 'MAX POOL RELEVANCE TEST'
     print 'x.shape', x.shape
     print 'pool', pool
     print 'stride', stride
@@ -111,82 +114,245 @@ def maxpoolRtest(x,Rin,Rex,pool,stride):
     print 'R == Rex :', np.all(R == Rex)
     assert(np.all(R == Rex))
 
+
+
+if False:
+
+    #construct filter and inputs.
+    a = np.array([[  [1,1,1,1],\
+                    [1,1,2,1],\
+                    [0,0,0,0],\
+                    [0,0,0,0]
+                ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+    a.astype(np.float)
+
+    b = np.array([[  [1,1,0,0],\
+                    [1,1,0,0],\
+                    [1,1,0,0],\
+                    [2,1,0,0]
+                ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+    b.astype(np.float)
+
+    c = np.array([[  [1,1,1,1],\
+                    [1,1,2,0],\
+                    [1,1,0,0],\
+                    [1,0,0,0]
+                ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+    c.astype(np.float)
+
+    #construct multiple 1-layer input data points
+    x = np.concatenate((a,b,c),axis = 0)
+    expected = [
+        [[1,2],[0,0]],\
+        [[1,0],[2,0]],\
+        [[1,2],[1,0]]
+    ]
+    expected = np.array(expected)[...,None]
+
+    maxpooltest(x,expected,pool = (2,2),stride = (2,2))
+
+    x2 = np.concatenate((a,b,c),axis = 3) # 1 x 4 x 4 x 3
+    e2 = np.zeros([1,2,2,3])
+    e2[0,:,:,0] = np.array([[2,2],[2,2]])
+    e2[0,:,:,1] = np.array([[1,1],[2,1]])
+    e2[0,:,:,2] = np.array([[2,2],[2,2]])
+
+    maxpooltest(x2,e2,pool=(3,3),stride=(1,1))
+
+    x3 = x2
+    e3 = np.zeros([1,1,1,3])
+    e3[0,:,:,0] = np.array([[[2]]])
+    e3[0,:,:,1] = np.array([[[2]]])
+    e3[0,:,:,2] = np.array([[[2]]])
+
+    maxpooltest(x3,e3,pool=(4,4),stride=(1,1))
+
+
+    #testing relevance allocation
+    Rin = np.ones_like(e3)
+    Rex = (x2 == 2) * 1.0
+    maxpoolRtest(x3,Rin,Rex,pool=(4,4),stride=(4,4))
+
+    xa = a
+    Rina = np.array([[1.,1.],[1.,1.]])
+    Rina = np.reshape(Rina, [1,2,2,1])
+    Rexa = np.array([[[0.25,0.25,0,0],\
+                    [0.25,0.25,1,0],\
+                    [.25,.25,.25,.25],\
+                    [.25,.25,.25,.25]
+                ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+
+    maxpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
+
+    xa = a
+    Rina = np.array([[1.,1.],[0.,0.]])
+    Rina = np.reshape(Rina, [1,2,2,1])
+    Rexa = np.array([[[0.25,0.25,0,0],\
+                    [0.25,0.25,1,0],\
+                    [.0,.0,.0,.0],\
+                    [.0,.0,.0,.0]
+                ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+
+    maxpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
+
+    #overlapping 3x3 relevance pooling test with three layers
+
+    stride = (1,1)
+    pool = (3,3)
+
+    xa = a
+    Rina = np.array([[1.,1.],[1.,1.]]).reshape([1,2,2,1])
+    Rexa = np.array([[[0,0,0,0],\
+                    [0,0,4,0],\
+                    [.0,.0,.0,.0],\
+                    [.0,.0,.0,.0]
+                ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+
+    maxpoolRtest(xa,Rina,Rexa,pool=pool,stride=stride)
+
+    xb = b
+    Rinb = np.array([[1.,1.],[1.,1.]]).reshape([1,2,2,1])
+    s = 1./6 ; d = 1./3
+    Rexb = np.array([[[s,s+d,0,0],\
+                    [s,s+d+d,0,0],\
+                    [s,s+d+d,.0,.0],\
+                    [1,d,.0,.0]
+                ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+    maxpoolRtest(xb,Rinb,Rexb,pool=pool,stride=stride)
+
+    x = np.concatenate((xa,xb),axis=0)
+    Rin = np.concatenate((Rina, Rinb),axis=0)
+    Rex = np.concatenate((Rexa, Rexb),axis = 0)
+    maxpoolRtest(x,Rin,Rex,pool=pool,stride=stride)
+
+
+# ----------------------
+# Sum Pooling Layer Test
+# ----------------------
+
+def sumpooltest(x,e,pool,stride):
+    print ''
+    print 'SUM POOL FORWARD TEST'
+    print 'x.shape', x.shape
+    print 'pool', pool
+    print 'stride', stride
+    print 'e.shape', e.shape
+
+    S = SumPooling(pool=pool, stride=stride)
+    y =  S.forward(x)
+
+    print 'y.shape', y.shape
+    print 'y', y
+    print 'e', e
+    print 'y == e :', np.all(e == y)
+    assert(np.all(e == y))
+
+def sumpoolRtest(x,Rin,Rex,pool,stride):
+    print ''
+    print 'SUM POOL RELEVANCE TEST'
+    print 'x.shape', x.shape
+    print 'pool', pool
+    print 'stride', stride
+    print 'Rin.shape', Rin.shape
+
+    S = SumPooling(pool=pool, stride=stride)
+    y = S.forward(x)
+    R = S.lrp(Rin)
+
+    print 'x.shape', x.shape
+    print 'R.shape', R.shape
+    print 'Rex.shape', Rex.shape
+    print 'x', x
+    print 'R',R
+    print 'Rex', Rex
+    print 'R ~ Rex :', np.all(np.abs(R - Rex) <= 1e-10), '(tolerance = 1e-10)'
+    if not np.all(np.abs(R - Rex) <= 1e-10):
+        print 'delta (R - Rex):', R - Rex
+    assert(np.all(np.abs(R - Rex) <= 1e-10))
+
+
 #construct filter and inputs.
 a = np.array([[  [1,1,1,1],\
                  [1,1,2,1],\
                  [0,0,0,0],\
                  [0,0,0,0]
             ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
-a.astype(np.float)
+a = a.astype(np.float)
 
 b = np.array([[  [1,1,0,0],\
                  [1,1,0,0],\
                  [1,1,0,0],\
                  [2,1,0,0]
             ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
-b.astype(np.float)
+b  = b.astype(np.float)
 
 c = np.array([[  [1,1,1,1],\
                  [1,1,2,0],\
                  [1,1,0,0],\
                  [1,0,0,0]
             ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
-c.astype(np.float)
+c = c.astype(np.float)
 
 #construct multiple 1-layer input data points
 x = np.concatenate((a,b,c),axis = 0)
 expected = [
-    [[1,2],[0,0]],\
-    [[1,0],[2,0]],\
-    [[1,2],[1,0]]
+    [[4,5],[0,0]],\
+    [[4,0],[5,0]],\
+    [[4,4],[3,0]]
  ]
 expected = np.array(expected)[...,None]
 
-maxpooltest(x,expected,pool = (2,2),stride = (2,2))
+sumpooltest(x,expected,pool = (2,2),stride = (2,2))
 
-x2 = np.concatenate((a,b,c),axis = 3) # 1 x 4 x 4 x 3
+
+x2 = np.concatenate((a,-b,c),axis = 3) # 1 x 4 x 4 x 3
 e2 = np.zeros([1,2,2,3])
-e2[0,:,:,0] = np.array([[2,2],[2,2]])
-e2[0,:,:,1] = np.array([[1,1],[2,1]])
-e2[0,:,:,2] = np.array([[2,2],[2,2]])
+e2[0,:,:,0] = np.array([[7,7],[4,4]])
+e2[0,:,:,1] = np.array([[-6,-3],[-7,-3]])
+e2[0,:,:,2] = np.array([[9,7],[7,4]])
 
-maxpooltest(x2,e2,pool=(3,3),stride=(1,1))
+sumpooltest(x2,e2,pool=(3,3),stride=(1,1))
+
 
 x3 = x2
 e3 = np.zeros([1,1,1,3])
-e3[0,:,:,0] = np.array([[[2]]])
-e3[0,:,:,1] = np.array([[[2]]])
-e3[0,:,:,2] = np.array([[[2]]])
+e3[0,:,:,0] = np.array([[[9]]])
+e3[0,:,:,1] = np.array([[[-9]]])
+e3[0,:,:,2] = np.array([[[11]]])
 
-maxpooltest(x3,e3,pool=(4,4),stride=(1,1))
+sumpooltest(x3,e3,pool=(4,4),stride=(1,1))
 
 
 #testing relevance allocation
-Rin = np.ones_like(e3)
-Rex = (x2 == 2) * 1.0
-maxpoolRtest(x3,Rin,Rex,pool=(4,4),stride=(4,4))
+Rin = np.ones(e3.shape)
+Rex = x3.copy().astype(np.float)
+Rex[...,0] *= 1./Rex[...,0].sum()
+Rex[...,1] *= 1./Rex[...,1].sum()
+Rex[...,2] *= 1./Rex[...,2].sum()
+sumpoolRtest(x3,Rin,Rex,pool=(4,4),stride=(4,4))
 
-xa = a
+
+xa = a #note that this case - adding relevance to non-firing inputs-would never happen. (e.g. the relevance would not be there in the first place.)
 Rina = np.array([[1.,1.],[1.,1.]])
 Rina = np.reshape(Rina, [1,2,2,1])
-Rexa = np.array([[[0.25,0.25,0,0],\
-                 [0.25,0.25,1,0],\
-                 [.25,.25,.25,.25],\
-                 [.25,.25,.25,.25]
-            ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
-
-maxpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
-
-xa = a
-Rina = np.array([[1.,1.],[0.,0.]])
-Rina = np.reshape(Rina, [1,2,2,1])
-Rexa = np.array([[[0.25,0.25,0,0],\
-                 [0.25,0.25,1,0],\
+Rexa = np.array([[[0.25,0.25,.2,.2],\
+                 [0.25,0.25,.4,.2],\
                  [.0,.0,.0,.0],\
                  [.0,.0,.0,.0]
             ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
 
-maxpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
+sumpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
+
+xa = a
+Rina = np.array([[1.,1.],[0.,0.]])
+Rina = np.reshape(Rina, [1,2,2,1])
+Rexa = np.array([[[0.25,0.25,.2,.2],\
+                 [0.25,0.25,.4,.2],\
+                 [.0,.0,.0,.0],\
+                 [.0,.0,.0,.0]
+            ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+
+sumpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
 
 #overlapping 3x3 relevance pooling test with three layers
 
@@ -195,32 +361,31 @@ pool = (3,3)
 
 xa = a
 Rina = np.array([[1.,1.],[1.,1.]]).reshape([1,2,2,1])
-Rexa = np.array([[[0,0,0,0],\
-                 [0,0,4,0],\
+v = 1./4 ; s = 1./7
+Rexa = np.array([[[s,2*s,2*s,s],\
+                 [s+v,2*s+2*v,4*s+4*v,s+v],\
                  [.0,.0,.0,.0],\
                  [.0,.0,.0,.0]
             ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
 
-maxpoolRtest(xa,Rina,Rexa,pool=pool,stride=stride)
+sumpoolRtest(xa,Rina,Rexa,pool=pool,stride=stride)
+
 
 xb = b
 Rinb = np.array([[1.,1.],[1.,1.]]).reshape([1,2,2,1])
-s = 1./6 ; d = 1./3
+s = 1./6 ; d = 1./3 ; z = 1./7
 Rexb = np.array([[[s,s+d,0,0],\
-                 [s,s+d+d,0,0],\
-                 [s,s+d+d,.0,.0],\
-                 [1,d,.0,.0]
+                 [s+z,s+2*d+z,0,0],\
+                 [s+z,s+2*d+z,.0,.0],\
+                 [2*z,z+d,.0,.0]
             ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
-maxpoolRtest(xb,Rinb,Rexb,pool=pool,stride=stride)
+sumpoolRtest(xb,Rinb,Rexb,pool=pool,stride=stride)
+
 
 x = np.concatenate((xa,xb),axis=0)
 Rin = np.concatenate((Rina, Rinb),axis=0)
 Rex = np.concatenate((Rexa, Rexb),axis = 0)
-maxpoolRtest(x,Rin,Rex,pool=pool,stride=stride)
-# ----------------------
-# Sum Pooling Layer Test
-# ----------------------
-
+sumpoolRtest(x,Rin,Rex,pool=pool,stride=stride)
 
 
 # ----------------------
