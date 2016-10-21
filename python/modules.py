@@ -415,7 +415,7 @@ class Convolution(Module):
         self.fh, self.fw, self.fd, self.n = filtersize
         self.stride = stride
 
-        self.W = np.random.normal(0,1/(self.fh,self.fw,self.fd)**.5, filtersize)
+        self.W = np.random.normal(0,1/(self.fh*self.fw*self.fd)**.5, filtersize)
         self.B = np.zeros([self.n])
 
 
@@ -494,8 +494,9 @@ class Convolution(Module):
             for j in xrange(Wout):
                 x = X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , None] # N,hf,wf,df,numfilters . extended for numfilters = 1.
                 Z = W * x #input activations
-                Zsum = Z.sum(axis=(1,2,3),keepdims=True) # sum over filter tensors to proportionally distribute over each filter's input
+                Zsum = Z.sum(axis=(1,2,3),keepdims=True) + self.B[None,...] # sum over filter tensors to proportionally distribute over each filter's input
                 Z = Z / Zsum #proportional input activations per filter.
+                Z[np.isnan(Z)] = 1e-12
                 #STABILIZATION. ADD sign2-fxn
 
                 # might cause relevance increase, sneaking in another axis?
