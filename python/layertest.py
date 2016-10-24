@@ -410,8 +410,10 @@ def convolutiontest(x,e,filter,stride):
     print 'y.shape', y.shape
     print 'y', y
     print 'e', e
-    print 'y == e :', np.all(e == y)
-    assert(np.all(e == y))
+    print 'y == e :', np.all(np.abs(e - y) <= 1e-10), '(tolerance = 1e-20)'
+    if not np.all(np.abs(e - y) <= 1e-10):
+        print 'delta (e - y):', e - y
+    assert(np.all(np.abs(e - y) <= 1e-10))
 
 def convolutionRtest(x,Rin,Rex,filter,stride):
     print ''
@@ -492,6 +494,7 @@ ycc = np.tensordot(c,fc,axes = ([1,2,3],[0,1,2]))[None,...,None]
 convolutiontest(c,ycc,fc,stride=(1,1))
 
 
+
 #combine multiple filters and samples
 
 x = np.concatenate((a,b,c),axis = 0)
@@ -503,100 +506,106 @@ ec = np.concatenate((yca,ycb,ycc),axis = 3)
 e = np.concatenate((ea,eb,ec),axis = 0)
 convolutiontest(x,e,f,stride=(1,1))
 
+
 # test stride 2,2 on 2,2 filter on 2 inputs, then two filtes on one input, then lrp
 
-'''
-#construct multiple 1-layer input data points
-x = np.concatenate((a,b,c),axis = 0)
-expected = [
-    [[4,5],[0,0]],\
-    [[4,0],[5,0]],\
-    [[4,4],[3,0]]
- ]
-expected = np.array(expected)[...,None]
+f = np.array([[0.1,0.2],[0.2,0.1]])
+f = np.reshape(f,[2,2,1,1])
 
-sumpooltest(x,expected,pool = (2,2),stride = (2,2))
+stride = (2,2)
+fsize = (2,2)
 
+x = np.concatenate((b,c),axis = 0)
+eb = [[0.6,0],[0.8,0]]
+eb = np.reshape(np.array(eb),[1,2,2,1])
+ec = [[.6,.7],[.5,0]]
+ec = np.reshape(np.array(ec),[1,2,2,1])
+e  = np.concatenate((eb,ec),axis=0)
 
-x2 = np.concatenate((a,-b,c),axis = 3) # 1 x 4 x 4 x 3
-e2 = np.zeros([1,2,2,3])
-e2[0,:,:,0] = np.array([[7,7],[4,4]])
-e2[0,:,:,1] = np.array([[-6,-3],[-7,-3]])
-e2[0,:,:,2] = np.array([[9,7],[7,4]])
+Rin = np.ones_like(e)
+s = 1./6 ; d = 2*s ; aa = 1./8 ; v = 2*aa
+Rexb = [[s, d, 0, 0],\
+        [d, s, 0, 0],\
+        [aa, v, 0, 0],\
+        [2*v,aa,0, 0]]
+z = 1./7
+g = 0.2
+Rexc  = [[s,d,z,2*z],\
+         [d,s,4*z,0],\
+         [g,2*g,0,0],\
+         [2*g,0,0,0]]
 
-sumpooltest(x2,e2,pool=(3,3),stride=(1,1))
+Rexb = np.reshape(np.array(Rexb),b.shape)
+Rexc = np.reshape(np.array(Rexc),c.shape)
+Rex = np.concatenate((Rexb,Rexc),axis = 0)
 
-
-x3 = x2
-e3 = np.zeros([1,1,1,3])
-e3[0,:,:,0] = np.array([[[9]]])
-e3[0,:,:,1] = np.array([[[-9]]])
-e3[0,:,:,2] = np.array([[[11]]])
-
-sumpooltest(x3,e3,pool=(4,4),stride=(1,1))
-
-
-#testing relevance allocation
-Rin = np.ones(e3.shape)
-Rex = x3.copy().astype(np.float)
-Rex[...,0] *= 1./Rex[...,0].sum()
-Rex[...,1] *= 1./Rex[...,1].sum()
-Rex[...,2] *= 1./Rex[...,2].sum()
-sumpoolRtest(x3,Rin,Rex,pool=(4,4),stride=(4,4))
+convolutiontest(x,e,f,stride=(2,2))
+convolutionRtest(x,Rin,Rex,f,stride=(2,2))
 
 
-xa = a #note that this case - adding relevance to non-firing inputs-would never happen. (e.g. the relevance would not be there in the first place.)
-Rina = np.array([[1.,1.],[1.,1.]])
-Rina = np.reshape(Rina, [1,2,2,1])
-Rexa = np.array([[[0.25,0.25,.2,.2],\
-                 [0.25,0.25,.4,.2],\
-                 [.0,.0,.0,.0],\
-                 [.0,.0,.0,.0]
-            ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+f2 = np.array([[1,2],[-3,-4]])
+f2 = np.reshape(f2,[2,2,1,1])
+f3 = np.concatenate((f,f2),axis = 3)
+x = a
+ef=[[.6,.8],[0,0]]
+ef = np.reshape(np.array(ef),[1,2,2,1])
+ef2=[[-4,-7],[0,0]]
+ef2 = np.reshape(np.array(ef2),[1,2,2,1])
+e = np.concatenate((ef,ef2),axis=3)
 
-sumpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
+Rinf= np.ones_like(ef)
+Rexf = [[s,d,aa,v],\
+        [d,s,2*v,aa],\
+        [0,0,0,0],\
+        [0,0,0,0]]
 
-xa = a
-Rina = np.array([[1.,1.],[0.,0.]])
-Rina = np.reshape(Rina, [1,2,2,1])
-Rexa = np.array([[[0.25,0.25,.2,.2],\
-                 [0.25,0.25,.4,.2],\
-                 [.0,.0,.0,.0],\
-                 [.0,.0,.0,.0]
-            ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+Rexf = np.array(Rexf)
+Rexf = np.reshape(Rexf,[1,4,4,1])
 
-sumpoolRtest(xa,Rina,Rexa,pool=(2,2),stride=(2,2))
+Rinf2 = np.ones_like(ef2)
+v = 0.25 ; z = 1./7
+Rexf2 = [[-v, -2*v, -z, -2*z],\
+         [3*v, 1  , 6*z, 4*z],\
+         [0,0,0,0],\
+         [0,0,0,0]]
 
-#overlapping 3x3 relevance pooling test with three layers
+Rexf2 = np.array(Rexf2)
+Rexf2 = np.reshape(Rexf2,[1,4,4,1])
 
+convolutionRtest(x,Rinf,Rexf,f,stride=(2,2))
+convolutionRtest(x,Rinf2,Rexf2,f2,stride=(2,2))
+
+Rin = np.concatenate((Rinf, Rinf2),axis=3)
+Rex = Rexf + Rexf2 #after computing relevace contribution for each filter, aggregate at the input again by summation.
+
+convolutiontest(x,e,f3,stride=(2,2))
+convolutionRtest(x,Rin,Rex,f3,stride=(2,2))
+
+
+x = a
+f = np.ones((3,3,1,1)) ; f[1,1,...] = 2
 stride = (1,1)
-pool = (3,3)
+Rin = np.ones((1,2,2,1))
+Rex11 = [[aa,aa,aa,0],\
+         [aa,v,v,0],\
+         [0,0,0,0],\
+         [0,0,0,0]]
+n = 1./9
+Rex12 = [[0,n,n,n],\
+         [0,n,4*n,n],\
+         [0,0,0,0],\
+         [0,0,0,0]]
 
-xa = a
-Rina = np.array([[1.,1.],[1.,1.]]).reshape([1,2,2,1])
-v = 1./4 ; s = 1./7
-Rexa = np.array([[[s,2*s,2*s,s],\
-                 [s+v,2*s+2*v,4*s+4*v,s+v],\
-                 [.0,.0,.0,.0],\
-                 [.0,.0,.0,.0]
-            ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
+Rex21 = [[0,0,0,0],\
+         [v,v,2*v,0],\
+         [0,0,0,0],\
+         [0,0,0,0]]
 
-sumpoolRtest(xa,Rina,Rexa,pool=pool,stride=stride)
+Rex22 = [[0,0,0,0],\
+         [0,v,2*v,v],\
+         [0,0,0,0],\
+         [0,0,0,0]]
 
-
-xb = b
-Rinb = np.array([[1.,1.],[1.,1.]]).reshape([1,2,2,1])
-s = 1./6 ; d = 1./3 ; z = 1./7
-Rexb = np.array([[[s,s+d,0,0],\
-                 [s+z,s+2*d+z,0,0],\
-                 [s+z,s+2*d+z,.0,.0],\
-                 [2*z,z+d,.0,.0]
-            ]])[...,None] # 1 x 4 x 4 x 1 = N x H x W x D
-sumpoolRtest(xb,Rinb,Rexb,pool=pool,stride=stride)
-
-
-x = np.concatenate((xa,xb),axis=0)
-Rin = np.concatenate((Rina, Rinb),axis=0)
-Rex = np.concatenate((Rexa, Rexb),axis = 0)
-sumpoolRtest(x,Rin,Rex,pool=pool,stride=stride)
-'''
+Rex = np.array(Rex11) + np.array(Rex21) + np.array(Rex12) + np.array(Rex22)
+Rex = np.reshape(Rex,x.shape)
+convolutionRtest(x,Rin,Rex,f,stride)

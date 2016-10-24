@@ -492,12 +492,12 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                x = X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , None] # N,hf,wf,df,numfilters . extended for numfilters = 1.
+                x = self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , None] # N,hf,wf,df,numfilters . extended for numfilters = 1.
                 Z = W * x #input activations
                 Zsum = Z.sum(axis=(1,2,3),keepdims=True) + self.B[None,...] # sum over filter tensors to proportionally distribute over each filter's input
                 Z = Z / Zsum #proportional input activations per filter.
                 Z[np.isnan(Z)] = 1e-12
-                #STABILIZATION. ADD sign2-fxn
+                #STABILIZATION. ADD sign2-fxn: MAKE SMARTER
 
                 # might cause relevance increase, sneaking in another axis?
                 r = R[:,i:i+1,j:j+1,None,:] #N, 1, 1, numfilters, extended to N,1,1,df,numfilters
