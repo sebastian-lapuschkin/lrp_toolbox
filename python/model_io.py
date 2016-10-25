@@ -11,7 +11,7 @@
 import os
 import pickle
 import numpy as np
-from modules import Sequential,Linear,Tanh,Rect,SoftMax
+from modules import Sequential,Linear,Tanh,Rect,SoftMax,Convolution,Flatten,SumPooling,MaxPooling
 
 #--------------------
 #   model reading
@@ -54,7 +54,7 @@ def read(path, fmt = None):
 
         SoftMax
 
-        The exception formed by the linear layer implementation modules.Linear incorporates in raw text form as
+        The exception formed by the linear layer implementation modules.Linear and modules.Convolution incorporates in raw text form as
 
         Linear m n
         W.flatten()
@@ -63,6 +63,19 @@ def read(path, fmt = None):
         with m and n being integer values describing the dimensions of the weight matrix W as [m x n] ,
         W being the human readable ascii-representation of the flattened matrix in m * n white space separated double values.
         After the line describing W, the bias term B is written out as a single line of n white space separated double values.
+
+        Convolution h w d n s0 s1
+        W.flatten()
+        B.flatte()
+
+        Semantics as above, with h, w, d being the filter heigth, width and depth and n being the number of filters of that layer.
+        s0 and s1 specify the stride parameter in vertical (axis 0) and horizontal (axis 1) direction the layer operates on.
+
+        Pooling layers have a parameterized one-line-description
+
+        [Max|Sum]Pooling h w s0 s1
+
+        with h and w designating the pooling mask size and s0 and s1 the pooling stride.
     '''
 
     if not os.path.exists(path):
@@ -105,14 +118,48 @@ def _read_txt(path):
                     modules.append(layer)
                     c+=3 # the description of a linear layer spans three lines
 
+                elif line.startswith(Convolution.__name__): # @UndefinedVariable import error suppression for PyDev users
                     '''
-                TODO:
-                elif line.startswith(Convolution.__name__): ...
-                elif line.startswith(SumPooling.__name__): ...
-                elif line.startswith(MaxPooling.__name__): ...
-                elif line.startswith(Flatten.__name__): ...
+                    Format of convolution layer
+                    Convolution <rows_of_W> <columns_of_W> <depth_of_W> <number_of_filters_W> <stride_axis_0> <stride_axis_1>
+                    <flattened filter block W>
+                    <flattened bias vector>
                     '''
 
+                    _,h,w,d,n,s0,s1 = line.split()
+                    h = int(h); w = int(w); d = int(d); n = int(n); s0 = int(s0); s1 = int(s1)
+                    layer = Convolution(filtersize=(h,w,d,n), stride=(s0,s1))
+                    layer.W = np.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0]).reshape((h,w,d,n))
+                    layer.B = np.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0])
+                    modules.append(layer)
+                    c+=3 #the description of a convolution layer spans three lines
+
+                elif line.startswith(SumPooling.__name__): # @UndefinedVariable import error suppression for PyDev users
+                    '''
+                    Format of sum pooling layer
+                    SumPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                    '''
+
+                    _,h,w,s0,s1 = line.split()
+                    h = int(h); w = int(w); s0 = int(s0); s1 = int(s1)
+                    layer = SumPooling(pool=(h,w),stride=(s0,s1))
+                    modules.append(layer)
+                    c+=1 # one line of parameterized layer description
+
+                elif line.startswith(MaxPooling.__name__): # @UndefinedVariable import error suppression for PyDev users
+                    '''
+                    Format of max pooling layer
+                    MaxPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                    '''
+
+                    _,h,w,s0,s1 = line.split()
+                    h = int(h); w = int(w); s0 = int(s0); s1 = int(s1)
+                    layer = MaxPooling(pool=(h,w),stride=(s0,s1))
+                    modules.append(layer)
+                    c+=1 # one line of parameterized layer description
+
+                elif line.startswith(Flatten.__name__): # @UndefinedVariable import error suppression for PyDev users
+                    modules.append(Flatten()) ; c+=1 #one line of parameterless layer description
                 elif line.startswith(Rect.__name__): # @UndefinedVariable import error suppression for PyDev users
                     modules.append(Rect()) ; c+= 1 #one line of parameterless layer description
                 elif line.startswith(Tanh.__name__): # @UndefinedVariable import error suppression for PyDev users
@@ -122,7 +169,7 @@ def _read_txt(path):
                 else:
                     raise ValueError('Layer type identifier' + [s for s in line.split() if len(s) > 0][0] +  ' not supported for reading from plain text file')
 
-                #skip info of previous layer, read in next layer header
+                #skip info of previous layers, read in next layer header
                 line = content[c]
 
 
@@ -253,13 +300,51 @@ def _write_txt(model,path):
                 f.write(' '.join([repr(w) for w in layer.W.flatten()]) + '\n')
                 f.write(' '.join([repr(b) for b in layer.B.flatten()]) + '\n')
 
+            elif isinstance(layer,Convolution):
                 '''
-            TODO:
-            elif line.startswith(Convolution.__name__): ...
-            elif line.startswith(SumPooling.__name__): ...
-            elif line.startswith(MaxPooling.__name__): ...
-            elif line.startswith(Flatten.__name__): ...
+                    Format of convolution layer
+                    Convolution <rows_of_W> <columns_of_W> <depth_of_W> <number_of_filters_W> <stride_axis_0> <stride_axis_1>
+                    <flattened filter block W>
+                    <flattened bias vector>
                 '''
+
+                f.write('{0} {1} {2} {3} {4} {5} {6}\n'.format(
+                    layer.__class__.__name__,\
+                    layer.fh,\
+                    layer.fw,\
+                    layer.fd,\
+                    layer.n,\
+                    layer.stride[0],\
+                    layer.stride[1]
+                ))
+                f.write(' '.join([repr(w) for w in layer.W.flatten()]) + '\n')
+                f.write(' '.join([repr(b) for b in layer.B.flatten()]) + '\n')
+
+            elif isinstance(layer,SumPooling):
+                '''
+                    Format of sum pooling layer
+                    SumPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                '''
+
+                f.write('{0} {1} {2} {3} {4}\n'.format(
+                    layer.__class__.__name__,\
+                    layer.pool[0],\
+                    layer.pool[1],\
+                    layer.stride[0],\
+                    layer.stride[1]))
+
+            elif isinstance(layer,MaxPooling):
+                '''
+                    Format of max pooling layer
+                    MaxPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                '''
+
+                f.write('{0} {1} {2} {3} {4}\n'.format(
+                    layer.__class__.__name__,\
+                    layer.pool[0],\
+                    layer.pool[1],\
+                    layer.stride[0],\
+                    layer.stride[1]))
 
             else:
                 '''
