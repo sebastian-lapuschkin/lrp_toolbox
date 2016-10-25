@@ -26,14 +26,17 @@ import data_io
 import render
 
 #load a neural network, as well as the MNIST test data and some labels
-nn = model_io.read('../models/MNIST/LeNet-5.txt')
-
+nn = model_io.read('../models/MNIST/LeNet-5.txt') # 99.23% prediction accuracy
 X = data_io.read('../data/MNIST/test_images.npy')
 Y = data_io.read('../data/MNIST/test_labels.npy')
 
 
 # transfer pixel values from [0 255] to [-1 1] to satisfy the expected input / training paradigm of the model
-X =  X / 127.5 - 1
+X =  X / 127.5 - 1.
+
+#reshape the vector representations in X to match the requirements of the CNN input
+X = np.reshape(X,[X.shape[0],28,28,1])
+X = np.pad(X,((0,0),(2,2),(2,2),(0,0)), 'constant', constant_values = (-1.,))
 
 # transform numeric class labels to vector indicator for uniformity. assume presence of all classes within the label set
 I = Y[:,0].astype(int)
@@ -46,7 +49,7 @@ I = np.arange(X.shape[0])
 
 #predict and perform LRP for the 10 first samples
 for i in I[:10]:
-    x = X[na,i,:]
+    x = X[i:i+1,...]
 
     #forward pass and prediction
     ypred = nn.forward(x)
@@ -59,15 +62,20 @@ for i in I[:10]:
     #R = nn.lrp(ypred,'epsilon',100)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
     #R = nn.lrp(ypred,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
-    '''
-    R = nn.lrp(Y[na,i]) #compute first layer relevance according to the true class label
-    '''
+
+    #R = nn.lrp(Y[na,i]) #compute first layer relevance according to the true class label
+
 
     '''
     yselect = 3
     yselect = (np.arange(Y.shape[1])[na,:] == yselect)*1.
     R = nn.lrp(yselect) #compute first layer relvance for an arbitrarily selected class
     '''
+
+    #sum over the third (color channel) axis. not necessary here, but for color images it would be.
+    R = R.sum(axis=3)
+    #same for input. create brightness image in [0,1].
+    x = ((x+1.)/2.).sum(axis=3)
 
     #render input and heatmap as rgb images
     digit = render.digit_to_rgb(x, scaling = 3)
@@ -83,7 +91,7 @@ for i in I[:10]:
 
 #note that modules.Sequential allows for batch processing inputs
 '''
-x = X[:10,:]
+x = X[:10,...]
 y = nn.forward(x)
 R = nn.lrp(y)
 data_io.write(R,'../Rbatch.npy')

@@ -601,6 +601,7 @@ class Sequential(Module):
 
 
 
+
     def lrp(self,R,lrp_var=None,param=0):
         '''
         Performs LRP using the network and temporary data produced by a forward call

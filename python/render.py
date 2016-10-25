@@ -11,6 +11,7 @@ provides methods to draw heatmaps beautifully.
 '''
 
 import numpy as np
+import matplotlib.cm
 from matplotlib.cm import ScalarMappable
 import skimage.io
 #import skimage.feature
@@ -52,7 +53,7 @@ def enlarge_image(img, scaling = 3):
     ----------
 
     img : numpy.ndarray
-        array of shape [H x W]
+        array of shape [H x W] OR [H x W x D]
 
     scaling : int
         positive integer value > 0
@@ -62,30 +63,44 @@ def enlarge_image(img, scaling = 3):
 
     out : numpy.ndarray
         two-dimensional array of shape [scaling*H x scaling*W]
+        OR
+        three-dimensional array of shape [scaling*H x scaling*W x D]
+        depending on the dimensionality of the input
     '''
 
     if scaling < 1 or not isinstance(scaling,int):
         print 'scaling factor needs to be an int >= 1'
 
-    H,W = img.shape
+    if len(img.shape) == 2:
+        H,W = img.shape
 
-    out = np.zeros((scaling*H, scaling*W))
-    for h in range(H):
-        fh = scaling*h
-        for w in range(W):
-            fw = scaling*w
-            out[fh:fh+scaling, fw:fw+scaling] = img[h,w]
+        out = np.zeros((scaling*H, scaling*W))
+        for h in range(H):
+            fh = scaling*h
+            for w in range(W):
+                fw = scaling*w
+                out[fh:fh+scaling, fw:fw+scaling] = img[h,w]
+
+    elif len(img.shape) == 3:
+        H,W,D = img.shape
+
+        out = np.zeros((scaling*H, scaling*W,D))
+        for h in range(H):
+            fh = scaling*h
+            for w in range(W):
+                fw = scaling*w
+                out[fh:fh+scaling, fw:fw+scaling,:] = img[h,w,:]
 
     return out
 
 
 def repaint_corner_pixels(rgbimg, scaling = 3):
     '''
+    DEPRECATED/OBSOLETE.
+
     Recolors the top left and bottom right pixel (groups) with the average rgb value of its three neighboring pixel (groups).
     The recoloring visually masks the opposing pixel values which are a product of stabilizing the scaling.
     Assumes those image ares will pretty much never show evidence.
-
-    TODO: find a smarter way to do this. I know a smarter way, yet am too lazy to bother. SEE hm_to_rgb (this file, line 191)
 
     Parameters
     ----------
@@ -102,6 +117,7 @@ def repaint_corner_pixels(rgbimg, scaling = 3):
     rgbimg : numpy.ndarray
         three-dimensional array of shape [scaling*H x scaling*W x 3]
     '''
+
 
     #top left corner.
     rgbimg[0:scaling,0:scaling,:] = (rgbimg[0,scaling,:] + rgbimg[scaling,0,:] + rgbimg[scaling, scaling,:])/3.0
@@ -136,8 +152,12 @@ def digit_to_rgb(X, scaling=3, shape = (), cmap = 'binary'):
         three-dimensional array of shape [scaling*H x scaling*W x 3] , where H*W == M*N
     '''
 
-    sm = ScalarMappable(cmap = cmap)
-    image = sm.to_rgba(enlarge_image(vec2im(X,shape), scaling))[:,:,0:3]
+    #create color map object from name string
+    cmap = eval('matplotlib.cm.{}'.format(cmap))
+
+    image = enlarge_image(vec2im(X,shape), scaling) #enlarge
+    image = cmap(image.flatten())[...,0:3].reshape([image.shape[0],image.shape[1],3]) #colorize, reshape
+
     return image
 
 
@@ -181,17 +201,17 @@ def hm_to_rgb(R, X = None, scaling = 3, shape = (), sigma = 2, cmap = 'jet', nor
         three-dimensional array of shape [scaling*H x scaling*W x 3] , where H*W == M*N
     '''
 
-    sm = ScalarMappable(cmap = cmap)  #prepare heatmap -> rgb image conversion
+    #create color map object from name string
+    cmap = eval('matplotlib.cm.{}'.format(cmap))
 
     if normalize:
-        R = R / np.max(np.abs(R))
-    R[0,0] = 1; R[-1,-1] = -1; # anchors for controlled color mapping, to be drawn over later.
+        R = R / np.max(np.abs(R)) # normalize to [-1,1] wrt to max relevance magnitude
+        R = (R + 1.)/2. # shift/normalize to [0,1] for color mapping
+
 
     R = enlarge_image(vec2im(R,shape), scaling)
-    rgbimg = sm.to_rgba(R)[:,:,0:3]
-    rgbimg = repaint_corner_pixels(rgbimg, scaling)
-    ''' TODO: shift relevance values to [0,1] after normalization, then directly use matplotlib.cm.<cmapname> on this input interval. then remove the now unneccessary repaint_corner_pixels'''
-    ''' TODO: when working on this, implement all other color mappings used for our publications '''
+    rgb = cmap(R.flatten())[...,0:3].reshape([R.shape[0],R.shape[1],3])
+    #rgb = repaint_corner_pixels(rgb, scaling) #obsolete due to directly calling the color map with [0,1]-normalized inputs
 
     if not X is None: #compute the outline of the input
         X = enlarge_image(vec2im(X,shape), scaling)
@@ -205,9 +225,9 @@ def hm_to_rgb(R, X = None, scaling = 3, shape = (), sigma = 2, cmap = 'jet', nor
         else:
             edges = skimage.filter.canny(X, sigma=sigma)
             edges = np.invert(np.dstack([edges]*3))*1.0
-            rgbimg *= edges # set outline pixels to black color
+            rgb *= edges # set outline pixels to black color
 
-    return rgbimg
+    return rgb
 
 
 def save_image(rgb_images, path, gap = 2):

@@ -25,7 +25,7 @@ import data_io
 import render
 
 #load a neural network, as well as the MNIST test data and some labels
-nn = model_io.read('../models/MNIST/long-rect.nn')
+nn = model_io.read('../models/MNIST/long-rect.nn') # 99.17% prediction accuracy
 X = data_io.read('../data/MNIST/test_images.npy')
 Y = data_io.read('../data/MNIST/test_labels.npy')
 
@@ -56,15 +56,18 @@ for i in I[:10]:
     #R = nn.lrp(ypred,'epsilon',100)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
     #R = nn.lrp(ypred,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
-    '''
-    R = nn.lrp(Y[na,i]) #compute first layer relevance according to the true class label
-    '''
+
+    #R = nn.lrp(Y[na,i]) #compute first layer relevance according to the true class label
+
 
     '''
     yselect = 3
     yselect = (np.arange(Y.shape[1])[na,:] == yselect)*1.
     R = nn.lrp(yselect) #compute first layer relvance for an arbitrarily selected class
     '''
+
+    #undo input normalization for digit drawing. get it back to range [0,1] per pixel
+    x = (x+1.)/2.
 
     #render input and heatmap as rgb images
     digit = render.digit_to_rgb(x, scaling = 3)
