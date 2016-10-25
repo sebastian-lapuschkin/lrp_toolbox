@@ -13,7 +13,8 @@ provides methods to draw heatmaps beautifully.
 import numpy as np
 from matplotlib.cm import ScalarMappable
 import skimage.io
-import skimage.feature
+#import skimage.feature
+import skimage.filter
 
 
 def vec2im(V, shape = () ):
@@ -202,7 +203,7 @@ def hm_to_rgb(R, X = None, scaling = 3, shape = (), sigma = 2, cmap = 'jet', nor
             print 'R.shape = ',Rdims, 'X.shape = ', xdims
             print 'skipping drawing of outline\n'
         else:
-            edges = skimage.feature.canny(X, sigma=sigma)
+            edges = skimage.filter.canny(X, sigma=sigma)
             edges = np.invert(np.dstack([edges]*3))*1.0
             rgbimg *= edges # set outline pixels to black color
 
