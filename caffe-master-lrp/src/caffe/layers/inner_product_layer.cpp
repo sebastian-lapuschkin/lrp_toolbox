@@ -277,6 +277,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(
 		const vector<Blob<Dtype>*>& bottom, const int layerindex,
 		const relpropopts & ro) {
 
+        // an inplace relu may alter the layer, thats why the forward here
+        Forward_cpu( bottom, top);
+
 	for (int i = 0; i < top.size(); ++i) {
 		const Dtype* top_diff = top[i]->cpu_diff();
 		const Dtype* bottom_data = bottom[i]->cpu_data();
@@ -332,6 +335,8 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(
 		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
 		const vector<Blob<Dtype>*>& bottom, const int layerindex,
 		const relpropopts & ro) {
+
+        Forward_cpu( bottom, top);
 
 	for (int i = 0; i < top.size(); ++i) {
 		const Dtype* top_diff = top[i]->cpu_diff();
