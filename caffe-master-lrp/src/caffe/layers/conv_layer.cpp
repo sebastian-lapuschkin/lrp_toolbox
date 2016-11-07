@@ -371,6 +371,9 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(const vec
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
 	  const int layerindex, const relpropopts & ro ) {
 	
+        // an inplace relu may alter the layer, thats why the forward here
+        Forward_cpu( bottom, top);
+
 	  const Dtype* weight = this->blobs_[0]->cpu_data();
 
 	
@@ -483,7 +486,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(const 
 	  const int layerindex, const relpropopts & ro ) {
 	
 	  const Dtype* weight = this->blobs_[0]->cpu_data();
-
+        Forward_cpu( bottom, top);
 	
 	  for (int i = 0; i < top.size(); ++i) {
 	    const Dtype* top_diff = top[i]->cpu_diff();
