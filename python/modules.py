@@ -141,12 +141,12 @@ class Linear(Module):
     def backward(self,DY):
         self.dW = np.dot(self.X.T,DY)
         self.dB = DY.sum(axis=0)
-        return np.dot(DY,self.W.T)*self.m**.5/self.n**.5
+        return np.dot(DY,self.W.T)
 
 
     def update(self, lrate):
-        self.W -= lrate*self.dW/self.m**.5
-        self.B -= lrate*self.dB/self.m**.25
+        self.W -= lrate*self.dW
+        self.B -= lrate*self.dB
 
 
     def clean(self):
@@ -207,7 +207,7 @@ class SoftMax(Module):
 
     def forward(self,X):
         self.X = X
-        self.Y = np.exp(X) / np.exp(X).sum(axis=1)[:,na]
+        self.Y = np.exp(X) / np.exp(X).sum(axis=1,keepdims=True)
         return self.Y
 
 
@@ -415,7 +415,7 @@ class Convolution(Module):
         self.fh, self.fw, self.fd, self.n = filtersize
         self.stride = stride
 
-        self.W = np.random.normal(0,1/(self.fh*self.fw*self.fd)**.5, filtersize)
+        self.W = np.random.normal(0,1./(self.fh*self.fw*self.fd)**.5, filtersize)
         self.B = np.zeros([self.n])
 
 
@@ -473,8 +473,13 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                dy = DY[:,i:i+1,j:j+1,None,:] # N,1,1,numfilters, extended to N,1,1,df,numfilters
-                DX[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (W * dy).sum(axis=4)  #sum over all the filters
+                #dy = DY[:,i:i+1,j:j+1,None,:] # N,1,1,numfilters, extended to N,1,1,df,numfilters
+                #DX[:,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += (W * dy).sum(axis=4)  #sum over all the filters
+
+                for n in xrange(numfilters):
+                    for b in range(N):
+                        dy = DY[b,i,j,n] # N gradient values, one per sample for the current output voxel
+                        DX[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += self.W[...,n] * dy
 
         return DX
 
@@ -514,23 +519,30 @@ class Convolution(Module):
         hf,wf,df,numfilters = self.W.shape
         hstride, wstride = self.stride
 
-        DW = np.zeros_like(self.W,dtype=np.float) # hf, wf, df, numfilters
+        self.DW = np.zeros_like(self.W,dtype=np.float) # hf, wf, df, numfilters
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                x = X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # N,hf,wf,df
+                '''
+                x = self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # N,hf,wf,df
                 x = x[...,None] # N, hf, wf, df, nf=1
-
-                dy = DY[:,i:i+1,j:j+1,None,:] # N, Hout=1, Wout=1, df=1, nf
-
+                dy = self.DY[:,i:i+1,j:j+1,None,:] # N, Hout=1, Wout=1, df=1, nf
                 # hf, wf, df, nf
                 self.DW += (x * dy).sum(axis=0) # hf, wf, df, nf
+                '''
+
+                for b in xrange(N):
+                    x = self.X[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # hf,wf,df
+                    for n in xrange(numfilters):
+                        dy = self.DY[b,i,j,n]
+                        self.DW[...,n] += x*dy
+
 
         self.DB = self.DY.sum(axis=(0,1,2))
 
 
-        self.W -= lr * self.DW
-        self.B -= lr * self.DB
+        self.W -= lrate * self.DW
+        self.B -= lrate * self.DB
 
 
         def clean(self):
@@ -720,9 +732,6 @@ class Sequential(Module):
 
             return I
 
-
-
-
         untilConvergence = convergence;    learningFactor = lfactor_initial
         bestAccuracy = 0.0;                bestLayers = copy.deepcopy(self.modules)
 
@@ -746,16 +755,17 @@ class Sequential(Module):
 
             #periodically evaluate network and optionally adjust learning rate or check for convergence.
             if (d+1) % status == 0:
-                Ypred = self.forward(X)
-                acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Y, axis=1))
-                print
-                print 'Accuracy after {0} iterations: {1}%'.format(d+1,acc*100)
-
-                #if given, also evaluate on validation data
-                if not Xval == [] and not Yval == []:
+                if not Xval == [] and not Yval == []: #if given, evaluate on validation data
                     Ypred = self.forward(Xval)
-                    acc_val = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Yval, axis=1))
-                    print 'Accuracy on validation set: {1}%'.format(acc_val*100)
+                    acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Yval, axis=1))
+                    print 'Accuracy on validation set: {0}%'.format(acc*100)
+
+                else: #evaluate on the training data only
+                    Ypred = self.forward(X)
+                    acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Y, axis=1))
+                    print
+                    print 'Accuracy after {0} iterations: {1}%'.format(d+1,acc*100)
+
 
                 #save current network parameters if we have improved
                 if acc > bestAccuracy:
@@ -785,7 +795,8 @@ class Sequential(Module):
 
             elif (d+1) % (status/10) == 0:
                 # print 'alive' signal
-                sys.stdout.write('.')
+                #sys.stdout.write('.')
+                sys.stdout.write('batch# {}, lrate {}, l1loss {:.2}\n'.format(d+1,lrate*learningFactor,np.abs(Ypred - Y[samples,:]).sum()/N))
                 sys.stdout.flush()
 
         #after training, either due to convergence or iteration limit

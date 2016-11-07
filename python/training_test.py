@@ -1,4 +1,4 @@
- '''
+'''
 @author: Sebastian Lapuschkin
 @maintainer: Sebastian Lapuschkin
 @contact: sebastian.lapuschkin@hhi.fraunhofer.de
@@ -26,7 +26,7 @@ X += np.random.randn(N,D)*0.1 # add some noise to the data.
 #build a network
 nn = modules.Sequential([modules.Linear(2,3), modules.Tanh(),modules.Linear(3,15), modules.Tanh(), modules.Linear(15,15), modules.Tanh(), modules.Linear(15,3), modules.Tanh() ,modules.Linear(3,2), modules.SoftMax()])
 #train the network.
-nn.train(X,Y, batchsize = 5)
+nn.train(X,Y,Xval=X,Yval=Y, batchsize = 5)
 
 #save the network
 model_io.write(nn, '../xor_net_small_1000.txt')
