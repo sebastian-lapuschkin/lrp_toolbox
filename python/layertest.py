@@ -609,3 +609,39 @@ Rex22 = [[0,0,0,0],\
 Rex = np.array(Rex11) + np.array(Rex21) + np.array(Rex12) + np.array(Rex22)
 Rex = np.reshape(Rex,x.shape)
 convolutionRtest(x,Rin,Rex,f,stride)
+
+
+
+print '# -------------------------------'
+print '# Convolution Layer backward test'
+print '# -------------------------------'
+
+
+print a
+aeps = a*1.0
+eps = 0.3
+aeps[0,3,3,0] += eps
+
+C = Convolution(filtersize=(4,4,1,1),stride = (1,1))
+W = np.copy(C.W)
+
+fa = C.forward(a)
+da = C.backward(np.ones_like(fa))
+
+
+faeps = C.forward(aeps)
+daeps = C.backward(np.ones_like(faeps))
+
+print (faeps - fa)/eps
+print da[0,3,3,0]
+print daeps[0,3,3,0]
+
+C.W = W.copy()
+fa = C.forward(a)
+da = C.backward(np.ones_like(fa))
+C.update(1)
+
+C.W = W.copy()
+faeps = C.forward(aeps)
+daeps = C.backward(np.ones_like(faeps))
+C.update(1)

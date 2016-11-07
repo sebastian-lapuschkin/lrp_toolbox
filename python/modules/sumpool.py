@@ -61,6 +61,7 @@ class SumPool(Module):
 
 
     def backward(self,DY):
+        # DY is of shape N, Hout, Wout, nfilters
 
         N,H,W,D = self.X.shape
 
@@ -71,13 +72,13 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        #distribute the gradient towards across all inputs evenly
-        #assumes non-zero values for each input, which should be mostly true -> gradient at each input is 1
-
+        #distribute the gradient (1 * DY) towards across all contributing inputs evenly
         DX = np.zeros_like(self.X)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:]  #the :: to not lose axis information and allow for broadcasting.
+                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:]
+
+        print 'dx sum sumpool', DX.sum()
         return DX
 
 
@@ -90,7 +91,6 @@ class SumPool(Module):
 
     def lrp(self,R, *args, **kwargs):
 
-        #copypasta from backward. check for errors if changes made to backward!
         N,H,W,D = self.X.shape
 
         hpool,   wpool   = self.pool
@@ -107,8 +107,8 @@ class SumPool(Module):
         for i in xrange(Hout):
             for j in xrange(Wout):
                 x = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations. N,hpool,wpool,D
-                z = x / x.sum(axis=(1,2),keepdims=True) #proportional input activations per layer.
-                z[np.isnan(z)] = 1e-12 #do smarter!. isnan is slow.
+                xsum = x.sum(axis=(1,2),keepdims=True)
+                z = x / ( xsum + ((xsum >= 0)*2-1.)*1e-12 ) #proportional input activations per layer plus some slight numerical stabilization to avoid division by zero
 
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += z * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 

@@ -29,6 +29,5 @@ class Flatten(Module):
         return np.reshape(X,[self.inputshape[0],np.prod(self.inputshape[1:])])
 
 
-
     def lrp(self,R, *args, **kwargs):
         return np.reshape(R,self.inputshape)

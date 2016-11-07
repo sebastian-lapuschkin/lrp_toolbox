@@ -75,25 +75,22 @@ class Convolution(Module):
     def backward(self,DY):
 
         self.DY = DY
-        N,Hout,Wout,numfilters = DY.shape
-
-        hf, wf, df, numfilters = self.W.shape
+        N,Hy,Wy,NF = DY.shape
+        hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        W = self.W[na,...] # extend for N axis in input. is 5-tensor now: N,hf,wf,df,numfilters
-
         DX = np.zeros_like(self.X,dtype=np.float)
+        DXO = np.zeros_like(self.X,dtype=np.float)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
-                #dy = DY[:,i:i+1,j:j+1,None,:] # N,1,1,numfilters, extended to N,1,1,df,numfilters
-                #DX[:,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += (W * dy).sum(axis=4)  #sum over all the filters
+        for i in xrange(Hy):
+            for j in xrange(Wy):
+                DX[:,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += (self.W[na,...] * DY[:,i:i+1,j:j+1,na,:]).sum(axis=4)  #sum over all the filters
 
-                for n in xrange(numfilters):
-                    for b in range(N):
-                        dy = DY[b,i,j,n] # N gradient values, one per sample for the current output voxel
-                        DX[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += self.W[...,n] * dy
-
+                #for n in xrange(numfilters):
+                #    for b in range(N):
+                #        dy = DY[b,i,j,n] # N gradient values, one per sample for the current output voxel
+                #        DX[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += self.W[...,n] * dy
+        print 'dx sum conv', DX.sum()
         return DX
 
 
@@ -102,33 +99,49 @@ class Convolution(Module):
     def update(self,lrate):
 
         N,Hx,Wx,Dx = self.X.shape
-        N,Hout,Wout,Dout = self.DY.shape
+        N,Hy,Wy,NF = self.DY.shape
 
-        hf,wf,df,numfilters = self.W.shape
+        hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
         self.DW = np.zeros_like(self.W,dtype=np.float) # hf, wf, df, numfilters
+        self.DW2 = np.zeros_like(self.W,dtype=np.float)
+        self.DW0 = np.zeros_like(self.W,dtype=np.float)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
-                '''
+        #prepare combined input and gradient (sum over all samples)
+        X = self.X.sum(axis = 0) # Hx,Wx,Dx
+        DY = self.DY.sum(axis = 0) # Hy,Wy,numfilters
+
+
+        for i in xrange(Hy):
+            for j in xrange(Wy):
+                #result differs from that ending up in self.DW and self.DW2, but this does not help much.
+                self.DW0 += X[i*hstride:i*hstride+hf,j*wstride:j*wstride+wf,:,na] * DY[i,j,na,:]
+
+
+
                 x = self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # N,hf,wf,df
                 x = x[...,None] # N, hf, wf, df, nf=1
                 dy = self.DY[:,i:i+1,j:j+1,None,:] # N, Hout=1, Wout=1, df=1, nf
                 # hf, wf, df, nf
                 self.DW += (x * dy).sum(axis=0) # hf, wf, df, nf
-                '''
 
+                # stupid explicit loop-based code. produces same result as self.DW
                 for b in xrange(N):
                     x = self.X[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # hf,wf,df
-                    for n in xrange(numfilters):
+                    for n in xrange(NF):
                         dy = self.DY[b,i,j,n]
-                        self.DW[...,n] += x*dy
+                        self.DW2[...,n] += x*dy
+
+
+
+        print 'DW0', self.DW0
+        print 'DW', self.DW
+        print 'DW2', self.DW2
 
 
         self.DB = self.DY.sum(axis=(0,1,2))
-
-        self.W -= lrate * self.DW
+        self.W -= lrate * self.DW0
         self.B -= lrate * self.DB
 
 

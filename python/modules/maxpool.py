@@ -85,7 +85,7 @@ class MaxPool(Module):
                 for n in xrange(N):
                     for d in xrange(D):
                         activators = x[n,...,d] == y[n,d]
-                        DYout[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += (activators * DY[n,i,j,d]) * (1./activators.sum()) #last bit to distribute gradient evenly in case of multiple activations.
+                        DYout[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += activators * DY[n,i,j,d]
         return DYout
 
 
@@ -97,8 +97,31 @@ class MaxPool(Module):
 
 
     def lrp(self,R, *args, **kwargs):
-        #this should behave exactly the same as backward, just with relevance. so let's use what we already have
-        return self.backward(R)
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #distribute the gradient towards the max activation (evenly in case of ambiguities)
+        #the max activation value is already known via self.Y
+
+        #this implementation seems wasteful.....
+        Rx = np.zeros_like(self.X,dtype=np.float)
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                y = self.Y[:,i,j,:] #y is the max activation for this poolig OP. outputs a 2-axis array. over N and D
+                x = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
+
+                #attribute gradient weights per input depth and sample
+                for n in xrange(N):
+                    for d in xrange(D):
+                        activators = x[n,...,d] == y[n,d]
+                        Rx[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += (activators * DY[n,i,j,d]) * (1./activators.sum()) #last bit to distribute gradient evenly in case of multiple activations.
+        return Rx
 
 
 
