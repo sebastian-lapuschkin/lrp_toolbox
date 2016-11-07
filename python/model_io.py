@@ -11,7 +11,7 @@
 import os
 import pickle
 import numpy as np
-from modules import Sequential,Linear,Tanh,Rect,SoftMax,Convolution,Flatten,SumPooling,MaxPooling
+from modules import Sequential,Linear,Tanh,Rect,SoftMax,Convolution,Flatten,SumPool,MaxPool
 
 #--------------------
 #   model reading
@@ -66,14 +66,14 @@ def read(path, fmt = None):
 
         Convolution h w d n s0 s1
         W.flatten()
-        B.flatte()
+        B.flatten()
 
         Semantics as above, with h, w, d being the filter heigth, width and depth and n being the number of filters of that layer.
         s0 and s1 specify the stride parameter in vertical (axis 0) and horizontal (axis 1) direction the layer operates on.
 
         Pooling layers have a parameterized one-line-description
 
-        [Max|Sum]Pooling h w s0 s1
+        [Max|Sum]Pool h w s0 s1
 
         with h and w designating the pooling mask size and s0 and s1 the pooling stride.
     '''
@@ -134,27 +134,27 @@ def _read_txt(path):
                     modules.append(layer)
                     c+=3 #the description of a convolution layer spans three lines
 
-                elif line.startswith(SumPooling.__name__): # @UndefinedVariable import error suppression for PyDev users
+                elif line.startswith(SumPool.__name__): # @UndefinedVariable import error suppression for PyDev users
                     '''
                     Format of sum pooling layer
-                    SumPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                    SumPool <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
                     '''
 
                     _,h,w,s0,s1 = line.split()
                     h = int(h); w = int(w); s0 = int(s0); s1 = int(s1)
-                    layer = SumPooling(pool=(h,w),stride=(s0,s1))
+                    layer = SumPool(pool=(h,w),stride=(s0,s1))
                     modules.append(layer)
                     c+=1 # one line of parameterized layer description
 
-                elif line.startswith(MaxPooling.__name__): # @UndefinedVariable import error suppression for PyDev users
+                elif line.startswith(MaxPool.__name__): # @UndefinedVariable import error suppression for PyDev users
                     '''
                     Format of max pooling layer
-                    MaxPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                    MaxPool <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
                     '''
 
                     _,h,w,s0,s1 = line.split()
                     h = int(h); w = int(w); s0 = int(s0); s1 = int(s1)
-                    layer = MaxPooling(pool=(h,w),stride=(s0,s1))
+                    layer = MaxPool(pool=(h,w),stride=(s0,s1))
                     modules.append(layer)
                     c+=1 # one line of parameterized layer description
 
@@ -320,10 +320,10 @@ def _write_txt(model,path):
                 f.write(' '.join([repr(w) for w in layer.W.flatten()]) + '\n')
                 f.write(' '.join([repr(b) for b in layer.B.flatten()]) + '\n')
 
-            elif isinstance(layer,SumPooling):
+            elif isinstance(layer,SumPool):
                 '''
                     Format of sum pooling layer
-                    SumPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                    SumPool <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
                 '''
 
                 f.write('{0} {1} {2} {3} {4}\n'.format(
@@ -333,10 +333,10 @@ def _write_txt(model,path):
                     layer.stride[0],\
                     layer.stride[1]))
 
-            elif isinstance(layer,MaxPooling):
+            elif isinstance(layer,MaxPool):
                 '''
                     Format of max pooling layer
-                    MaxPooling <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
+                    MaxPool <mask_heigth> <mask_width> <stride_axis_0> <stride_axis_1>
                 '''
 
                 f.write('{0} {1} {2} {3} {4}\n'.format(

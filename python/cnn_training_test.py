@@ -46,13 +46,13 @@ Ytest[np.arange(Ytest.shape[0]),I] = 1
 nn = modules.Sequential([
                             modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
                             modules.Rect(),\
-                            modules.SumPooling(pool=(2,2),stride=(2,2)),\
+                            modules.SumPool(pool=(2,2),stride=(2,2)),\
                             modules.Convolution(filtersize=(5,5,10,25),stride = (1,1)),\
                             modules.Rect(),\
-                            modules.SumPooling(pool=(2,2),stride=(2,2)),\
+                            modules.SumPool(pool=(2,2),stride=(2,2)),\
                             modules.Convolution(filtersize=(4,4,25,100),stride = (1,1)),\
                             modules.Rect(),\
-                            modules.SumPooling(pool=(2,2),stride=(2,2)),\
+                            modules.SumPool(pool=(2,2),stride=(2,2)),\
                             modules.Convolution(filtersize=(1,1,100,10),stride = (1,1)),\
                             modules.Flatten()
                         ])

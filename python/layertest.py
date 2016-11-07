@@ -1,5 +1,5 @@
 
-from modules import SumPooling, MaxPooling, Convolution, Flatten
+from modules import SumPool, MaxPool, Convolution, Flatten
 import numpy as np
 
 # -----------------------------------------
@@ -83,7 +83,7 @@ def maxpooltest(x,e,pool,stride):
     print 'stride', stride
     print 'e.shape', e.shape
 
-    M = MaxPooling(pool=pool, stride=stride)
+    M = MaxPool(pool=pool, stride=stride)
     y =  M.forward(x)
 
     print 'y.shape', y.shape
@@ -101,7 +101,7 @@ def maxpoolRtest(x,Rin,Rex,pool,stride):
     print 'stride', stride
     print 'Rin.shape', Rin.shape
 
-    M = MaxPooling(pool=pool, stride=stride)
+    M = MaxPool(pool=pool, stride=stride)
     y = M.forward(x)
     R = M.lrp(Rin)
 
@@ -239,7 +239,7 @@ if False:
         print 'stride', stride
         print 'e.shape', e.shape
 
-        S = SumPooling(pool=pool, stride=stride)
+        S = SumPool(pool=pool, stride=stride)
         y =  S.forward(x)
 
         print 'y.shape', y.shape
@@ -256,7 +256,7 @@ if False:
         print 'stride', stride
         print 'Rin.shape', Rin.shape
 
-        S = SumPooling(pool=pool, stride=stride)
+        S = SumPool(pool=pool, stride=stride)
         y = S.forward(x)
         R = S.lrp(Rin)
 
