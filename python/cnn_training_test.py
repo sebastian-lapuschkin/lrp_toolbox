@@ -63,7 +63,7 @@ nn.train(   X=Xtrain,\
             Xval=Xtest,\
             Yval=Ytest,\
             iters=10**6,\
-            lrate = 0.00001,\
+            lrate = 0.0001,\
             batchsize = 25)
 
 #save the network

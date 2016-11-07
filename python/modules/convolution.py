@@ -80,7 +80,7 @@ class Convolution(Module):
         hstride, wstride = self.stride
 
         DX = np.zeros_like(self.X,dtype=np.float)
-        DXO = np.zeros_like(self.X,dtype=np.float)
+        DXG = np.zeros_like(self.X,dtype=np.float)
 
         for i in xrange(Hy):
             for j in xrange(Wy):
@@ -90,8 +90,16 @@ class Convolution(Module):
                 #    for b in range(N):
                 #        dy = DY[b,i,j,n] # N gradient values, one per sample for the current output voxel
                 #        DX[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += self.W[...,n] * dy
-        print 'dx sum conv', DX.sum()
-        return DX
+        #print 'dx sum conv', DX.sum()
+        #return DX
+
+
+        for i in xrange(hf):
+            for j in xrange(wf):
+                DXG[:,i:i+Hy:hstride,j:j+Wy:wstride,:] += np.dot(DY,self.W[i,j,:,:].T)
+
+        #print 'DXG sum conv', DXG.sum()
+        return DXG
 
 
 
@@ -107,12 +115,13 @@ class Convolution(Module):
         self.DW = np.zeros_like(self.W,dtype=np.float) # hf, wf, df, numfilters
         self.DW2 = np.zeros_like(self.W,dtype=np.float)
         self.DW0 = np.zeros_like(self.W,dtype=np.float)
+        self.DWG = np.zeros_like(self.W,dtype=np.float)
 
         #prepare combined input and gradient (sum over all samples)
         X = self.X.sum(axis = 0) # Hx,Wx,Dx
         DY = self.DY.sum(axis = 0) # Hy,Wy,numfilters
 
-
+        '''
         for i in xrange(Hy):
             for j in xrange(Wy):
                 #result differs from that ending up in self.DW and self.DW2, but this does not help much.
@@ -133,15 +142,24 @@ class Convolution(Module):
                         dy = self.DY[b,i,j,n]
                         self.DW2[...,n] += x*dy
 
+        '''
+        hw = Hx - Hy + 1 # stride dependant
+        ww = Wx - Wy + 1 # TODO: FIX CALCULATION OF THOSE
+        for i in xrange(hw):
+            for j in xrange(ww):
+                self.DWG[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2,]))
 
 
-        print 'DW0', self.DW0
-        print 'DW', self.DW
-        print 'DW2', self.DW2
+
+
+        #print 'DW0', self.DW0 # this one seems to be wrong. the other ones do all match up.
+        #print 'DW', self.DW
+        #print 'DW2', self.DW2
+        #print 'DWG', self.DWG
 
 
         self.DB = self.DY.sum(axis=(0,1,2))
-        self.W -= lrate * self.DW0
+        self.W -= lrate * self.DWG
         self.B -= lrate * self.DB
 
 

@@ -55,7 +55,7 @@ class SumPool(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2))
+                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2)) * 0.5 #WHY 0.5 ?
 
         return self.Y
 
@@ -76,9 +76,9 @@ class SumPool(Module):
         DX = np.zeros_like(self.X)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:]
+                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * 0.5 # WHY 0.5 ?
 
-        print 'dx sum sumpool', DX.sum()
+        #print 'dx sum sumpool', DX.sum()
         return DX
 
 
