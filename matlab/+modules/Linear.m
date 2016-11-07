@@ -141,12 +141,12 @@ classdef Linear < modules.Module
         function DY = backward(obj,DY)
             obj.dW = obj.X'*DY;
             obj.dB = sum(DY,1);
-            DY = (DY * obj.W')*obj.m^.5/obj.n^.5;
+            DY = (DY * obj.W');
         end
 
         function update(obj, lrate)
-           obj.W = obj.W - lrate*obj.dW/obj.m^.5;
-           obj.B = obj.B - lrate*obj.dB/obj.m^.5;
+           obj.W = obj.W - lrate*obj.dW;
+           obj.B = obj.B - lrate*obj.dB;
         end
 
         function clean(obj)
