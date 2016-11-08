@@ -207,7 +207,7 @@ class Convolution(Module):
         for i in xrange(Hout):
             for j in xrange(Wout):
                 Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
-                Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,...]
+                Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,na,na,na,...]
                 Zs += 1e-12*((Zs >= 0)*2 - 1.) # add a weak numerical stabilizer to cusion division by zero
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
         return Rx
@@ -227,7 +227,45 @@ class Convolution(Module):
         for i in xrange(Hout):
             for j in xrange(Wout):
                 Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
-                Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,...]
+                Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,na,na,na,...]
                 Zs += epsilon*((Zs >= 0)*2-1)
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+        return Rx
+
+
+    def _alphabeta_lrp(self,R,alpha):
+        '''
+        LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
+        '''
+
+        beta = 1 - alpha
+
+        N,Hout,Wout,NF = R.shape
+        hf,wf,df,NF = self.W.shape
+        hstride, wstride = self.stride
+
+        Rx = np.zeros_like(self.X,dtype=np.float)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+
+                if not alpha == 0:
+                    Zp = Z * (Z > 0)
+                    Bp = (self.B * (self.B > 0))[na,na,na,na,...]
+                    Zsp = Zp.sum(axis=(1,2,3),keepdims=True) + Bp
+                    Ralpha = alpha * ((Zp/Zsp) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+                else:
+                    Ralpha = 0
+
+                if not beta == 0:
+                    Zn = Z * (Z < 0)
+                    Bn = (self.B * (self.B < 0))[na,na,na,na,...]
+                    Zsn = Zn.sum(axis=(1,2,3),keepdims=True) + Bn
+                    Rbeta = beta * ((Zn/Zsn) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+                else:
+                    Rbeta = 0
+
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += Ralpha + Rbeta
+
         return Rx

@@ -147,7 +147,8 @@ class SumPool(Module):
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
-            return self._alphabeta_lrp(R,param)
+            #return self._alphabeta_lrp(R,param)
+            return self._simple_lrp(R)
         else:
             print 'Unknown lrp variant', lrp_var
 
@@ -202,3 +203,46 @@ class SumPool(Module):
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += (Z/Zs) * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 
         return Rx
+
+    """
+    # yes, we can do this. no, it will not make sense most of the time.  by default, _lrp_simple will be called. see line 151
+    def _alphabeta_lrp(self,R,alpha):
+        '''
+        LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
+        '''
+
+        beta = 1-alpha
+
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #distribute the gradient towards across all inputs evenly
+        Rx = np.zeros(self.X.shape)
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
+
+                if not alpha == 0:
+                    Zp = Z * (Z > 0)
+                    Zsp = Zp.sum(axis=(1,2),keepdims=True)
+                    Ralpha = (Zp/Zsp) * R[:,i:i+1,j:j+1,:]
+                else:
+                    Ralpha = 0
+
+                if not beta == 0:
+                    Zn = Z * (Z < 0)
+                    Zsn = Zn.sum(axis=(1,2),keepdims=True)
+                    Rbeta = (Zn/Zsn) * R[:,i:i+1,j:j+1,:]
+                else:
+                    Rbeta = 0
+
+                Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += Ralpha + Rbeta
+
+        return Rx
+    """
