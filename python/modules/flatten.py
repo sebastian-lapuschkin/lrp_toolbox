@@ -22,6 +22,7 @@ class Flatten(Module):
     '''
 
     def __init__(self):
+        Module.__init__(self)
         self.inputshape = []
 
     def backward(self,DY):

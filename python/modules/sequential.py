@@ -34,6 +34,7 @@ class Sequential(Module):
         modules : list, tuple, etc. enumerable.
             an enumerable collection of instances of class Module
         '''
+        Module.__init__(self)
         self.modules = modules
 
 

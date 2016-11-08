@@ -39,6 +39,8 @@ class Convolution(Module):
 
         '''
 
+        Module.__init__(self)
+
         self.fh, self.fw, self.fd, self.n = filtersize
         self.stride = stride
 

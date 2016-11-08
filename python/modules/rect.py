@@ -19,6 +19,8 @@ class Rect(Module):
     '''
     Rectification Layer
     '''
+    def __init__(self):
+        Module.__init__(self)
 
     def forward(self,X):
         self.Y = np.maximum(0,X)

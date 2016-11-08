@@ -20,6 +20,9 @@ class Tanh(Module):
     Tanh Layer
     '''
 
+    def __init__(self):
+        Module.__init__(self)
+
     def forward(self,X):
         self.Y = np.tanh(X)
         return self.Y

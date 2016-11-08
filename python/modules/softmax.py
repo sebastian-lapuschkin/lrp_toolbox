@@ -20,6 +20,9 @@ class SoftMax(Module):
     Softmax Layer
     '''
 
+    def __init__(self):
+        Module.__init__(self)
+
     def forward(self,X):
         self.X = X
         self.Y = np.exp(X) / np.exp(X).sum(axis=1,keepdims=True)

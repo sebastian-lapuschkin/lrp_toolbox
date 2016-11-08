@@ -32,6 +32,8 @@ class SumPool(Module):
             the vertical (h) and horizontal (w) step sizes between filter applications.
         '''
 
+        Module.__init__(self)
+
         self.pool = pool
         self.stride = stride
 
