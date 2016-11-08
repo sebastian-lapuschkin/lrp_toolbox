@@ -17,17 +17,29 @@ from module import Module
 # -------------------------------
 
 class Flatten(Module):
+    '''
+    Flattening layer.
+    '''
 
     def __init__(self):
         self.inputshape = []
 
     def backward(self,DY):
+        '''
+        Just backward-passes the input gradient DY and reshapes it to fit the input.
+        '''
         return np.reshape(DY,self.inputshape)
 
     def forward(self,X):
+        '''
+        Transforms each sample in X to a one-dimensional array.
+        Shape change according to C-order.
+        '''
         self.inputshape = X.shape # N x H x W x D
         return np.reshape(X,[self.inputshape[0],np.prod(self.inputshape[1:])])
 
-
     def lrp(self,R, *args, **kwargs):
+        '''
+        Receives upper layer input relevance R and reshapes it to match the input neurons.
+        '''
         return np.reshape(R,self.inputshape)

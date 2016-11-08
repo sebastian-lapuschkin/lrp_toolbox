@@ -44,32 +44,68 @@ class Linear(Module):
 
 
     def forward(self,X):
+        '''
+        Forward-transforms an input X
+
+        Parameters
+        ----------
+
+        X : numpy.ndarray
+            the input, shaped [N,D], where N is the number of samples and D their dimensionality
+
+        Returns
+        -------
+        Y : numpy.ndarray
+            the transformed data shaped [N,M], with M being the number of output neurons
+        '''
+
         self.X = X
         self.Y = np.dot(X,self.W)+self.B
         return self.Y
 
 
     def backward(self,DY):
+        '''
+        Backward pass through the linear layer, computing the derivative wrt the inputs.
+        Ensures a well-conditioned output gradient
+
+        Parameters
+        ----------
+
+        DY : numpy.ndarray
+            the backpropagated error signal as input, shaped [N,M]
+
+        Returns
+        -------
+
+        DX : numpy.ndarray
+            the computed output derivative of the error signal wrt X, shaped [N,D]
+        '''
+
         self.dW = np.dot(self.X.T,DY)
         self.dB = DY.sum(axis=0)
-        return np.dot(DY,self.W.T)
+        return np.dot(DY,self.W.T)*self.m**.5/self.n**.5
 
 
     def update(self, lrate):
-        self.W -= lrate*self.dW
-        self.B -= lrate*self.dB
+        '''
+        Update the model weights
+        '''
+        self.W -= lrate*self.dW/self.m**.5
+        self.B -= lrate*self.dB/self.n**.25
 
 
     def clean(self):
+        '''
+        Removes temporarily stored variables from this layer
+        '''
         self.X = None
         self.Y = None
         self.dW = None
         self.dB = None
 
 
-
-
-    def lrp(self,R, lrp_var=None,param=0):
+    def lrp(self,R, lrp_var=None,param=1.):
         '''
         performs LRP by calling subroutines, depending on lrp_var and param
 
@@ -83,7 +119,7 @@ class Linear(Module):
         lrp_var : str
             either 'none' or 'simple' or None for standard Lrp ,
             'epsilon' for an added epsilon slack in the denominator
-            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
+            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
 
         param : double
             the respective parameter for the lrp method of choice
@@ -98,7 +134,7 @@ class Linear(Module):
             return self._simple_lrp(R)
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
-        elif lrp_var.lower() == 'alphabeta':
+        elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
             return self._alphabeta_lrp(R,param)
         else:
             print 'Unknown lrp variant', lrp_var

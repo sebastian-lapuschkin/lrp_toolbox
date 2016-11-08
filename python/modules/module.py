@@ -17,10 +17,29 @@ class Module:
     Superclass for all computation layer implementations
     '''
 
-    def __init__(self): pass
-    def update(self, lrate): pass
-    def clean(self): pass
-    def lrp(self,R, *args, **kwargs): return R
-    def backward(self,DY): return DY
-    def train(self, X, Y, *args, **kwargs): pass
-    def forward(self,X): return X
+    def __init__(self):
+        ''' The constructor '''
+        pass
+
+    def update(self, lrate):
+        ''' update should implement the layer parameter updating step '''
+        pass
+
+    def clean(self):
+        ''' clean can be used to remove any temporary variables from the layer, e.g. just before serializing the layer object'''
+        pass
+
+    def lrp(self,R, *args, **kwargs):
+        ''' entry point for the lrp backward pass '''
+        return R
+
+    def backward(self,DY):
+        ''' backward passes the error gradient DY to the input neurons '''
+        return DY
+
+    def train(self, X, Y, *args, **kwargs):
+        ''' implements (currently in modules.Sequential only) a simple training routine '''
+
+    def forward(self,X):
+        ''' forward passes the input data X to the layer's output neurons '''
+        return X

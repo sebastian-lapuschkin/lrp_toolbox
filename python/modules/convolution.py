@@ -22,7 +22,21 @@ class Convolution(Module):
 
     def __init__(self, filtersize=(5,5,3,32), stride = (2,2)):
         '''
-        filtersize = (h,w,d,n)
+        Constructor for a Convolution layer.
+
+        Parameters
+        ----------
+
+        filtersize : 4-tuple with values (h,w,d,n), where
+            h = filter heigth
+            w = filter width
+            d = filter depth
+            n = number of filters = number of outputs
+
+        stride : 2-tuple (h,w), where
+            h = step size for filter application in vertical direction
+            w = step size in horizontal direction
+
         '''
 
         self.fh, self.fw, self.fd, self.n = filtersize
@@ -65,14 +79,32 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                x = X[:, i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ]
-                y = np.tensordot(x,self.W,axes = ([1,2,3],[0,1,2]))
-                self.Y[:,i,j,:] = y + self.B
-
+                self.Y[:,i,j,:] = np.tensordot(X[:, i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ],self.W,axes = ([1,2,3],[0,1,2])) + self.B
         return self.Y
 
 
     def backward(self,DY):
+        '''
+        Backward-passes an input error gradient DY towards the input neurons of this layer.
+
+        Parameters
+        ----------
+
+        DY : numpy.ndarray
+            an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
+            N = number of samples in the batch
+            Hy = heigth of the output
+            Wy = width of the output
+            Dy = output depth = input depth
+
+
+        Returns
+        -------
+
+        DX : numpy.ndarray
+            the error gradient propagated towards the input
+
+        '''
 
         self.DY = DY
         N,Hy,Wy,NF = DY.shape
@@ -80,86 +112,40 @@ class Convolution(Module):
         hstride, wstride = self.stride
 
         DX = np.zeros_like(self.X,dtype=np.float)
-        DXG = np.zeros_like(self.X,dtype=np.float)
 
+        '''
         for i in xrange(Hy):
             for j in xrange(Wy):
                 DX[:,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += (self.W[na,...] * DY[:,i:i+1,j:j+1,na,:]).sum(axis=4)  #sum over all the filters
-
-                #for n in xrange(numfilters):
-                #    for b in range(N):
-                #        dy = DY[b,i,j,n] # N gradient values, one per sample for the current output voxel
-                #        DX[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += self.W[...,n] * dy
-        #print 'dx sum conv', DX.sum()
-        #return DX
-
+        '''
 
         for i in xrange(hf):
             for j in xrange(wf):
-                DXG[:,i:i+Hy:hstride,j:j+Wy:wstride,:] += np.dot(DY,self.W[i,j,:,:].T)
-
-        #print 'DXG sum conv', DXG.sum()
-        return DXG
-
-
+                DX[:,i:i+Hy:hstride,j:j+Wy:wstride,:] += np.dot(DY,self.W[i,j,:,:].T)
+        return DX
 
 
     def update(self,lrate):
-
         N,Hx,Wx,Dx = self.X.shape
         N,Hy,Wy,NF = self.DY.shape
 
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        self.DW = np.zeros_like(self.W,dtype=np.float) # hf, wf, df, numfilters
-        self.DW2 = np.zeros_like(self.W,dtype=np.float)
-        self.DW0 = np.zeros_like(self.W,dtype=np.float)
-        self.DWG = np.zeros_like(self.W,dtype=np.float)
-
-        #prepare combined input and gradient (sum over all samples)
-        X = self.X.sum(axis = 0) # Hx,Wx,Dx
-        DY = self.DY.sum(axis = 0) # Hy,Wy,numfilters
+        self.DW = np.zeros_like(self.W,dtype=np.float)
 
         '''
         for i in xrange(Hy):
             for j in xrange(Wy):
-                #result differs from that ending up in self.DW and self.DW2, but this does not help much.
-                self.DW0 += X[i*hstride:i*hstride+hf,j*wstride:j*wstride+wf,:,na] * DY[i,j,na,:]
-
-
-
-                x = self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # N,hf,wf,df
-                x = x[...,None] # N, hf, wf, df, nf=1
-                dy = self.DY[:,i:i+1,j:j+1,None,:] # N, Hout=1, Wout=1, df=1, nf
-                # hf, wf, df, nf
-                self.DW += (x * dy).sum(axis=0) # hf, wf, df, nf
-
-                # stupid explicit loop-based code. produces same result as self.DW
-                for b in xrange(N):
-                    x = self.X[b,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :] # hf,wf,df
-                    for n in xrange(NF):
-                        dy = self.DY[b,i,j,n]
-                        self.DW2[...,n] += x*dy
-
+                self.DW += (self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :, na] * self.DY[:,i:i+1,j:j+1,na,:]).sum(axis=0)
         '''
-        hw = Hx - Hy + 1 # stride dependant
-        ww = Wx - Wy + 1 # TODO: FIX CALCULATION OF THOSE
-        for i in xrange(hw):
-            for j in xrange(ww):
-                self.DWG[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2,]))
 
-
-
-
-        #print 'DW0', self.DW0 # this one seems to be wrong. the other ones do all match up.
-        #print 'DW', self.DW
-        #print 'DW2', self.DW2
-        #print 'DWG', self.DWG
-
+        for i in xrange(hf):
+            for j in xrange(wf):
+                self.DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2,]))
 
         self.DB = self.DY.sum(axis=(0,1,2))
-        self.W -= lrate * self.DWG
+        self.W -= lrate * self.DW
         self.B -= lrate * self.DB
 
 
@@ -172,29 +158,76 @@ class Convolution(Module):
 
 
 
-    def lrp(self,R, *args, **kwargs):
+    def lrp(self,R,lrp_var=None,param=1.):
+        '''
+        performs LRP by calling subroutines, depending on lrp_var and param
 
-        N,Hout,Wout,numfilters = R.shape
+        Parameters
+        ----------
 
-        hf,wf,df,numfilters = self.W.shape
+        R : numpy.ndarray
+            relevance input for LRP.
+            should be of the same shape as the previously produced output by Linear.forward
+
+        lrp_var : str
+            either 'none' or 'simple' or None for standard Lrp ,
+            'epsilon' for an added epsilon slack in the denominator
+            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+
+        param : double
+            the respective parameter for the lrp method of choice
+
+        Returns
+        -------
+        R : the backward-propagated relevance scores.
+            shaped identically to the previously processed inputs in Convolution.forward
+        '''
+
+        if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
+            return self._simple_lrp(R)
+        elif lrp_var.lower() == 'epsilon':
+            return self._epsilon_lrp(R,param)
+        elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
+            return self._alphabeta_lrp(R,param)
+        else:
+            print 'Unknown lrp variant', lrp_var
+
+
+    def _simple_lrp(self,R):
+        '''
+        LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
+        '''
+
+        N,Hout,Wout,NF = R.shape
+        hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
-
-        W = self.W[None,...] # extend for N axis in input. is 5-tensor now: N,hf,wf,df,numfilters
 
         Rx = np.zeros_like(self.X,dtype=np.float)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                x = self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , None] # N,hf,wf,df,numfilters . extended for numfilters = 1.
-                Z = W * x #input activations
-                Zsum = Z.sum(axis=(1,2,3),keepdims=True) + self.B[None,...] # sum over filter tensors to proportionally distribute over each filter's input
-                Z = Z / Zsum #proportional input activations per filter.
-                Z[np.isnan(Z)] = 1e-12
-                #STABILIZATION. ADD sign2-fxn: MAKE SMARTER
+                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+                Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,...]
+                Zs += 1e-12*((Zs >= 0)*2 - 1.) # add a weak numerical stabilizer to cusion division by zero
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+        return Rx
 
-                # might cause relevance increase, sneaking in another axis?
-                r = R[:,i:i+1,j:j+1,None,:] #N, 1, 1, numfilters, extended to N,1,1,df,numfilters
-                r = (Z * r).sum(axis=4) # N, hf, wf, df  ; df = Dx
-                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += r #distribute relevance propoprtional to input activations per filter
 
+    def _epsilon_lrp(self,R,epsilon):
+        '''
+        LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+        '''
+
+        N,Hout,Wout,NF = R.shape
+        hf,wf,df,NF = self.W.shape
+        hstride, wstride = self.stride
+
+        Rx = np.zeros_like(self.X,dtype=np.float)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+                Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,...]
+                Zs += epsilon*((Zs >= 0)*2-1)
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
         return Rx

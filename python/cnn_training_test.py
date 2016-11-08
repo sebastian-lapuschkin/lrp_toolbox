@@ -57,17 +57,18 @@ nn = modules.Sequential([
                             modules.Flatten()
                         ])
 
+
 #train the network.
 nn.train(   X=Xtrain,\
             Y=Ytrain,\
             Xval=Xtest,\
             Yval=Ytest,\
             iters=10**6,\
-            lrate = 0.0001,\
-            batchsize = 25)
+            lrate=0.0001,\
+            batchsize=25)
 
 #save the network
-model_io.write(nn, '../LeNet-5-trained.txt')
+model_io.write(nn, '../LeNet-5.txt')
 
 
 

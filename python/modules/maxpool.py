@@ -18,6 +18,19 @@ from module import Module
 
 class MaxPool(Module):
     def __init__(self,pool=(2,2),stride=(2,2)):
+        '''
+        Constructor for the max pooling layer object
+
+        Parameters
+        ----------
+
+        pool : tuple (h,w)
+            the size of the pooling mask in vertical (h) and horizontal (w) direction
+
+        stride : tuple (h,w)
+            the vertical (h) and horizontal (w) step sizes between filter applications.
+        '''
+
         self.pool = pool
         self.stride = stride
 
@@ -54,13 +67,32 @@ class MaxPool(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                x = X[:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ]
-                self.Y[:,i,j,:] = np.amax(np.amax(x,axis=2),axis=1)
-
+                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ].max(axis=(1,2))
         return self.Y
 
 
     def backward(self,DY):
+        '''
+        Backward-passes an input error gradient DY towards the domintly ativating neurons of this max pooling layer.
+
+        Parameters
+        ----------
+
+        DY : numpy.ndarray
+            an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
+            N = number of samples in the batch
+            Hy = heigth of the output
+            Wy = width of the output
+            Dy = output depth = input depth
+
+
+        Returns
+        -------
+
+        DX : numpy.ndarray
+            the error gradient propagated towards the input
+
+        '''
 
         N,H,W,D = self.X.shape
 
@@ -71,22 +103,13 @@ class MaxPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        #distribute the gradient towards the max activation (evenly in case of ambiguities)
+        #distribute the gradient towards the max activation(s)
         #the max activation value is already known via self.Y
-
-        #this implementation seems wasteful.....
-        DYout = np.zeros_like(self.X,dtype=np.float)
+        DX = np.zeros_like(self.X,dtype=np.float)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                y = self.Y[:,i,j,:] #y is the max activation for this poolig OP. outputs a 2-axis array. over N and D
-                x = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
-
-                #attribute gradient weights per input depth and sample
-                for n in xrange(N):
-                    for d in xrange(D):
-                        activators = x[n,...,d] == y[n,d]
-                        DYout[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += activators * DY[n,i,j,d]
-        return DYout
+                DX[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += DY[:,i:i+1,j:j+1,:] * (self.Y[:,i:i+1,j:j+1,:] == self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ])
+        return DX
 
 
     def clean(self):
@@ -109,18 +132,12 @@ class MaxPool(Module):
         #distribute the gradient towards the max activation (evenly in case of ambiguities)
         #the max activation value is already known via self.Y
 
-        #this implementation seems wasteful.....
         Rx = np.zeros_like(self.X,dtype=np.float)
+
         for i in xrange(Hout):
             for j in xrange(Wout):
-                y = self.Y[:,i,j,:] #y is the max activation for this poolig OP. outputs a 2-axis array. over N and D
-                x = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations
-
-                #attribute gradient weights per input depth and sample
-                for n in xrange(N):
-                    for d in xrange(D):
-                        activators = x[n,...,d] == y[n,d]
-                        Rx[n,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool, d ] += (activators * DY[n,i,j,d]) * (1./activators.sum()) #last bit to distribute gradient evenly in case of multiple activations.
+                activators = self.Y[:,i:i+1,j:j+1,:] == self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ]
+                Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (R[:,i:i+1,j:j+1,:] * activators)/activators.sum(axis=(1,2),keepdims=True)
         return Rx
 
 

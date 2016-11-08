@@ -19,9 +19,21 @@ from module import Module
 class SumPool(Module):
 
     def __init__(self,pool=(2,2),stride=(2,2)):
+        '''
+        Constructor for the sum pooling layer object
+
+        Parameters
+        ----------
+
+        pool : tuple (h,w)
+            the size of the pooling mask in vertical (h) and horizontal (w) direction
+
+        stride : tuple (h,w)
+            the vertical (h) and horizontal (w) step sizes between filter applications.
+        '''
+
         self.pool = pool
         self.stride = stride
-
 
     def forward(self,X):
         '''
@@ -55,14 +67,34 @@ class SumPool(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2)) * 0.5 #WHY 0.5 ?
-
+                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2)) * 0.5 #times 0.5 to keep the output well conditioned
         return self.Y
 
 
     def backward(self,DY):
-        # DY is of shape N, Hout, Wout, nfilters
+        '''
+        Backward-passes an input error gradient DY towards the input neurons of this sum pooling layer.
 
+        Parameters
+        ----------
+
+        DY : numpy.ndarray
+            an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
+            N = number of samples in the batch
+            Hy = heigth of the output
+            Wy = width of the output
+            Dy = output depth = input depth
+
+
+        Returns
+        -------
+
+        DX : numpy.ndarray
+            the error gradient propagated towards the input
+
+        '''
+
+        # DY is of shape N, Hout, Wout, nfilters
         N,H,W,D = self.X.shape
 
         hpool,   wpool   = self.pool
@@ -76,9 +108,7 @@ class SumPool(Module):
         DX = np.zeros_like(self.X)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * 0.5 # WHY 0.5 ?
-
-        #print 'dx sum sumpool', DX.sum()
+                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * 0.5 # 0.5 to match the forward pass and to produce well-conditioned input gradients
         return DX
 
 
@@ -87,10 +117,45 @@ class SumPool(Module):
         self.Y = None
 
 
+    def lrp(self,R, lrp_var=None,param=1.):
+        '''
+        performs LRP by calling subroutines, depending on lrp_var and param
+
+        Parameters
+        ----------
+
+        R : numpy.ndarray
+            relevance input for LRP.
+            should be of the same shape as the previously produced output by SumPool.forward
+
+        lrp_var : str
+            either 'none' or 'simple' or None for standard Lrp ,
+            'epsilon' for an added epsilon slack in the denominator
+            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+
+        param : double
+            the respective parameter for the lrp method of choice
+
+        Returns
+        -------
+        R : the backward-propagated relevance scores.
+            shaped identically to the previously processed inputs in SumPool.forward
+        '''
+
+        if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
+            return self._simple_lrp(R)
+        elif lrp_var.lower() == 'epsilon':
+            return self._epsilon_lrp(R,param)
+        elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
+            return self._alphabeta_lrp(R,param)
+        else:
+            print 'Unknown lrp variant', lrp_var
 
 
-    def lrp(self,R, *args, **kwargs):
-
+    def _simple_lrp(self,R):
+        '''
+        LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
+        '''
         N,H,W,D = self.X.shape
 
         hpool,   wpool   = self.pool
@@ -101,15 +166,39 @@ class SumPool(Module):
         Wout = (W - wpool) / wstride + 1
 
         #distribute the gradient towards across all inputs evenly
-        #assumes non-zero values for each input, which should be mostly true -> gradient at each input is 1
-
         Rx = np.zeros(self.X.shape)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                x = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations. N,hpool,wpool,D
-                xsum = x.sum(axis=(1,2),keepdims=True)
-                z = x / ( xsum + ((xsum >= 0)*2-1.)*1e-12 ) #proportional input activations per layer plus some slight numerical stabilization to avoid division by zero
+                Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
+                Zs = Z.sum(axis=(1,2),keepdims=True)
+                Zs += 1e-12*((Zs >= 0)*2-1) # add a weak numerical stabilizer to cushion an all-zero input
 
-                Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += z * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
+                Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += (Z/Zs) * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
+
+        return Rx
+
+
+    def _epsilon_lrp(self,R,epsilon):
+        '''
+        LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+        '''
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        #distribute the gradient towards across all inputs evenly
+        Rx = np.zeros(self.X.shape)
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
+                Zs = Z.sum(axis=(1,2),keepdims=True)
+                Zs += epsilon*((Zs >= 0)*2-1) # add a weak numerical stabilizer to cushion an all-zero input
+
+                Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += (Z/Zs) * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 
         return Rx

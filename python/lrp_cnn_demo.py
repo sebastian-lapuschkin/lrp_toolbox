@@ -27,6 +27,8 @@ import render
 
 #load a neural network, as well as the MNIST test data and some labels
 nn = model_io.read('../models/MNIST/LeNet-5.txt') # 99.23% prediction accuracy
+#nn = model_io.read('../LeNet-5-trained_sum.txt')
+#nn = model_io.read('../LeNet-5-trained.txt')
 X = data_io.read('../data/MNIST/test_images.npy')
 Y = data_io.read('../data/MNIST/test_labels.npy')
 
@@ -58,12 +60,11 @@ for i in I[:10]:
 
 
     #compute first layer relevance according to prediction
-    R = nn.lrp(ypred)                   #as Eq(56) from DOI: 10.1371/journal.pone.0130140
-    #R = nn.lrp(ypred,'epsilon',100)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
+    #R = nn.lrp(ypred)                   #as Eq(56) from DOI: 10.1371/journal.pone.0130140
+    R = nn.lrp(ypred,'epsilon',0.1)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
     #R = nn.lrp(ypred,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
 
-    #R = nn.lrp(Y[na,i]) #compute first layer relevance according to the true class label
 
 
     '''

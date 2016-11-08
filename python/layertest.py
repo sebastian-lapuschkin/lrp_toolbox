@@ -116,7 +116,7 @@ def maxpoolRtest(x,Rin,Rex,pool,stride):
 
 
 
-if False:
+if True:
 
     #construct filter and inputs.
     a = np.array([[  [1,1,1,1],\
@@ -230,7 +230,7 @@ print '# ----------------------'
 print '# Sum Pooling Layer Test'
 print '# ----------------------'
 
-if False:
+if True:
     def sumpooltest(x,e,pool,stride):
         print ''
         print 'SUM POOL FORWARD TEST'
@@ -240,7 +240,7 @@ if False:
         print 'e.shape', e.shape
 
         S = SumPool(pool=pool, stride=stride)
-        y =  S.forward(x)
+        y =  S.forward(x)*2 #to undo the gregoire stabilizer magic
 
         print 'y.shape', y.shape
         print 'y', y
@@ -466,182 +466,183 @@ fa = a[0,...,None]
 fb = b[0,...,None]*0.5
 fc = -1.*c[0,...,None]
 
-yaa = np.tensordot(a,fa,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(a,yaa,fa,stride=(1,1))
+if True:
+    yaa = np.tensordot(a,fa,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(a,yaa,fa,stride=(1,1))
 
-yab = np.tensordot(a,fb,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(a,yab,fb,stride=(1,1))
+    yab = np.tensordot(a,fb,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(a,yab,fb,stride=(1,1))
 
-yac = np.tensordot(a,fc,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(a,yac,fc,stride=(1,1))
+    yac = np.tensordot(a,fc,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(a,yac,fc,stride=(1,1))
 
-yba = np.tensordot(b,fa,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(b,yba,fa,stride=(1,1))
+    yba = np.tensordot(b,fa,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(b,yba,fa,stride=(1,1))
 
-ybb = np.tensordot(b,fb,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(b,ybb,fb,stride=(1,1))
+    ybb = np.tensordot(b,fb,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(b,ybb,fb,stride=(1,1))
 
-ybc = np.tensordot(b,fc,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(b,ybc,fc,stride=(1,1))
+    ybc = np.tensordot(b,fc,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(b,ybc,fc,stride=(1,1))
 
-yca = np.tensordot(c,fa,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(c,yca,fa,stride=(1,1))
+    yca = np.tensordot(c,fa,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(c,yca,fa,stride=(1,1))
 
-ycb = np.tensordot(c,fb,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(c,ycb,fb,stride=(1,1))
+    ycb = np.tensordot(c,fb,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(c,ycb,fb,stride=(1,1))
 
-ycc = np.tensordot(c,fc,axes = ([1,2,3],[0,1,2]))[None,...,None]
-convolutiontest(c,ycc,fc,stride=(1,1))
-
-
-
-#combine multiple filters and samples
-
-x = np.concatenate((a,b,c),axis = 0)
-f = np.concatenate((fa,fb,fc),axis = 3)
-
-ea = np.concatenate((yaa,yab,yac),axis = 3)
-eb = np.concatenate((yba,ybb,ybc),axis = 3)
-ec = np.concatenate((yca,ycb,ycc),axis = 3)
-e = np.concatenate((ea,eb,ec),axis = 0)
-convolutiontest(x,e,f,stride=(1,1))
-
-
-# test stride 2,2 on 2,2 filter on 2 inputs, then two filtes on one input, then lrp
-
-f = np.array([[0.1,0.2],[0.2,0.1]])
-f = np.reshape(f,[2,2,1,1])
-
-stride = (2,2)
-fsize = (2,2)
-
-x = np.concatenate((b,c),axis = 0)
-eb = [[0.6,0],[0.8,0]]
-eb = np.reshape(np.array(eb),[1,2,2,1])
-ec = [[.6,.7],[.5,0]]
-ec = np.reshape(np.array(ec),[1,2,2,1])
-e  = np.concatenate((eb,ec),axis=0)
-
-Rin = np.ones_like(e)
-s = 1./6 ; d = 2*s ; aa = 1./8 ; v = 2*aa
-Rexb = [[s, d, 0, 0],\
-        [d, s, 0, 0],\
-        [aa, v, 0, 0],\
-        [2*v,aa,0, 0]]
-z = 1./7
-g = 0.2
-Rexc  = [[s,d,z,2*z],\
-         [d,s,4*z,0],\
-         [g,2*g,0,0],\
-         [2*g,0,0,0]]
-
-Rexb = np.reshape(np.array(Rexb),b.shape)
-Rexc = np.reshape(np.array(Rexc),c.shape)
-Rex = np.concatenate((Rexb,Rexc),axis = 0)
-
-convolutiontest(x,e,f,stride=(2,2))
-convolutionRtest(x,Rin,Rex,f,stride=(2,2))
-
-
-f2 = np.array([[1,2],[-3,-4]])
-f2 = np.reshape(f2,[2,2,1,1])
-f3 = np.concatenate((f,f2),axis = 3)
-x = a
-ef=[[.6,.8],[0,0]]
-ef = np.reshape(np.array(ef),[1,2,2,1])
-ef2=[[-4,-7],[0,0]]
-ef2 = np.reshape(np.array(ef2),[1,2,2,1])
-e = np.concatenate((ef,ef2),axis=3)
-
-Rinf= np.ones_like(ef)
-Rexf = [[s,d,aa,v],\
-        [d,s,2*v,aa],\
-        [0,0,0,0],\
-        [0,0,0,0]]
-
-Rexf = np.array(Rexf)
-Rexf = np.reshape(Rexf,[1,4,4,1])
-
-Rinf2 = np.ones_like(ef2)
-v = 0.25 ; z = 1./7
-Rexf2 = [[-v, -2*v, -z, -2*z],\
-         [3*v, 1  , 6*z, 4*z],\
-         [0,0,0,0],\
-         [0,0,0,0]]
-
-Rexf2 = np.array(Rexf2)
-Rexf2 = np.reshape(Rexf2,[1,4,4,1])
-
-convolutionRtest(x,Rinf,Rexf,f,stride=(2,2))
-convolutionRtest(x,Rinf2,Rexf2,f2,stride=(2,2))
-
-Rin = np.concatenate((Rinf, Rinf2),axis=3)
-Rex = Rexf + Rexf2 #after computing relevace contribution for each filter, aggregate at the input again by summation.
-
-convolutiontest(x,e,f3,stride=(2,2))
-convolutionRtest(x,Rin,Rex,f3,stride=(2,2))
-
-
-x = a
-f = np.ones((3,3,1,1)) ; f[1,1,...] = 2
-stride = (1,1)
-Rin = np.ones((1,2,2,1))
-Rex11 = [[aa,aa,aa,0],\
-         [aa,v,v,0],\
-         [0,0,0,0],\
-         [0,0,0,0]]
-n = 1./9
-Rex12 = [[0,n,n,n],\
-         [0,n,4*n,n],\
-         [0,0,0,0],\
-         [0,0,0,0]]
-
-Rex21 = [[0,0,0,0],\
-         [v,v,2*v,0],\
-         [0,0,0,0],\
-         [0,0,0,0]]
-
-Rex22 = [[0,0,0,0],\
-         [0,v,2*v,v],\
-         [0,0,0,0],\
-         [0,0,0,0]]
-
-Rex = np.array(Rex11) + np.array(Rex21) + np.array(Rex12) + np.array(Rex22)
-Rex = np.reshape(Rex,x.shape)
-convolutionRtest(x,Rin,Rex,f,stride)
+    ycc = np.tensordot(c,fc,axes = ([1,2,3],[0,1,2]))[None,...,None]
+    convolutiontest(c,ycc,fc,stride=(1,1))
 
 
 
-print '# -------------------------------'
-print '# Convolution Layer backward test'
-print '# -------------------------------'
+    #combine multiple filters and samples
+
+    x = np.concatenate((a,b,c),axis = 0)
+    f = np.concatenate((fa,fb,fc),axis = 3)
+
+    ea = np.concatenate((yaa,yab,yac),axis = 3)
+    eb = np.concatenate((yba,ybb,ybc),axis = 3)
+    ec = np.concatenate((yca,ycb,ycc),axis = 3)
+    e = np.concatenate((ea,eb,ec),axis = 0)
+    convolutiontest(x,e,f,stride=(1,1))
 
 
-print a
-aeps = a*1.0
-eps = 0.3
-aeps[0,3,3,0] += eps
+    # test stride 2,2 on 2,2 filter on 2 inputs, then two filtes on one input, then lrp
 
-C = Convolution(filtersize=(4,4,1,1),stride = (1,1))
-W = np.copy(C.W)
+    f = np.array([[0.1,0.2],[0.2,0.1]])
+    f = np.reshape(f,[2,2,1,1])
 
-fa = C.forward(a)
-da = C.backward(np.ones_like(fa))
+    stride = (2,2)
+    fsize = (2,2)
+
+    x = np.concatenate((b,c),axis = 0)
+    eb = [[0.6,0],[0.8,0]]
+    eb = np.reshape(np.array(eb),[1,2,2,1])
+    ec = [[.6,.7],[.5,0]]
+    ec = np.reshape(np.array(ec),[1,2,2,1])
+    e  = np.concatenate((eb,ec),axis=0)
+
+    Rin = np.ones_like(e)
+    s = 1./6 ; d = 2*s ; aa = 1./8 ; v = 2*aa
+    Rexb = [[s, d, 0, 0],\
+            [d, s, 0, 0],\
+            [aa, v, 0, 0],\
+            [2*v,aa,0, 0]]
+    z = 1./7
+    g = 0.2
+    Rexc  = [[s,d,z,2*z],\
+            [d,s,4*z,0],\
+            [g,2*g,0,0],\
+            [2*g,0,0,0]]
+
+    Rexb = np.reshape(np.array(Rexb),b.shape)
+    Rexc = np.reshape(np.array(Rexc),c.shape)
+    Rex = np.concatenate((Rexb,Rexc),axis = 0)
+
+    convolutiontest(x,e,f,stride=(2,2))
+    convolutionRtest(x,Rin,Rex,f,stride=(2,2))
 
 
-faeps = C.forward(aeps)
-daeps = C.backward(np.ones_like(faeps))
+    f2 = np.array([[1,2],[-3,-4]])
+    f2 = np.reshape(f2,[2,2,1,1])
+    f3 = np.concatenate((f,f2),axis = 3)
+    x = a
+    ef=[[.6,.8],[0,0]]
+    ef = np.reshape(np.array(ef),[1,2,2,1])
+    ef2=[[-4,-7],[0,0]]
+    ef2 = np.reshape(np.array(ef2),[1,2,2,1])
+    e = np.concatenate((ef,ef2),axis=3)
 
-print (faeps - fa)/eps
-print da[0,3,3,0]
-print daeps[0,3,3,0]
+    Rinf= np.ones_like(ef)
+    Rexf = [[s,d,aa,v],\
+            [d,s,2*v,aa],\
+            [0,0,0,0],\
+            [0,0,0,0]]
 
-C.W = W.copy()
-fa = C.forward(a)
-da = C.backward(np.ones_like(fa))
-C.update(1)
+    Rexf = np.array(Rexf)
+    Rexf = np.reshape(Rexf,[1,4,4,1])
 
-C.W = W.copy()
-faeps = C.forward(aeps)
-daeps = C.backward(np.ones_like(faeps))
-C.update(1)
+    Rinf2 = np.ones_like(ef2)
+    v = 0.25 ; z = 1./7
+    Rexf2 = [[-v, -2*v, -z, -2*z],\
+            [3*v, 1  , 6*z, 4*z],\
+            [0,0,0,0],\
+            [0,0,0,0]]
+
+    Rexf2 = np.array(Rexf2)
+    Rexf2 = np.reshape(Rexf2,[1,4,4,1])
+
+    convolutionRtest(x,Rinf,Rexf,f,stride=(2,2))
+    convolutionRtest(x,Rinf2,Rexf2,f2,stride=(2,2))
+
+    Rin = np.concatenate((Rinf, Rinf2),axis=3)
+    Rex = Rexf + Rexf2 #after computing relevace contribution for each filter, aggregate at the input again by summation.
+
+    convolutiontest(x,e,f3,stride=(2,2))
+    convolutionRtest(x,Rin,Rex,f3,stride=(2,2))
+
+
+    x = a
+    f = np.ones((3,3,1,1)) ; f[1,1,...] = 2
+    stride = (1,1)
+    Rin = np.ones((1,2,2,1))
+    Rex11 = [[aa,aa,aa,0],\
+            [aa,v,v,0],\
+            [0,0,0,0],\
+            [0,0,0,0]]
+    n = 1./9
+    Rex12 = [[0,n,n,n],\
+            [0,n,4*n,n],\
+            [0,0,0,0],\
+            [0,0,0,0]]
+
+    Rex21 = [[0,0,0,0],\
+            [v,v,2*v,0],\
+            [0,0,0,0],\
+            [0,0,0,0]]
+
+    Rex22 = [[0,0,0,0],\
+            [0,v,2*v,v],\
+            [0,0,0,0],\
+            [0,0,0,0]]
+
+    Rex = np.array(Rex11) + np.array(Rex21) + np.array(Rex12) + np.array(Rex22)
+    Rex = np.reshape(Rex,x.shape)
+    convolutionRtest(x,Rin,Rex,f,stride)
+
+
+
+    print '# -------------------------------'
+    print '# Convolution Layer backward test'
+    print '# -------------------------------'
+
+
+    print a
+    aeps = a*1.0
+    eps = 0.3
+    aeps[0,3,3,0] += eps
+
+    C = Convolution(filtersize=(4,4,1,1),stride = (1,1))
+    W = np.copy(C.W)
+
+    fa = C.forward(a)
+    da = C.backward(np.ones_like(fa))
+
+
+    faeps = C.forward(aeps)
+    daeps = C.backward(np.ones_like(faeps))
+
+    print (faeps - fa)/eps
+    print da[0,3,3,0]
+    print daeps[0,3,3,0]
+
+    C.W = W.copy()
+    fa = C.forward(a)
+    da = C.backward(np.ones_like(fa))
+    C.update(1)
+
+    C.W = W.copy()
+    faeps = C.forward(aeps)
+    daeps = C.backward(np.ones_like(faeps))
+    C.update(1)
