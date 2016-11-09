@@ -27,62 +27,11 @@ classdef Sequential < modules.Module
             %----------
             %modules : cell array
             %a cell array of instances of class Module
+            obj = obj@modules.Module();
             obj.modules = modules;
         end
-
-        function clean(obj)
-            % Removes temporary variables from all network layers.
-            for i = 1:length(obj.modules)
-                obj.modules{i}.clean()
-            end
-        end
-
-        function R = lrp(obj,R, lrp_var, param)
-            %R = lrp(obj,R)
-            %
-            %Performs LRP using the network and temporary data produced by a forward call
-            %
-            %Parameters
-            %----------
-            %R : matrix
-            %final layer relevance values. usually the network's prediction of some data points
-            %for which the output relevance is to be computed
-            %dimensionality should be equal to the previously computed predictions
-            %
-            %lrp_var : str
-            %either 'none' or 'simple' or [] for standard Lrp ,
-            %'epsilon' for an added epsilon slack in the denominator
-            %'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
-            %
-            %param : double
-            %the respective parameter for the lrp method of choice
-            %
-            %Returns
-            %-------
-            %
-            %R : matrix
-            %the first layer relevances as produced by the neural net wrt to the previously forward
-            %passed input data. dimensionality is equal to the previously into forward entered input data
-            %
-            %Note
-            %----
-            %
-            %Requires the net to be populated with temporary variables, i.e. forward needed to be called with the input
-            %for which the explanation is to be computed. calling clean in between forward and lrp invalidates the
-            %temporary data
-            if nargin < 4 || (exist('param','var') && isempty(param))
-                param = 0;
-            end
-            if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
-                lrp_var = [];
-            end
-
-            for i = length(obj.modules):-1:1
-                R = obj.modules{i}.lrp(R,lrp_var,param);
-            end
-        end
-
-
+        
+        
         function X = forward(obj,X)
             %X = forward(obj,X)
             %
@@ -100,6 +49,25 @@ classdef Sequential < modules.Module
 
             for i = 1:length(obj.modules)
                 X = obj.modules{i}.forward(X);
+            end
+        end
+        
+        function DY = backward(obj, DY)
+            for i = length(obj.modules):-1:1
+                DY = obj.modules{i}.backward(DY);
+            end
+        end
+
+        function update(obj, lrate)
+            for i = 1:length(obj.modules)
+                obj.modules{i}.update(lrate);
+            end
+        end
+
+        function clean(obj)
+            % Removes temporary variables from all network layers.
+            for i = 1:length(obj.modules)
+                obj.modules{i}.clean()
             end
         end
 
@@ -245,20 +213,25 @@ classdef Sequential < modules.Module
                 %periodically evaluate network and optionally adjust
                 %learning rate or check for convergence
                 if mod(d,status) == 0
-                    Ypred = obj.forward(X);
-                    [~,argmaxPred]  = max(Ypred,[],2);
-                    [~,argmaxTruth] = max(Y,[],2);
-                    acc = mean(argmaxPred == argmaxTruth);
-                    disp(' ')
-                    disp(['Accuracy after ' num2str(d) ' iterations: ' num2str(acc*100) '%'])
-
+                    
                     %if given, also evaluate on validation data
                     if ~isempty(Xval) && ~isempty(Yval)
                        Ypred = obj.forward(Xval);
                        [~,argmaxPred]  = max(Ypred,[],2);
                        [~,argmaxTruth] = max(Yval,[],2);
-                       acc_val = mean(argmaxPred == argmaxTruth);
-                       disp(['Accuracy on validation set: ' num2str(acc_val*100) '%'])
+                       acc = mean(argmaxPred == argmaxTruth);
+                       l1loss = sum(abs(Ypred(:) - Yval(:)))/size(Yval,1);
+                       disp(' ')
+                       disp(['Accuracy after ' num2str(d) 'iterations on validation set: ' num2str(acc*100) '% (l1-loss: '  num2str(l1loss) ')'])
+                       
+                    else %evaluate on training data only   
+                        Ypred = obj.forward(X);
+                        [~,argmaxPred]  = max(Ypred,[],2);
+                        [~,argmaxTruth] = max(Y,[],2);
+                        acc = mean(argmaxPred == argmaxTruth);
+                        l1loss = sum(abs(Ypred(:) - Y(:)))/size(Y,1);
+                        disp(' ')
+                        disp(['Accuracy after ' num2str(d) ' iterations: ' num2str(acc*100) '% (l1-loss: '  num2str(l1loss) ')'])
                     end
 
                     %save current network parameters if we have improved
@@ -292,7 +265,10 @@ classdef Sequential < modules.Module
 
                 elseif mod(d,status/10) == 0
                     % print 'alive' signal
-                    fprintf('.')
+                    % fprintf('.')
+                    Ysamples = Y(samples,:);
+                    l1loss = sum(abs(Ypred(:) - Ysamples(:)))/size(Ypred,1);
+                    disp(['batch# ' num2str(d) ', lrate ' num2str(lrate) ', l1-loss ' num2str(l1loss)])
                 end
 
             end
@@ -304,18 +280,57 @@ classdef Sequential < modules.Module
         end
 
 
-        function DY = backward(obj, DY)
+
+
+        
+        
+        function R = lrp(obj,R, lrp_var, param)
+            %R = lrp(obj,R)
+            %
+            %Performs LRP using the network and temporary data produced by a forward call
+            %
+            %Parameters
+            %----------
+            %R : matrix
+            %final layer relevance values. usually the network's prediction of some data points
+            %for which the output relevance is to be computed
+            %dimensionality should be equal to the previously computed predictions
+            %
+            %lrp_var : str
+            %either 'none' or 'simple' or [] for standard Lrp ,
+            %'epsilon' for an added epsilon slack in the denominator
+            %'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
+            %
+            %param : double
+            %the respective parameter for the lrp method of choice
+            %
+            %Returns
+            %-------
+            %
+            %R : matrix
+            %the first layer relevances as produced by the neural net wrt to the previously forward
+            %passed input data. dimensionality is equal to the previously into forward entered input data
+            %
+            %Note
+            %----
+            %
+            %Requires the net to be populated with temporary variables, i.e. forward needed to be called with the input
+            %for which the explanation is to be computed. calling clean in between forward and lrp invalidates the
+            %temporary data
+            if nargin < 4 || (exist('param','var') && isempty(param))
+                param = 0;
+            end
+            if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
+                lrp_var = [];
+            end
+
             for i = length(obj.modules):-1:1
-                DY = obj.modules{i}.backward(DY);
+                R = obj.modules{i}.lrp(R,lrp_var,param);
             end
         end
 
 
-        function update(obj, lrate)
-            for i = 1:length(obj.modules)
-                obj.modules{i}.update(lrate);
-            end
-        end
+        
 
     end
 
