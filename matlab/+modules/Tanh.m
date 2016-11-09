@@ -17,6 +17,7 @@ classdef Tanh < modules.Module
 
     methods
         function obj = Tanh
+            obj = obj@modules.Module();
         end
 
         function clean(obj)
