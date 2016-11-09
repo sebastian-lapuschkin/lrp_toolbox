@@ -131,15 +131,13 @@ class MaxPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        #distribute the gradient towards the max activation (evenly in case of ambiguities)
-        #the max activation value is already known via self.Y
-
         Rx = np.zeros_like(self.X,dtype=np.float)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                activators = self.Y[:,i:i+1,j:j+1,:] == self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ]
-                Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (R[:,i:i+1,j:j+1,:] * activators)/activators.sum(axis=(1,2),keepdims=True)
+                Z = self.Y[:,i:i+1,j:j+1,:] == self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ]
+                Zs = Z.sum(axis=(1,2),keepdims=True)
+                Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
         return Rx
 
 
