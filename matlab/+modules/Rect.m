@@ -17,6 +17,7 @@ classdef Rect < modules.Module
 
     methods
         function obj = Rect
+            obj = obj@modules.Module();
         end
 
         function clean(obj)
@@ -24,7 +25,7 @@ classdef Rect < modules.Module
         end
 
         function DY = backward(obj,DY)
-           DY = DY .* (obj.Y > 0);
+           DY = DY .* (obj.Y ~= 0);
         end
 
         function Y = forward(obj,X)
