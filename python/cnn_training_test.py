@@ -43,7 +43,7 @@ Ytest[np.arange(Ytest.shape[0]),I] = 1
 
 
 #model a network according to LeNet-5 architecture
-nn = modules.Sequential([
+maxnet = modules.Sequential([
                             modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
                             modules.Rect(),\
                             modules.SumPool(pool=(2,2),stride=(2,2)),\
@@ -57,18 +57,45 @@ nn = modules.Sequential([
                             modules.Flatten()
                         ])
 
-
 #train the network.
-nn.train(   X=Xtrain,\
-            Y=Ytrain,\
-            Xval=Xtest,\
-            Yval=Ytest,\
-            iters=10**6,\
-            lrate=0.0001,\
-            batchsize=25)
+maxnet.train(   X=Xtrain,\
+                Y=Ytrain,\
+                Xval=Xtest,\
+                Yval=Ytest,\
+                iters=10**6,\
+                lrate=0.0001,\
+                batchsize=25)
 
 #save the network
 model_io.write(nn, '../LeNet-5.txt')
 
 
 
+
+#a slight variation to test max pooling layers. this model should train much faster.
+maxnet = modules.Sequential([
+                            modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
+                            modules.Rect(),\
+                            modules.MaxPool(pool=(2,2),stride=(2,2)),\
+                            modules.Convolution(filtersize=(5,5,10,25),stride = (1,1)),\
+                            modules.Rect(),\
+                            modules.MaxPool(pool=(2,2),stride=(2,2)),\
+                            modules.Convolution(filtersize=(4,4,25,100),stride = (1,1)),\
+                            modules.Rect(),\
+                            modules.MaxPool(pool=(2,2),stride=(2,2)),\
+                            modules.Convolution(filtersize=(1,1,100,10),stride = (1,1)),\
+                            modules.Flatten(),\
+                            modules.SoftMax()
+                        ])
+
+#train the network.
+maxnet.train(   X=Xtrain,\
+                Y=Ytrain,\
+                Xval=Xtest,\
+                Yval=Ytest,\
+                iters=10**6,\
+                lrate=0.001,\
+                batchsize=25)
+
+#save the network
+model_io.write(nn, '../LeNet-5-maxpooling.txt')
