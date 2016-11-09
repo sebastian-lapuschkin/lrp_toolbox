@@ -36,7 +36,7 @@ class Linear(Module):
         -------
         the newly created object instance
         '''
-
+        Module.__init__(self)
         self.m = m
         self.n = n
         self.B = np.zeros([self.n])
