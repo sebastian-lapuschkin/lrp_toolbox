@@ -19,6 +19,7 @@ classdef SoftMax < modules.Module
 
     methods
         function obj = SoftMax
+            obj = obj@modules.Module();
         end
 
         function clean(obj)
