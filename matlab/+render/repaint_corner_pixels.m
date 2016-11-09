@@ -13,8 +13,9 @@ function rgbimg = repaint_corner_pixels(rgbimg, scaling)
     %The recoloring visually masks the opposing pixel values which are a product of stabilizing the scaling.
     %Assumes those image ares will pretty much never show evidence.
     %
-    %TODO: find a smarter way to do this. I know a smarter way, yet am too lazy to bother
-    %TODO: remove this by normalizing relevance data to [0,1]
+    %Unfortunately I currently know of no other way and have to use this
+    %method and setting corner pixels to -1 and 1 respectively to scale the
+    %color map correctly. matplotlib does it better.
     %
     %Parameters
     %----------

@@ -65,7 +65,7 @@ function rgbimg = hm_to_rgb(R,X,scaling,shape,sigma,cmap,normalize)
     if normalize
         R = R/max(abs(R(:)));
     end
-    R(1,1) = 1 ; R(end,end) = -1;
+    R(1) = 1 ; R(end) = -1;
 
     R = (R - min(R(:))); %we need this anyway for ind2rgb to work, so normlizing will be ignored.
     R = round((R ./ max(R(:)))*255);

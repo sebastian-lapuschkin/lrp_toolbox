@@ -14,7 +14,7 @@ function out = enlarge_image(img,scaling)
     %Parameters
     %----------
     %
-    %img : matrix or vector of shape [H x W]
+    %img : matrix or vector of shape [H x W x D] or [H x W]
     %
     %scaling : int
     %positive integer value > 0
@@ -32,16 +32,30 @@ function out = enlarge_image(img,scaling)
     if scaling < 1
        fprintf('scaling factor needs to be an integer >= 1\n')
     end
+    
+    if length(size(img)) == 2
+        [H,W] = size(img);
+        out = zeros(H*scaling,W*scaling);
+        for h = 1:H
+          fh = (h-1)*scaling+1;
 
-    [H,W] = size(img);
-    out = zeros(H,W);
-    for h = 1:H
-      fh = (h-1)*scaling+1;
-
-      for w = 1:W
-          fw = (w-1)*scaling+1;
-          out(fh:fh+scaling-1,fw:fw+scaling-1) = img(h,w);
-      end
+          for w = 1:W
+              fw = (w-1)*scaling+1;
+              out(fh:fh+scaling-1,fw:fw+scaling-1) = img(h,w);
+          end
+        end
+    
+    elseif length(size(img)) == 3
+        [H,W,D] = size(img);
+        out = zeros(H*scaling, W*scaling, D);
+        for h = 1:H
+            fh = (h-1)*scaling+1;
+            
+            for w = 1:W
+                fw = (w-1)*scalling+1;
+                out(fh:fh+scaling-1,fw:fw+scaling-1) = img(h,w,:);
+            end
+        end
     end
 
 end
