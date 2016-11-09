@@ -180,13 +180,14 @@ class Sequential(Module):
                 if not Xval == [] and not Yval == []: #if given, evaluate on validation data
                     Ypred = self.forward(Xval)
                     acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Yval, axis=1))
-                    print 'Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,np.abs(Ypred - Yval).sum()/Yval.shape[0])
+                    l1loss = np.abs(Ypred - Yval).sum()/Yval.shape[0]
+                    print 'Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,l1loss)
 
                 else: #evaluate on the training data only
                     Ypred = self.forward(X)
                     acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Y, axis=1))
-                    print
-                    print 'Accuracy after {0} iterations on training data: {1} (l1-loss: {2:.4})%'.format(d+1,acc*100,np.abs(Ypred - Y).sum()/Y.shape[0])
+                    l1loss = np.abs(Ypred - Y).sum()/Y.shape[0]
+                    print 'Accuracy after {0} iterations on training data: {1}% (l1-loss: {2:.4})'.format(d+1,acc*100,l1loss)
 
 
                 #save current network parameters if we have improved
@@ -218,7 +219,8 @@ class Sequential(Module):
             elif (d+1) % (status/10) == 0:
                 # print 'alive' signal
                 #sys.stdout.write('.')
-                sys.stdout.write('batch# {}, lrate {}, l1-loss {:.4}\n'.format(d+1,lrate*learningFactor,np.abs(Ypred - Y[samples,:]).sum()/Ypred.shape[0]))
+                l1loss = np.abs(Ypred - Y[samples,:]).sum()/Ypred.shape[0]
+                sys.stdout.write('batch# {}, lrate {}, l1-loss {:.4}\n'.format(d+1,lrate*learningFactor,l1loss))
                 sys.stdout.flush()
 
         #after training, either due to convergence or iteration limit
