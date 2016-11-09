@@ -26,12 +26,39 @@ classdef Linear < modules.Module
 
     methods
         function obj = Linear(m,n)
+            obj = obj@modules.Module();
             obj.m = m;
             obj.n = n;
             obj.B = zeros(1,n);
             obj.W = randn(m,n)*m^(-.5);
         end
+        
+        function Y = forward(obj,X)
+            Y = X * obj.W + repmat(obj.B,size(X,1),1);
+            obj.X = X;
+            obj.Y = Y;
+        end
 
+        function DY = backward(obj,DY)
+            obj.dW = obj.X'*DY;
+            obj.dB = sum(DY,1);
+            DY = (DY * obj.W')*obj.m^.5/obj.n^.5;
+        end
+
+        function update(obj, lrate)
+           obj.W = obj.W - lrate*obj.dW/obj.m^.5;
+           obj.B = obj.B - lrate*obj.dB/obj.n^.25;
+        end
+
+        function clean(obj)
+            obj.X = [];
+            obj.Y = [];
+            obj.dW = [];
+            obj.dB = [];
+        end
+
+        
+        
        function R = lrp(obj,R,lrp_var, param)
            % performs LRP by calling subroutines, depending on lrp_var and param
            %
@@ -45,7 +72,7 @@ classdef Linear < modules.Module
            % lrp_var : str
            % either 'none' or 'simple' or None for standard Lrp ,
            % 'epsilon' for an added epsilon slack in the denominator
-           % 'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
+           % 'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
            %
            % param : double
            % the respective parameter for the lrp method of choice
@@ -66,7 +93,7 @@ classdef Linear < modules.Module
               R = obj.simple_lrp(R);
            elseif strcmpi(lrp_var,'epsilon')
               R = obj.epsilon_lrp(R,param);
-           elseif strcmpi(lrp_var,'alphabeta')
+           elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
               R = obj.alphabeta_lrp(R,param);
            else
               fprintf('unknown lrp variant %s\n',lrp_var)
@@ -108,53 +135,36 @@ classdef Linear < modules.Module
 
        function R = alphabeta_lrp(obj,R,alpha)
            % LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
-           beta = 1 - alpha;
            N = size(obj.X,1);
            Wr = repmat(reshape(obj.W,[1,obj.m,obj.n]),[N,1,1]);
            Xr = repmat(obj.X,[1,1,obj.n]);
-
-           %localized preactivations
-           Z = Wr .* Xr ;
-
-           Zp = Z .* (Z > 0);
-           Zsp = sum(Zp,2) + repmat(reshape(obj.B .* (obj.B > 0),[1,1,obj.n]),[N,1,1]);
-
-           Zn = Z .* (Z < 0);
-           Zsn = sum(Zn,2) + repmat(reshape(obj.B .* (obj.B < 0),[1,1,obj.n]),[N,1,1]);
-
-
-
            Rr = repmat(reshape(R,[N,1,obj.n]),[1,obj.m,1]);
-           Rp = sum((Zp ./ repmat(Zsp,[1,obj.m,1])) .* Rr,3);
-           Rn = sum((Zn ./ repmat(Zsn,[1,obj.m,1])) .* Rr,3);
-           R = alpha .* Rp + beta .* Rn ;
+
+           
+           beta = 1 - alpha;
+           Z = Wr .* Xr ; %localized preactivations
+           
+           if ~(alpha == 0)
+                Zp = Z .* (Z > 0);
+                Zsp = sum(Zp,2) + repmat(reshape(obj.B .* (obj.B > 0),[1,1,obj.n]),[N,1,1]);
+                Ralpha = alpha .* sum((Zp ./ repmat(Zsp,[1,obj.m,1])) .* Rr,3);
+           else
+                Ralpha = 0; 
+           end
+
+           if ~(beta == 0)
+                Zn = Z .* (Z < 0);
+                Zsn = sum(Zn,2) + repmat(reshape(obj.B .* (obj.B < 0),[1,1,obj.n]),[N,1,1]);
+                Rbeta = beta .* sum((Zn ./ repmat(Zsn,[1,obj.m,1])) .* Rr,3);
+           else
+                Rbeta = 0;
+           end
+           
+           R = Ralpha + Rbeta;
        end
 
 
-        function Y = forward(obj,X)
-            Y = X * obj.W + repmat(obj.B,size(X,1),1);
-            obj.X = X;
-            obj.Y = Y;
-        end
 
-
-        function DY = backward(obj,DY)
-            obj.dW = obj.X'*DY;
-            obj.dB = sum(DY,1);
-            DY = (DY * obj.W');
-        end
-
-        function update(obj, lrate)
-           obj.W = obj.W - lrate*obj.dW;
-           obj.B = obj.B - lrate*obj.dB;
-        end
-
-        function clean(obj)
-            obj.X = [];
-            obj.Y = [];
-            obj.dW = [];
-            obj.dB = [];
-        end
 
     end
 
