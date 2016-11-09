@@ -168,7 +168,6 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        #distribute the gradient towards across all inputs evenly
         Rx = np.zeros(self.X.shape)
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -194,7 +193,6 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        #distribute the gradient towards across all inputs evenly
         Rx = np.zeros(self.X.shape)
         for i in xrange(Hout):
             for j in xrange(Wout):
