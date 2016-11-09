@@ -11,6 +11,10 @@ classdef MaxPool < modules.Module
     % Rectification Layer
 
     properties
+        %layer parameters
+        stride
+        pool
+        
         %temporary variables
         Y
         X
@@ -18,17 +22,46 @@ classdef MaxPool < modules.Module
 
     methods
         function obj = MaxPool(pool,stride)
+            % Constructor for the max pooling layer object
+            % 
+            % Parameters
+            % ----------
+            % 
+            % pool : tuple (h,w)
+            %     the size of the pooling mask in vertical (h) and horizontal (w) direction
+            % 
+            % stride : tuple (h,w)
+            %     the vertical (h) and horizontal (w) step sizes between filter applications.
+            
             obj = obj@modules.Module();
 
             if nargin < 2 || (exist('stride','var') && isempty(stride))
-              obj.stride = [2,2];
+                obj.stride = [2,2];
+            else
+                obj.stride = stride;
             end
             if nargin < 1 || (exist('pool','var') && isempty(pool))
-               obj.pool = [2,2];
+                obj.pool = [2,2];
+            else
+                obj.pool = pool;
             end
         end
 
         function Y = forward(obj,X)
+            % Realizes the forward pass of an input through the max pooling layer.
+            % 
+            % Parameters
+            % ----------
+            % X : matrix
+            %     a network input, shaped (N,H,W,D), with
+            %     N = batch size
+            %     H, W, D = input size in heigth, width, depth
+            % 
+            % Returns
+            % -------
+            % Y : matrix
+            %     the max-pooled outputs, reduced in size due to given stride and pooling size
+            
             obj.X = X;
             [N,H,W,D]= size(X);
             
@@ -51,6 +84,25 @@ classdef MaxPool < modules.Module
         end
         
         function DX = backward(obj,DY)
+            % Backward-passes an input error gradient DY towards the domintly ativating neurons of this max pooling layer.
+            % 
+            % Parameters
+            % ----------
+            % 
+            % DY : matrix
+            %     an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
+            %     N = number of samples in the batch
+            %     Hy = heigth of the output
+            %     Wy = width of the output
+            %     Dy = output depth = input depth
+            % 
+            % 
+            % Returns
+            % -------
+            % 
+            % DX : matrix
+            %     the error gradient propagated towards the input
+            
             [N,H,W,D] = size(obj.X);
 
             hpool = obj.pool(1);        wpool = obj.pool(2);

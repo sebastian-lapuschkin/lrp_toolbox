@@ -11,6 +11,10 @@ classdef SumPool < modules.Module
     % Rectification Layer
 
     properties
+        %layer parameters
+        stride
+        pool
+        
         %temporary variables
         Y
         X
@@ -18,17 +22,47 @@ classdef SumPool < modules.Module
 
     methods
         function obj = SumPool(pool,stride)
+            % Constructor
+            %
+            % Parameters
+            % ----------
+            % 
+            % pool : (h,w)
+            %     the size of the pooling mask in vertical (h) and horizontal (w) direction
+            % 
+            % stride : (h,w)
+            %     the vertical (h) and horizontal (w) step sizes between filter applications.
+            
             obj = obj@modules.Module();
 
             if nargin < 2 || (exist('stride','var') && isempty(stride))
-              obj.stride = [2,2];
+                obj.stride = [2,2];
+            else
+                obj.stride = stride;            
             end
             if nargin < 1 || (exist('pool','var') && isempty(pool))
-               obj.pool = [2,2];
+                obj.pool = [2,2];
+            else
+                obj.pool = pool;
             end
         end
 
+        
         function Y = forward(obj,X)
+            % Realizes the forward pass of an input through the sum pooling layer.
+            % 
+            % Parameters
+            % ----------
+            % X : matrix
+            %     a network input, shaped (N,H,W,D), with
+            %     N = batch size
+            %     H, W, D = input size in heigth, width, depth
+            % 
+            % Returns
+            % -------
+            % Y : matrix
+            %     the sum-pooled outputs, reduced in size due to given stride and pooling size
+            
             obj.X = X;
             [N,H,W,D]= size(X);
             
@@ -50,7 +84,28 @@ classdef SumPool < modules.Module
             Y = obj.Y; %'return'
         end
         
+        
+        
         function DX = backward(obj,DY)
+            % Backward-passes an input error gradient DY towards the input neurons of this sum pooling layer.
+            % 
+            % Parameters
+            % ----------
+            % 
+            % DY : matrix
+            %     an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
+            %     N = number of samples in the batch
+            %     Hy = heigth of the output
+            %     Wy = width of the output
+            %     Dy = output depth = input depth
+            % 
+            % 
+            % Returns
+            % -------
+            % 
+            % DX : matrix
+            %     the error gradient propagated towards the input
+            
             [N,H,W,D] = size(obj.X);
 
             hpool = obj.pool(1);        wpool = obj.pool(2);
@@ -73,10 +128,12 @@ classdef SumPool < modules.Module
             end     
         end
         
+        
         function clean(obj)
            obj.X = [];
            obj.Y = [];
         end
+        
         
         function Rx = lrp(obj,R,varargin)
             % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140

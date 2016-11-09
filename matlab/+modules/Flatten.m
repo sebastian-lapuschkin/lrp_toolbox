@@ -11,6 +11,9 @@ classdef Flatten < modules.Module
     % Rectification Layer
 
     properties
+        %layer parameters
+        inputshape
+        
         %temporary variables
         Y
     end
@@ -22,15 +25,18 @@ classdef Flatten < modules.Module
         end
 
         function Y = forward(obj,X)
+            % Transforms each sample in X to a one-dimensional array.
             obj.inputshape = size(X); % N x H x W x D
             Y = reshape(X,[obj.inputshape(1) prod(obj.inputshape(2:end))]);
         end
         
         function DY = backward(obj,DY)
+           % Just backward-passes the input gradient DY and reshapes it to fit the input.
            DY = reshape(DY,obj.inputshape);
         end
         
         function R = lrp(obj,R,varargin)
+            % Receives upper layer input relevance R and reshapes it to match the input neurons.
             R = reshape(R,obj.inputshape);
         end
 
