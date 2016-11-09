@@ -119,7 +119,7 @@ class Linear(Module):
         lrp_var : str
             either 'none' or 'simple' or None for standard Lrp ,
             'epsilon' for an added epsilon slack in the denominator
-            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+            'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
 
         param : double
             the respective parameter for the lrp method of choice
