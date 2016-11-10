@@ -156,6 +156,7 @@ class Convolution(Module):
             self.Y = None
             self.DW = None
             self.DB = None
+            self.DY = None
 
 
 
