@@ -144,7 +144,7 @@ class Convolution(Module):
 
         for i in xrange(hf):
             for j in xrange(wf):
-                DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2,]))
+                DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2]))
 
         DB = self.DY.sum(axis=(0,1,2))
         self.W -= lrate * DW
