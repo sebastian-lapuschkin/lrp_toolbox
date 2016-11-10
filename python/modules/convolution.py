@@ -151,10 +151,10 @@ class Convolution(Module):
         self.B -= lrate * DB
 
 
-        def clean(self):
-            self.X = None
-            self.Y = None
-            self.DY = None
+    def clean(self):
+        self.X = None
+        self.Y = None
+        self.DY = None
 
 
 
