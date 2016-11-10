@@ -54,6 +54,8 @@ def read(path, fmt = None):
 
         SoftMax
 
+        Flatten
+
         The exception formed by the linear layer implementation modules.Linear and modules.Convolution incorporates in raw text form as
 
         Linear m n

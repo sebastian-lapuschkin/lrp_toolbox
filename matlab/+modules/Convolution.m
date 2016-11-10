@@ -96,8 +96,8 @@ classdef Convolution < modules.Module
             for i = 1:Hout
                for j = 1:Wout
                   x = X(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:);
-                  xr = repmat(x,[1 1 1 1 Nf]);
                   
+                  xr = repmat(x,[1 1 1 1 Nf]);
                   obj.Y(:,i,j,:) = sum(sum(sum(Wr .* xr,2),3),4);
                end
             end

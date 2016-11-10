@@ -91,7 +91,7 @@ function write_txt(model,path)
         if isa(mod, 'modules.Linear')
             % Format of linear layer
             % Linear <rows_of_W> <columns_of_W>
-            % <flattened weight matrix W>
+            % <flattened (C-order) weight matrix W>
             % <flattened bias vector>
             fprintf(fid,'Linear %i %i\n',mod.m, mod.n);
 
@@ -101,12 +101,41 @@ function write_txt(model,path)
 
             line = sprintf( '%e ',  mod.B); line(end:end+1) = '\n';
             fprintf(fid, line);
-
-        % TODO:
-        % else if isa(mod, 'modules.Convolution') ...
-        % else if isa(mod, 'modules.SumPooling') ...
-        % else if isa(mod, 'modules.MaxPooling') ...
-        % else if isa(mod, 'modules.Flatten') ...
+        elseif isa(mod,'modules.Convolution')
+            % Format of convolution layer
+            % Convolution <rows_of_W> <columns_of_W> <depth_of_W> <number_of_filters_W> <stride_axis_1> <stride_axis_2>
+            % <flattened (C-order) filter block W>
+            % <flattened bias vector>
+            hf = mod.filtersize(1);
+            wf = mod.filtersize(2);
+            df = mod.filtersize(3);
+            nf = mod.filtersize(4);
+            s1 = mod.stride(1);
+            s2 = mod.stride(2);
+            fprintf(fid,'Convolution %i %i %i %i %i %i\n',hf,wf,df,nf,s1,s2);
+            
+            W = permute(mod.W,[4 3 2 1]); %switch around axes to flatten out a C-order indexed version of mod.W
+            line = sprintf( '%e ', W(:)); line(end:end+1) = '\n';
+            fprintf(fid,line);
+            
+            line = sprintf( '%e ',  mod.B(:)); line(end:end+1) = '\n';
+            fprintf(fid, line);
+        elseif isa(mod,'modules.SumPool')
+            % Format of sum pooling layer
+            % SumPool <mask_heigth> <mask_width> <stride_axis_1> <stride_axis_2>
+            hpool = mod.pool(1);
+            wpool = mod.pool(2);
+            s1 = mod.stride(1);
+            s2 = mod.stride(2);
+            fprintf(fid,'SumPool %i %i %i %i\n',hpool,wpool,s1,s2);
+        elseif isa(mod, 'modules.MaxPool')
+            % Format of max pooling layer
+            % MaxPool <mask_heigth> <mask_width> <stride_axis_1> <stride_axis_2>
+            hpool = mod.pool(1);
+            wpool = mod.pool(2);
+            s1 = mod.stride(1);
+            s2 = mod.stride(2);
+            fprintf(fid,'MaxPool %i %i %i %i\n',hpool,wpool,s1,s2);
         else
             % all other layers are free from parameters. Format is thus:
             % <Layername>

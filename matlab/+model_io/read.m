@@ -45,6 +45,8 @@ function model = read(path, fmt)
     %
     %SoftMax
     %
+    %Flatten
+    %
     %The exception formed by the linear layer implementation modules.Linear incorporates in raw text form as
     %
     %Linear m n
@@ -54,6 +56,19 @@ function model = read(path, fmt)
     %with m and n being integer values describing the dimensions of the weight matrix W as [m x n] ,
     %W being the human readable ascii-representation of the flattened matrix (C-order) in m * n white space separated double values.
     %After the line describing W, the bias term B is written out as a single line of n white space separated double values.
+    %
+    %Convolution h w d n s1 s2
+    %W(:)
+    %B(:)
+    %
+    %Semantics as above, with h, w, d being the filter heigth, width and depth and n being the number of filters of that layer.
+    %s1 and s2 specify the stride parameter in vertical (axis 1) and horizontal (axis 2) direction the layer operates on.
+    %
+    %Pooling layers have a parameterized one-line-description
+    %
+    %[Max|Sum]Pool h w s1 s2
+    %
+    %with h and w designating the pooling mask size and s1 and s2 the pooling stride.
 
     if ~exist(path,'file')
         throw(MException('MODEL_IO_READ:invalidPath',sprintf('model_io.read : No such file or directory: %s',path)))
