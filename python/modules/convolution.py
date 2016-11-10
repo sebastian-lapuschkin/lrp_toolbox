@@ -209,7 +209,7 @@ class Convolution(Module):
             for j in xrange(Wout):
                 Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
                 Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,na,na,na,...]
-                Zs += 1e-12*((Zs >= 0)*2 - 1.) # add a weak numerical stabilizer to cusion division by zero
+                Zs += 1e-12*((Zs >= 0)*2 - 1.) # add a weak numerical stabilizer to cushion division by zero
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
         return Rx
 

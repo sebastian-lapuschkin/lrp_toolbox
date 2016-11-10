@@ -54,7 +54,7 @@ classdef Convolution < modules.Module
                 obj.filtersize = filtersize;
             end
             
-            obj.W = randn(obj.filtersize) ./ prod(obj.filtersize(1:3)^.5);
+            obj.W = randn(obj.filtersize) ./ (prod(obj.filtersize(1:3)) .^ .5);
             obj.B = zeros(filtersize(4));
         end
 
@@ -75,33 +75,33 @@ classdef Convolution < modules.Module
             
             obj.X = X;
             [N,H,W,D]= size(X);
-            numfilters = size(obj.W,4);
+            [hf,wf,df,Nf] = size(obj.W);
             
-            hpool = obj.pool(1);        wpool = obj.pool(2);
             hstride = obj.stride(1);    wstride = obj.stride(2);
             
             %assume the given pooling and stride parameters are carefully
             %chosen
-            Hout = (H - hpool)/hstride + 1;
-            Wout = (W - wpool)/wstride + 1;
+            Hout = (H - hf)/hstride + 1;
+            Wout = (W - wf)/wstride + 1;
             
             
             %prepare W and B for the loop below
             Wr = reshape(obj.W,[1 obj.filtersize]);
             Wr = repmat(Wr,[N 1 1 1 1]);
-            Br = reshape(obj.B,[1 1 1 numfilters]);
-            Br = repmat(Br,[N 1 1 1]);
+            Br = reshape(obj.B,[1 1 1 Nf]);
+            Br = repmat(Br,[N Hout Wout 1]);
             
             %initialize output
-            obj.Y = zeros(N,Hout,Wout,D);
+            obj.Y = zeros(N,Hout,Wout,Nf);
             for i = 1:Hout
                for j = 1:Wout
-                  x = X(:,(i-1)*hstride+1:(i-1)*hstride+hpool,(j-1)*wstride+1:(j-1)*wstride+wpool,:);
-                  xr = repmat(x,[1 1 1 1 numfilters]);
+                  x = X(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:);
+                  xr = repmat(x,[1 1 1 1 Nf]);
                   
-                  obj.Y(:,i,j,:) = sum(sum(sum(Wr .* xr,2),3),4) + Br;
+                  obj.Y(:,i,j,:) = sum(sum(sum(Wr .* xr,2),3),4);
                end
             end
+            obj.Y = obj.Y + Br;
             Y = obj.Y; %'return'
         end
         
@@ -156,6 +156,7 @@ classdef Convolution < modules.Module
                     x = obj.X(:,(i-1)*hstride+1:(i-1)*hstride+hf ,(j-1)*wstride+1:(j-1)*wstride+wf,:); % N x hf x wf x df
                     dy = obj.DY(:,i,j,:); % N x 1 x 1 x Nf
                     
+                    %these next two lines are horribly ineffiecient.
                     x = repmat(x,[1 1 1 1 nf]); % N x hf x wf x df x Nf
                     dy = repmat(reshape(dy,[N 1 1 1 nf]), [1 hf wf df 1]); % N x hf x wf x df x Nf
                     
@@ -191,7 +192,7 @@ classdef Convolution < modules.Module
             %prepare W and B for the loop below
             Wr = reshape(obj.W,[1 obj.filtersize]);
             Wr = repmat(Wr,[N 1 1 1 1]);
-            Br = reshape(obj.B,[1 numfilters]);
+            Br = reshape(obj.B,[1 Nf]);
             Br = repmat(Br,[N 1]);
             
             Rx = zeros(N,Hx,Wx,df);
@@ -201,9 +202,10 @@ classdef Convolution < modules.Module
                     x = repmat(x,[1 1 1 1 Nf]);
                     Z = Wr .* x; % N x hf x wf x df x Nf
                     
-                    Zs = sum(sum(sum(Z,2),3),4) + Br ; % N x Nf
+                    Zs = sum(sum(sum(Z,2),3),4);
+                    Zs = Zs + reshape(Br, size(Zs)) ; % N x Nf
                     Zs = Zs + 1e-12*((Zs >= 0)*2 -1); %add a weak numerical stabilizer to cushion division by zero
-                    Zs = repmat(reshape(Zs,[N 1 1 1 Nf]),[1 hf wf df Nf]); % N x hf x wf x df x Nf
+                    Zs = repmat(reshape(Zs,[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
                     
                     zz = Z ./ Zs ; % N x hf x wf x df x Nf
                     rr = repmat(reshape(R(:,i,j,:),[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf

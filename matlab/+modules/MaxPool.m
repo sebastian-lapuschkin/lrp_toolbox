@@ -115,7 +115,7 @@ classdef MaxPool < modules.Module
             
             %distribute the gradient (1 * DY) towards all contributing
             %inputs evenly
-            DX = zeros(N,H,D,W);
+            DX = zeros(N,H,W,D);
             for i = 1:Hout
                 for j = 1:Wout
                     x = obj.X(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);

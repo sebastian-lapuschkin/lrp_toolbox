@@ -30,7 +30,7 @@ classdef Linear < modules.Module
             obj.m = m;
             obj.n = n;
             obj.B = zeros(1,n);
-            obj.W = randn(m,n)*m^(-.5);
+            obj.W = randn(m,n).* m .^ (-.5);
         end
         
         function Y = forward(obj,X)
@@ -42,12 +42,12 @@ classdef Linear < modules.Module
         function DY = backward(obj,DY)
             obj.dW = obj.X'*DY;
             obj.dB = sum(DY,1);
-            DY = (DY * obj.W')*obj.m^.5/obj.n^.5;
+            DY = (DY * obj.W') .* obj.m .^ .5 ./ obj.n .^ .5;
         end
 
         function update(obj, lrate)
-           obj.W = obj.W - lrate*obj.dW/obj.m^.5;
-           obj.B = obj.B - lrate*obj.dB/obj.n^.25;
+           obj.W = obj.W - lrate .* obj.dW ./ obj.m .^ .5;
+           obj.B = obj.B - lrate .* obj.dB ./ obj.n .^ .25;
         end
 
         function clean(obj)

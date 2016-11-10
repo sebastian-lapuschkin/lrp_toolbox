@@ -113,22 +113,79 @@ function model = read_txt(path)
 
         while ischar(line)
             if length(line) >= 6 && all(line(1:6) == 'Linear')
+                % Format of linear layer
+                % Linear <rows_of_W> <columns_of_W>
+                % <flattened (C-order) weight matrix W>
+                % <flattened bias vector>
                 lineparts = strsplit(line);
                 m = str2double(lineparts{2});
                 n = str2double(lineparts{3});
 
                 layer = modules.Linear(m,n);
                 %CAUTION HERE! matlab reshape order is different from numpy
-                %reshape order!, thus the [n m] and transpose.
+                %reshape order!, thus the [n m] and transpose to
+                %come back from fortran order to c order indexing
                 layer.W = reshape(str2num(fgetl(fid)),[n m])';
                 layer.B = str2num(fgetl(fid));
                 modools{end+1} = layer;
+            elseif length(line) >= 11 && all(line(1:11) == 'Convolution')
+                % Format of convolution layer
+                % Convolution <rows_of_W> <columns_of_W> <depth_of_W> <number_of_filters_W> <stride_axis_1> <stride_axis_2>
+                % <flattened (C-order) filter block W>
+                % <flattened bias vector>
+                lineparts = strsplit(line);
+                h = str2double(lineparts{2});
+                w = str2double(lineparts{3});
+                d = str2double(lineparts{4});
+                n = str2double(lineparts{5});
+                s1 = str2double(lineparts{6});
+                s2 = str2double(lineparts{7});
+                
+                filtersize = [h w d n];
+                stride = [s1 s2];
+                layer = modules.Convolution(filtersize,stride);
+                %CAUTION HERE! matlab reshape order is different from numpy
+                %reshape order!, thus the [n m] and transpose to
+                %come back from fortran order to c order indexing
+                layer.W = permute(reshape(str2num(fgetl(fid)),[n d w h]),[4 3 2 1]);
+                layer.B = str2num(fgetl(fid));
+                modools{end+1} = layer;
+            elseif length(line) >= 7 && all(line(1:7) == 'SumPool')
+                % Format of sum pooling layer
+                % SumPool <mask_heigth> <mask_width> <stride_axis_1> <stride_axis_2>
+                lineparts = strsplit(line);
+                h = str2double(lineparts{2});
+                w = str2double(lineparts{3});
+                s1 = str2double(lineparts{4});
+                s2 = str2double(lineparts{5});
+                
+                pool = [h w];
+                stride = [s1 s2];
+                layer = modules.SumPool(pool,stride);
+                modools{end+1} = layer;          
+            elseif length(line) >= 7 && all(line(1:7) == 'MaxPool')
+                % Format of max pooling layer
+                % MaxPool <mask_heigth> <mask_width> <stride_axis_1> <stride_axis_2>
+                lineparts = strsplit(line);
+                h = str2double(lineparts{2});
+                w = str2double(lineparts{3});
+                s1 = str2double(lineparts{4});
+                s2 = str2double(lineparts{5});
+                
+                pool = [h w];
+                stride = [s1 s2];
+                layer = modules.MaxPool(pool,stride);
+                modools{end+1} = layer;
+            elseif length(line) == 7 && all(line(1:7) == 'Flatten')
+                modools{end+1} = modules.Flatten();
             elseif length(line) == 4 && all(line(1:4) == 'Rect')
                 modools{end+1} = modules.Rect();
             elseif length(line) == 4 && all(line(1:4) == 'Tanh')
                 modools{end+1} = modules.Tanh();
             elseif length(line) == 7 && all(line(1:7) == 'SoftMax')
                 modools{end+1} = modules.SoftMax();
+           
+                
             % TODO
             % elseif Convolution,Flatting,Pooling...
             else
