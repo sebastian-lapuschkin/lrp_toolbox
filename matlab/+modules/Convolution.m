@@ -20,6 +20,9 @@ classdef Convolution < modules.Module
         %temporary variables
         Y
         X
+        DB
+        DW
+        DY
     end
 
     methods
@@ -110,7 +113,7 @@ classdef Convolution < modules.Module
             % Parameters
             % ----------
             % 
-            % DY : numpy.ndarray
+            % DY : matrix
             %     an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
             %     N = number of samples in the batch
             %     Hy = heigth of the output
@@ -121,41 +124,37 @@ classdef Convolution < modules.Module
             % Returns
             % -------
             % 
-            % DX : numpy.ndarray
-            %     the error gradient propagated towards the input
+            % DX : matrix
+            %     the error gradient propagated towards the input          
             
-            % TODO: CONTINUE HERE
-            % TODO: CONTINUE HERE
-            % TODO: CONTINUE HERE
-            % TODO: CONTINUE HERE
-            
-            
-%             [N,H,W,D] = size(obj.X);
-% 
-%             hpool = obj.pool(1);        wpool = obj.pool(2);
-%             hstride = obj.stride(1);    wstride = obj.stride(2);
-% 
-%             %assume the given pooling and stride parameters are carefully
-%             %chosen
-%             Hout = (H - hpool)/hstride + 1;
-%             Wout = (W - wpool)/wstride + 1;
-%             
-%             %distribute the gradient (1 * DY) towards all contributing
-%             %inputs evenly
-%             DX = zeros(N,H,D,W);
-%             for i = 1:Hout
-%                 for j = 1:Wout
-%                     dx = DX(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
-%                     dy = repmat(DY(:,i,j,:),[1 hpool wpool 1]);
-%                     DX(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = (dx + dy) .* 0.5;
-%                 end
-%             end     
+            obj.DY = DY;
+            [N,H,D,W] = size(obj.X);
+            [n,Hy,Wy,NF] = size(DY);
+            [hf,wf,df,NF] = size(obj.W);
+    
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+
+            DX = zeros(N,H,D,W);
+            for i = 1:Hout
+                for j = 1:Wout
+                    dx = DX(: , i:hstride:i+Hy , j:wstride:j+Hx, :);
+                    DX(: , i:hstride:i+Hy , j:wstride:j+Hx, :) = dx + DY * permute(obj.W(i,j,:,:),[4 3 2 1]);
+                end
+            end     
         end
+
         
-%         function clean(obj)
-%            obj.X = [];
-%            obj.Y = [];
-%         end
+        
+        
+        function clean(obj)
+           obj.X = [];
+           obj.Y = [];
+           obj.DY = [];
+           obj.DB = [];
+           obj.DY = [];
+        end
+
+        
 %         
 %         function Rx = lrp(obj,R,varargin)
 %             % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
