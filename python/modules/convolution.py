@@ -134,28 +134,26 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        self.DW = np.zeros_like(self.W,dtype=np.float)
+        DW = np.zeros_like(self.W,dtype=np.float)
 
         '''
         for i in xrange(Hy):
             for j in xrange(Wy):
-                self.DW += (self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :, na] * self.DY[:,i:i+1,j:j+1,na,:]).sum(axis=0)
+                DW += (self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :, na] * self.DY[:,i:i+1,j:j+1,na,:]).sum(axis=0)
         '''
 
         for i in xrange(hf):
             for j in xrange(wf):
-                self.DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2,]))
+                DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2,]))
 
-        self.DB = self.DY.sum(axis=(0,1,2))
-        self.W -= lrate * self.DW
-        self.B -= lrate * self.DB
+        DB = self.DY.sum(axis=(0,1,2))
+        self.W -= lrate * DW
+        self.B -= lrate * DB
 
 
         def clean(self):
             self.X = None
             self.Y = None
-            self.DW = None
-            self.DB = None
             self.DY = None
 
 
