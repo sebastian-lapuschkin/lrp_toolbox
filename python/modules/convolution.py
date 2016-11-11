@@ -174,6 +174,8 @@ class Convolution(Module):
             either 'none' or 'simple' or None for standard Lrp ,
             'epsilon' for an added epsilon slack in the denominator
             'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+            'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
+            'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
 
         param : double
             the respective parameter for the lrp method of choice
@@ -186,6 +188,10 @@ class Convolution(Module):
 
         if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
             return self._simple_lrp(R)
+        elif lrp_var.lower() == 'flat':
+            return self._flat_lrp(R)
+        elif lrp_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
+            return self._ww_lrp(R)
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
@@ -213,6 +219,43 @@ class Convolution(Module):
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
         return Rx
 
+    def _flat_lrp(self,R):
+        '''
+        distribute relevance for each output evenly to the output neurons' receptive fields.
+        '''
+
+        N,Hout,Wout,NF = R.shape
+        hf,wf,df,NF = self.W.shape
+        hstride, wstride = self.stride
+
+        Rx = np.zeros_like(self.X,dtype=np.float)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = np.ones(N,hf,wf,df,nf)
+                Zs = Z.sum(axis=(1,2,3),keepdims=True)
+
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+        return Rx
+
+    def _ww_lrp(self,R):
+        '''
+        LRP according to Eq(12) in https://arxiv.org/pdf/1512.02479v1.pdf
+        '''
+
+        N,Hout,Wout,NF = R.shape
+        hf,wf,df,NF = self.W.shape
+        hstride, wstride = self.stride
+
+        Rx = np.zeros_like(self.X,dtype=np.float)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.W[na,...]
+                Zs = Z.sum(axis=(1,2,3),keepdims=True)
+
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+        return Rx
 
     def _epsilon_lrp(self,R,epsilon):
         '''

@@ -180,7 +180,9 @@ class MaxPool(Module):
 
 
     def _flat_lrp(self,R):
-        # distribute relevance for each output evenly to the output neurons' receptive fields.
+        '''
+        distribute relevance for each output evenly to the output neurons' receptive fields.
+        '''
         N,H,W,D = self.X.shape
 
         hpool,   wpool   = self.pool

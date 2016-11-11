@@ -197,6 +197,8 @@ classdef Convolution < modules.Module
            % either 'none' or 'simple' or None for standard Lrp ,
            % 'epsilon' for an added epsilon slack in the denominator
            % 'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
+           % 'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
+           % 'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
            %
            % param : double
            % the respective parameter for the lrp method of choice
@@ -215,6 +217,10 @@ classdef Convolution < modules.Module
 
            if isempty(lrp_var) || strcmpi(lrp_var,'none') || strcmpi(lrp_var,'simple')
               R = obj.simple_lrp(R);
+           elseif strcmpi(lrp_var,'flat')
+              R = obj.flat_lrp(R);
+           elseif strcmpi(lrp_var,'ww') || strcmpi(lrp_var,'w^2')
+              R = obj.ww_lrp(R);
            elseif strcmpi(lrp_var,'epsilon')
               R = obj.epsilon_lrp(R,param);
            elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
@@ -226,7 +232,7 @@ classdef Convolution < modules.Module
        end
         
        
-        function Rx = simple_lrp(obj,R,varargin)
+        function Rx = simple_lrp(obj,R)
             % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
             
             [N,Hx,Wx,df] = size(obj.X);
@@ -262,6 +268,63 @@ classdef Convolution < modules.Module
                 end
             end
         end
+        
+        function Rx = flat_lrp(obj,R)
+            % distribute relevance for each output evenly to the output neurons' receptive fields.
+            
+            [N,Hx,Wx,df] = size(obj.X);
+            [N,Hout,Wout,Nf] = size(R);
+            [hf,wf,df,Nf] = size(obj.W);
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+            
+            Rx = zeros(N,Hx,Wx,df);
+            for i = 1:Hout
+                for j = 1:Wout
+                    Z = ones(N,hf,wf,df,Nf);
+                    
+                    Zs = sum(sum(sum(Z,2),3),4);
+                    Zs = repmat(reshape(Zs,[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                    
+                    zz = Z ./ Zs ; % N x hf x wf x df x Nf
+                    rr = repmat(reshape(R(:,i,j,:),[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                    rx = Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:); % N x hf x wf x df
+                     
+                    Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:) = rx +  sum(zz .* rr,5);
+                end
+            end
+        end
+        
+        function Rx = ww_lrp(obj,R)
+            % LRP according to Eq(12) in https://arxiv.org/pdf/1512.02479v1.pdf
+            
+            [N,Hx,Wx,df] = size(obj.X);
+            [N,Hout,Wout,Nf] = size(R);
+            [hf,wf,df,Nf] = size(obj.W);
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+            
+            
+            %prepare W for the loop below
+            Wr = reshape(obj.W,[1 obj.filtersize]);
+            Wr = repmat(Wr,[N 1 1 1 1]);
+
+            
+            Rx = zeros(N,Hx,Wx,df);
+            for i = 1:Hout
+                for j = 1:Wout       
+                    Z = Wr; % N x hf x wf x df x Nf
+                    
+                    Zs = sum(sum(sum(Z,2),3),4);  % N x Nf
+                    Zs = repmat(reshape(Zs,[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                    
+                    zz = Z ./ Zs ; % N x hf x wf x df x Nf
+                    rr = repmat(reshape(R(:,i,j,:),[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                    rx = Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:); % N x hf x wf x df
+                     
+                    Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:) = rx +  sum(zz .* rr,5);
+                end
+            end
+        end
+        
         
         function Rx = epsilon_lrp(obj,R,epsilon)
             % LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
