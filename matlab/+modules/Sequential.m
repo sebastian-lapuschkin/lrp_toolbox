@@ -149,35 +149,35 @@ classdef Sequential < modules.Module
             %    Xt = someStuff(X);
 
             %first, set default values whereever necessary
-            if nargin < 14 || (exist('transform','var') && isempty(transform))
+            if nargin < 13 || (exist('transform','var') && isempty(transform))
                transform = [];
             end
 
-            if nargin < 13 || (exist('convergence','var') && isempty(convergence))
+            if nargin < 12 || (exist('convergence','var') && isempty(convergence))
                convergence = -1;
             end
 
-            if nargin < 12 || (exist('status','var') && isempty(status))
+            if nargin < 11 || (exist('status','var') && isempty(status))
                status = 250;
             end
 
-            if nargin < 11 || (exist('lfactor_initial','var') && isempty(lfactor_initial))
+            if nargin < 10 || (exist('lfactor_initial','var') && isempty(lfactor_initial))
                lfactor_initial = 1.0;
             end
 
-            if nargin < 10 || (exist('lrate_decay','var') && isempty(lrate_decay))
+            if nargin < 9 || (exist('lrate_decay','var') && isempty(lrate_decay))
                lrate_decay = [];
             end
 
-            if nargin < 9 || (exist('lrate','var') && isempty(lrate))
+            if nargin < 8 || (exist('lrate','var') && isempty(lrate))
                lrate = 0.005;
             end
 
-            if nargin < 8 || (exist('iters','var') && isempty(iters))
+            if nargin < 7 || (exist('iters','var') && isempty(iters))
                iters = 10000;
             end
 
-            if nargin < 7 || (exist('batchsize','var') && isempty(batchsize))
+            if nargin < 6 || (exist('batchsize','var') && isempty(batchsize))
                batchsize = 25;
             end
 
@@ -199,9 +199,9 @@ classdef Sequential < modules.Module
 
                 %transform batch data (maybe)
                 if isempty(transform)
-                    batch = X(samples,:);
+                    batch = X(samples,:,:,:);
                 else
-                    batch = transfor(X(samples,:));
+                    batch = transfor(X(samples,:,:,:));
                 end
 
                 %forward and backward propagation steps with parameter
@@ -222,7 +222,7 @@ classdef Sequential < modules.Module
                        acc = mean(argmaxPred == argmaxTruth);
                        l1loss = sum(abs(Ypred(:) - Yval(:)))/size(Yval,1);
                        disp(' ')
-                       disp(['Accuracy after ' num2str(d) 'iterations on validation set: ' num2str(acc*100) '% (l1-loss: '  num2str(l1loss) ')'])
+                       disp(['Accuracy after ' num2str(d) ' iterations on validation set: ' num2str(acc*100) '% (l1-loss: '  num2str(l1loss) ')'])
                        
                     else %evaluate on training data only   
                         Ypred = obj.forward(X);

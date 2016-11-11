@@ -74,11 +74,13 @@ classdef SumPool < modules.Module
             Hout = (H - hpool)/hstride + 1;
             Wout = (W - wpool)/wstride + 1;
             
+            normalizer = 1./sqrt(hpool*wpool);
+            
             %initialize output
             obj.Y = zeros(N,Hout,Wout,D);
             for i = 1:Hout
                for j = 1:Wout
-                  obj.Y(:,i,j,:) = sum(sum(X(:,(i-1)*hstride+1:(i-1)*hstride+hpool,(j-1)*wstride+1:(j-1)*wstride+wpool,:),2),3) .* 0.5; %0.5 to match the forward pass and to produce well-conditioned input gradients
+                  obj.Y(:,i,j,:) = sum(sum(X(:,(i-1)*hstride+1:(i-1)*hstride+hpool,(j-1)*wstride+1:(j-1)*wstride+wpool,:),2),3) .* normalizer; %normalizer to produce well-conditioned output values
                end
             end
             Y = obj.Y; %'return'
@@ -116,14 +118,17 @@ classdef SumPool < modules.Module
             Hout = (H - hpool)/hstride + 1;
             Wout = (W - wpool)/wstride + 1;
             
+            
+            normalizer = 1./sqrt(hpool * wpool);
+            
             %distribute the gradient (1 * DY) towards all contributing
             %inputs evenly
-            DX = zeros(N,H,D,W);
+            DX = zeros(N,H,W,D);
             for i = 1:Hout
                 for j = 1:Wout
                     dx = DX(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
                     dy = repmat(DY(:,i,j,:),[1 hpool wpool 1]);
-                    DX(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = (dx + dy) .* 0.5;
+                    DX(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = (dx + dy) .* normalizer;
                 end
             end     
         end

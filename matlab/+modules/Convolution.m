@@ -55,7 +55,7 @@ classdef Convolution < modules.Module
             end
             
             obj.W = randn(obj.filtersize) ./ (prod(obj.filtersize(1:3)) .^ .5);
-            obj.B = zeros(filtersize(4));
+            obj.B = zeros(1,filtersize(4));
         end
 
         function Y = forward(obj,X)
@@ -96,10 +96,6 @@ classdef Convolution < modules.Module
             for i = 1:Hout
                for j = 1:Wout
                   x = X(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:);
-                  
-                  %xr = repmat(x,[1 1 1 1 Nf]);
-                  %obj.Y(:,i,j,:) = sum(sum(sum(Wr .* xr,2),3),4);
-                  
                   obj.Y(:,i,j,:) = reshape(x,[N (hf*wf*df)]) * reshape(obj.W, [(hf * wf * df) Nf]);
                end
             end
@@ -128,19 +124,25 @@ classdef Convolution < modules.Module
             %     the error gradient propagated towards the input          
             
             obj.DY = DY;
-            [N,H,D,W] = size(obj.X);
-            [n,Hy,Wy,NF] = size(DY);
-            [hf,wf,df,NF] = size(obj.W);
+            [N,Hx,Wx,Dx] = size(obj.X);
+            [N,Hy,Wy,Nf] = size(DY);
+            [hf,wf,df,Nf] = size(obj.W);
     
             hstride = obj.stride(1);    wstride = obj.stride(2);
 
-            DX = zeros(N,H,D,W);
-            for i = 1:Hout
-                for j = 1:Wout
-                    dx = DX(: , i:hstride:i+Hy , j:wstride:j+Hx, :);
-                    DX(: , i:hstride:i+Hy , j:wstride:j+Wy, :) = dx + DY * permute(obj.W(i,j,:,:),[4 3 2 1]);
+            DX = zeros(N,Hx,Wx,Dx);
+           
+            Wr = reshape(obj.W,[1 hf wf df Nf]);
+            Wr = repmat(Wr,[N 1 1 1 1]); % N hf wf df Nf
+            
+            for i = 1:Hy
+                for j = 1:Wy
+                    dx = DX(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:); % N hf wf df
+                    dy = DY(:,i,j,:); % N x 1 x 1 x Nf
+                    dy = repmat(reshape(dy,[N 1 1 1 Nf]),[1 hf wf df 1]); % N hf wf df Nf
+                    DX(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:) = dx + sum(Wr .* dy,5);
                 end
-            end     
+            end
         end
 
         
@@ -159,16 +161,16 @@ classdef Convolution < modules.Module
                     dy = obj.DY(:,i,j,:); % N x 1 x 1 x Nf
                     
                     %these next two lines are horribly ineffiecient.
-                    x = repmat(x,[1 1 1 1 nf]); % N x hf x wf x df x Nf
-                    dy = repmat(reshape(dy,[N 1 1 1 nf]), [1 hf wf df 1]); % N x hf x wf x df x Nf
+                    x = repmat(x,[1 1 1 1 Nf]); % N x hf x wf x df x Nf
+                    dy = repmat(reshape(dy,[N 1 1 1 Nf]), [1 hf wf df 1]); % N x hf x wf x df x Nf
                     
-                    DW = DW + sum((x .* dy),1);
+                    DW = DW + reshape(sum((x .* dy),1),size(DW));
                 end
             end
             
-            DB = sum(sum(sum(self.DY,1),2),3);
+            DB = sum(sum(sum(obj.DY,1),2),3);
             obj.W = obj.W - lrate .* DW;
-            obj.B = obj.B - lrate .* DB;
+            obj.B = obj.B - lrate .* reshape(DB,size(obj.B));
             
         end
        

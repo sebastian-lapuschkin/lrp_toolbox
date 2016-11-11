@@ -43,7 +43,7 @@ Ytest[np.arange(Ytest.shape[0]),I] = 1
 
 
 #model a network according to LeNet-5 architecture
-maxnet = modules.Sequential([
+lenet = modules.Sequential([
                             modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
                             modules.Rect(),\
                             modules.SumPool(pool=(2,2),stride=(2,2)),\
@@ -58,7 +58,7 @@ maxnet = modules.Sequential([
                         ])
 
 #train the network.
-maxnet.train(   X=Xtrain,\
+lenet.train(   X=Xtrain,\
                 Y=Ytrain,\
                 Xval=Xtest,\
                 Yval=Ytest,\
@@ -67,7 +67,7 @@ maxnet.train(   X=Xtrain,\
                 batchsize=25)
 
 #save the network
-model_io.write(nn, '../LeNet-5.txt')
+model_io.write(lenet, '../LeNet-5.txt')
 
 
 
@@ -98,4 +98,4 @@ maxnet.train(   X=Xtrain,\
                 batchsize=25)
 
 #save the network
-model_io.write(nn, '../LeNet-5-maxpooling.txt')
+model_io.write(maxnet, '../LeNet-5-maxpooling.txt')

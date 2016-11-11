@@ -64,12 +64,14 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
+        normalizer = 1./np.sqrt(hpool*wpool)
+
         #initialize pooled output
         self.Y = np.zeros((N,Hout,Wout,D))
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2)) * 0.5 #times 0.5 to keep the output well conditioned
+                self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2)) * normalizer #normalizer to keep the output well conditioned
         return self.Y
 
 
@@ -106,11 +108,13 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
+        normalizer = 1./np.sqrt(hpool * wpool)
+
         #distribute the gradient (1 * DY) towards across all contributing inputs evenly
         DX = np.zeros_like(self.X)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * 0.5 # 0.5 to match the forward pass and to produce well-conditioned input gradients
+                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * normalizer # 0normalizer to produce well-conditioned gradients
         return DX
 
 

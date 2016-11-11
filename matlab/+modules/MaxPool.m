@@ -146,7 +146,7 @@ classdef MaxPool < modules.Module
             Hout = (H - hpool)/hstride + 1;
             Wout = (W - wpool)/wstride + 1;
             
-            Rx = zeros(N,H,D,W);
+            Rx = zeros(N,H,W,D);
             for i = 1:Hout
                 for j = 1:Wout
                     x = obj.X(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
