@@ -170,8 +170,7 @@ classdef SumPool < modules.Module
            elseif strcmpi(lrp_var,'epsilon')
               R = obj.epsilon_lrp(R,param);
            elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
-               R = obj.simple_lrp(R);
-              %R = obj.alphabeta_lrp(R,param);
+               R = obj.alphabeta_lrp(R,param);
            else
               fprintf('unknown lrp variant %s\n',lrp_var)
            end
@@ -231,6 +230,49 @@ classdef SumPool < modules.Module
                     rx = Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
                     
                     Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = rx + rr .* zz;
+                end
+            end
+        end
+        
+        function Rx = alphabeta_lrp(obj,R,alpha)
+            % LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
+            [N,H,W,D] = size(obj.X);
+
+            hpool = obj.pool(1);        wpool = obj.pool(2);
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+
+            %assume the given pooling and stride parameters are carefully
+            %chosen
+            Hout = (H - hpool)/hstride + 1;
+            Wout = (W - wpool)/wstride + 1;
+            
+            
+            beta = 1 - alpha; 
+            Rx = zeros(N,H,W,D);
+            for i = 1:Hout
+                for j = 1:Wout
+                    Z = obj.X(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
+                    rr = repmat(R(:,i,j,:),[1,hpool,wpool,1]);
+                    
+                    if ~(alpha == 0)
+                        Zp = Z .* (Z > 0);
+                        Zsp = sum(sum(Zp,2),3) + 1e-16; %zero division is quite likely in sum pooling layers when using the alpha-variant
+                        Ralpha = alpha .* rr .* (Zp ./ repmat(Zsp,[1,hpool,wpool,1]));
+                    else
+                        Ralpha = 0;
+                    end
+                    
+                    
+                    if ~(beta == 0)
+                        Zn = Z .* (Z < 0);
+                        Zsn = sum(sum(Zn,2),3) - 1e-16; %zero division is quite likely in sum pooling layers when using the alpha-variant
+                        Rbeta = beta .* rr .* (Zn ./ repmat(Zsn,[1,hpool,wpool,1]));
+                    else
+                        Rbeta = 0;
+                    end
+                    
+                    rx = Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
+                    Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = rx + Ralpha + Rbeta;
                 end
             end
         end

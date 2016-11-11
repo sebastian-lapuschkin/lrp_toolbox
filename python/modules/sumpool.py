@@ -149,8 +149,8 @@ class SumPool(Module):
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
-            #return self._alphabeta_lrp(R,param)
-            return self._simple_lrp(R)
+            return self._alphabeta_lrp(R,param)
+            #return self._simple_lrp(R)
         else:
             print 'Unknown lrp variant', lrp_var
 
@@ -204,8 +204,8 @@ class SumPool(Module):
 
         return Rx
 
-    """
-    # yes, we can do this. no, it will not make sense most of the time.  by default, _lrp_simple will be called. see line 151
+
+    # yes, we can do this. no, it will not make sense most of the time.  by default, _lrp_simple will be called. see line 152
     def _alphabeta_lrp(self,R,alpha):
         '''
         LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
@@ -230,14 +230,14 @@ class SumPool(Module):
 
                 if not alpha == 0:
                     Zp = Z * (Z > 0)
-                    Zsp = Zp.sum(axis=(1,2),keepdims=True)
+                    Zsp = Zp.sum(axis=(1,2),keepdims=True) +1e-16 #zero division is quite likely in sum pooling layers when using the alpha-variant
                     Ralpha = (Zp/Zsp) * R[:,i:i+1,j:j+1,:]
                 else:
                     Ralpha = 0
 
                 if not beta == 0:
                     Zn = Z * (Z < 0)
-                    Zsn = Zn.sum(axis=(1,2),keepdims=True)
+                    Zsn = Zn.sum(axis=(1,2),keepdims=True) - 1e-16 #zero division is quite likely in sum pooling layers when using the alpha-variant
                     Rbeta = (Zn/Zsn) * R[:,i:i+1,j:j+1,:]
                 else:
                     Rbeta = 0
@@ -245,4 +245,3 @@ class SumPool(Module):
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += Ralpha + Rbeta
 
         return Rx
-    """

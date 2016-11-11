@@ -297,5 +297,64 @@ classdef Convolution < modules.Module
                 end
             end
         end
+        
+        
+        function Rx = alphabeta_lrp(obj,R,alpha)
+            % LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
+            
+            [N,Hx,Wx,df] = size(obj.X);
+            [N,Hout,Wout,Nf] = size(R);
+            [hf,wf,df,Nf] = size(obj.W);
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+            
+            
+            %prepare W and B for the loop below
+            Wr = reshape(obj.W,[1 obj.filtersize]);
+            Wr = repmat(Wr,[N 1 1 1 1]);
+            Br = reshape(obj.B,[1 Nf]);
+            Br = repmat(Br,[N 1]);
+            
+            beta = 1 - alpha;
+            Rx = zeros(N,Hx,Wx,df);
+            for i = 1:Hout
+                for j = 1:Wout
+                    x = obj.X(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:);
+                    x = repmat(x,[1 1 1 1 Nf]);
+                    rr = repmat(reshape(R(:,i,j,:),[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                                        
+                    Z = Wr .* x; % N x hf x wf x df x Nf
+                    
+                    if ~(alpha == 0)
+                        Zp = Z .* (Z > 0);
+                        Brp = Br .* (Br > 0);
+                        
+                        Zsp = sum(sum(sum(Zp,2),3),4);
+                        Zsp = Zsp + reshape(Brp, size(Zsp)) ; % N x Nf
+                        Zsp = repmat(reshape(Zsp,[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                        
+                        Ralpha = alpha .* sum(Zp ./ Zsp .* rr,5);
+                    else
+                        Ralpha = 0;
+                    end
+                    
+                    if ~(beta == 0)
+                        Zn = Z .* (Z < 0);
+                        Brn = Br .* (Br < 0);
+                        
+                        Zsn = sum(sum(sum(Zn,2),3),4);
+                        Zsn = Zsn + reshape(Brn, size(Zsn)) ; % N x Nf
+                        Zsn = repmat(reshape(Zsn,[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                        
+                        Rbeta = beta .* sum(Zn ./ Zsn .* rr,5);
+                    else
+                        Rbeta = 0;
+                    end
+                    
+                    
+                    rx = Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:); % N x hf x wf x df   
+                    Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:) = rx + Ralpha + Rbeta;
+                end
+            end
+        end
     end
 end

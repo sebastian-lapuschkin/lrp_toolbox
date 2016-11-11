@@ -57,7 +57,7 @@ for i = I(1:10)
 
     %compute first layer relevance according to prediction
     %R = nn.lrp(ypred);                 %as Eq(56) from DOI: 10.1371/journal.pone.0130140
-    %R = nn.lrp(ypred,'epsilon',1.);   %as Eq(58) from DOI: 10.1371/journal.pone.0130140
+    R = nn.lrp(ypred,'epsilon',1.);   %as Eq(58) from DOI: 10.1371/journal.pone.0130140
     %R = nn.lrp(ypred,'alphabeta',2);    %as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
 
