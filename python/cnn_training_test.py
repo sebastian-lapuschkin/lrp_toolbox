@@ -72,7 +72,7 @@ model_io.write(lenet, '../LeNet-5.txt')
 
 
 
-#a slight variation to test max pooling layers. this model should train much faster.
+#a slight variation to test max pooling layers. this model should train faster.
 maxnet = modules.Sequential([
                             modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
                             modules.Rect(),\

@@ -49,30 +49,30 @@ I = Ytest+1;
 Ytest = zeros(size(Xtest,1),numel(unique(Ytest)));
 Ytest(sub2ind(size(Ytest),1:size(Ytest,1),I')) = 1;
 
-% %model network according to LeNet-5 architecture
-% lenet = modules.Sequential({
-%                             modules.Convolution([5 5 1 10],[1 1]),
-%                             modules.Rect(),
-%                             modules.SumPool([2 2],[2 2])
-%                             modules.Convolution([5 5 10 25],[1 1]),
-%                             modules.Rect(),
-%                             modules.SumPool([2 2],[2 2]),
-%                             modules.Convolution([4 4 25 100],[1 1]),
-%                             modules.Rect(),
-%                             modules.SumPool([2 2],[2 2]),
-%                             modules.Convolution([1 1 100 10],[1 1]),
-%                             modules.Flatten()
-%                             });
-% 
-% %train the net
-% lenet.train(Xtrain,Ytrain,Xtest,Ytest,25,10^6,0.0001);
-% 
-% %save the net
-% model_io.write(lenet'../LeNet-5m.txt')
+%model network according to LeNet-5 architecture
+lenet = modules.Sequential({
+                            modules.Convolution([5 5 1 10],[1 1]),
+                            modules.Rect(),
+                            modules.SumPool([2 2],[2 2])
+                            modules.Convolution([5 5 10 25],[1 1]),
+                            modules.Rect(),
+                            modules.SumPool([2 2],[2 2]),
+                            modules.Convolution([4 4 25 100],[1 1]),
+                            modules.Rect(),
+                            modules.SumPool([2 2],[2 2]),
+                            modules.Convolution([1 1 100 10],[1 1]),
+                            modules.Flatten()
+                            });
+
+%train the net
+lenet.train(Xtrain,Ytrain,Xtest,Ytest,25,10^6,0.0001);
+
+%save the net
+model_io.write(lenet,'../LeNet-5m.txt')
 
 
 
-%a slight variation to test max pooling layers. this model should train much faster.
+%a slight variation to test max pooling layers. this model should train faster.
 maxnet = modules.Sequential({
                             modules.Convolution([5 5 1 10],[1 1]),
                             modules.Rect(),
