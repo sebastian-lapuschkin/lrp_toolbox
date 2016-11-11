@@ -124,7 +124,7 @@ class Convolution(Module):
         for i in xrange(hf):
             for j in xrange(wf):
                 DX[:,i:i+Hy:hstride,j:j+Wy:wstride,:] += np.dot(DY,self.W[i,j,:,:].T)
-        return DX
+        return DX * (hf*wf*df)**.5 / (NF*Hy*Wy)**.5
 
 
     def update(self,lrate):
@@ -147,8 +147,8 @@ class Convolution(Module):
                 DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2]))
 
         DB = self.DY.sum(axis=(0,1,2))
-        self.W -= lrate * DW
-        self.B -= lrate * DB
+        self.W -= lrate * DW / (hf*wf*df)**.5
+        self.B -= lrate * DB / (NF*Hy*Wy)**.25
 
 
     def clean(self):

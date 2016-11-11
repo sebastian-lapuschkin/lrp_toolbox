@@ -143,6 +143,8 @@ classdef Convolution < modules.Module
                     DX(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:) = dx + sum(Wr .* dy,5);
                 end
             end
+            
+            DX = DX * (hf*wf*df)^.5 / (Nf*Hy*Wy)^.5;
         end
 
         
@@ -169,8 +171,8 @@ classdef Convolution < modules.Module
             end
             
             DB = sum(sum(sum(obj.DY,1),2),3);
-            obj.W = obj.W - lrate .* DW;
-            obj.B = obj.B - lrate .* reshape(DB,size(obj.B));
+            obj.W = obj.W - lrate .* DW / (hf*wf*df)^.5 ;
+            obj.B = obj.B - lrate .* reshape(DB,size(obj.B)) / (Nf*Hy*Wy)^.25;
             
         end
        
