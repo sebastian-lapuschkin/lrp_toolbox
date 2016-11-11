@@ -86,8 +86,8 @@ classdef Convolution < modules.Module
             
             
             %prepare W and B for the loop below
-            Wr = reshape(obj.W,[1 obj.filtersize]);
-            Wr = repmat(Wr,[N 1 1 1 1]);
+            %Wr = reshape(obj.W,[1 obj.filtersize]);
+            %Wr = repmat(Wr,[N 1 1 1 1]);
             Br = reshape(obj.B,[1 1 1 Nf]);
             Br = repmat(Br,[N Hout Wout 1]);
             
@@ -97,8 +97,10 @@ classdef Convolution < modules.Module
                for j = 1:Wout
                   x = X(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:);
                   
-                  xr = repmat(x,[1 1 1 1 Nf]);
-                  obj.Y(:,i,j,:) = sum(sum(sum(Wr .* xr,2),3),4);
+                  %xr = repmat(x,[1 1 1 1 Nf]);
+                  %obj.Y(:,i,j,:) = sum(sum(sum(Wr .* xr,2),3),4);
+                  
+                  obj.Y(:,i,j,:) = reshape(x,[N (hf*wf*df)]) * reshape(obj.W, [(hf * wf * df) Nf]);
                end
             end
             obj.Y = obj.Y + Br;
@@ -179,8 +181,50 @@ classdef Convolution < modules.Module
 
         
         
+        function R = lrp(obj,R,lrp_var, param)
+           % performs LRP by calling subroutines, depending on lrp_var and param
+           %
+           % Parameters
+           % ----------
+           %
+           % R : matrix
+           % relevance input for LRP.
+           % should be of the same shape as the previusly produced output by Convolution.forward
+           %
+           % lrp_var : str
+           % either 'none' or 'simple' or None for standard Lrp ,
+           % 'epsilon' for an added epsilon slack in the denominator
+           % 'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
+           %
+           % param : double
+           % the respective parameter for the lrp method of choice
+           %
+           % Returns
+           % -------
+           % R : the backward-propagated relevance scores.
+           % shaped identically to the previously processed inputs in Linear.forward
+
+           if nargin < 4 || (exist('param','var') && isempty(param))
+               param = 0;
+           end
+           if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
+               lrp_var = [];
+           end
+
+           if isempty(lrp_var) || strcmpi(lrp_var,'none') || strcmpi(lrp_var,'simple')
+              R = obj.simple_lrp(R);
+           elseif strcmpi(lrp_var,'epsilon')
+              R = obj.epsilon_lrp(R,param);
+           elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
+              R = obj.alphabeta_lrp(R,param);
+           else
+              fprintf('unknown lrp variant %s\n',lrp_var)
+           end
+
+       end
+        
        
-        function Rx = lrp(obj,R,varargin)
+        function Rx = simple_lrp(obj,R,varargin)
             % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
             
             [N,Hx,Wx,df] = size(obj.X);
@@ -200,6 +244,7 @@ classdef Convolution < modules.Module
                 for j = 1:Wout
                     x = obj.X(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:);
                     x = repmat(x,[1 1 1 1 Nf]);
+                                        
                     Z = Wr .* x; % N x hf x wf x df x Nf
                     
                     Zs = sum(sum(sum(Z,2),3),4);
@@ -210,7 +255,44 @@ classdef Convolution < modules.Module
                     zz = Z ./ Zs ; % N x hf x wf x df x Nf
                     rr = repmat(reshape(R(:,i,j,:),[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
                     rx = Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:); % N x hf x wf x df
+                     
+                    Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:) = rx +  sum(zz .* rr,5);
+                end
+            end
+        end
+        
+        function Rx = epsilon_lrp(obj,R,epsilon)
+            % LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+            
+            [N,Hx,Wx,df] = size(obj.X);
+            [N,Hout,Wout,Nf] = size(R);
+            [hf,wf,df,Nf] = size(obj.W);
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+            
+            
+            %prepare W and B for the loop below
+            Wr = reshape(obj.W,[1 obj.filtersize]);
+            Wr = repmat(Wr,[N 1 1 1 1]);
+            Br = reshape(obj.B,[1 Nf]);
+            Br = repmat(Br,[N 1]);
+            
+            Rx = zeros(N,Hx,Wx,df);
+            for i = 1:Hout
+                for j = 1:Wout
+                    x = obj.X(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:);
+                    x = repmat(x,[1 1 1 1 Nf]);
+                                        
+                    Z = Wr .* x; % N x hf x wf x df x Nf
                     
+                    Zs = sum(sum(sum(Z,2),3),4);
+                    Zs = Zs + reshape(Br, size(Zs)) ; % N x Nf
+                    Zs = Zs + epsilon*((Zs >= 0)*2 -1); %add a weak numerical stabilizer to cushion division by zero
+                    Zs = repmat(reshape(Zs,[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                    
+                    zz = Z ./ Zs ; % N x hf x wf x df x Nf
+                    rr = repmat(reshape(R(:,i,j,:),[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf
+                    rx = Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:); % N x hf x wf x df
+                     
                     Rx(:,(i-1)*hstride+1:(i-1)*hstride+hf,(j-1)*wstride+1:(j-1)*wstride+wf,:) = rx +  sum(zz .* rr,5);
                 end
             end

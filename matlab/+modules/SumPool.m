@@ -135,7 +135,51 @@ classdef SumPool < modules.Module
         end
         
         
-        function Rx = lrp(obj,R,varargin)
+        function R = lrp(obj,R,lrp_var, param)
+           % performs LRP by calling subroutines, depending on lrp_var and param
+           %
+           % Parameters
+           % ----------
+           %
+           % R : matrix
+           % relevance input for LRP.
+           % should be of the same shape as the previusly produced output by SumPool.forward
+           %
+           % lrp_var : str
+           % either 'none' or 'simple' or None for standard Lrp ,
+           % 'epsilon' for an added epsilon slack in the denominator
+           % 'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
+           %
+           % param : double
+           % the respective parameter for the lrp method of choice
+           %
+           % Returns
+           % -------
+           % R : the backward-propagated relevance scores.
+           % shaped identically to the previously processed inputs in Linear.forward
+
+           if nargin < 4 || (exist('param','var') && isempty(param))
+               param = 0;
+           end
+           if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
+               lrp_var = [];
+           end
+
+           if isempty(lrp_var) || strcmpi(lrp_var,'none') || strcmpi(lrp_var,'simple')
+              R = obj.simple_lrp(R);
+           elseif strcmpi(lrp_var,'epsilon')
+              R = obj.epsilon_lrp(R,param);
+           elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
+               R = obj.simple_lrp(R);
+              %R = obj.alphabeta_lrp(R,param);
+           else
+              fprintf('unknown lrp variant %s\n',lrp_var)
+           end
+
+       end
+        
+        
+        function Rx = simple_lrp(obj,R)
             % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
             [N,H,W,D] = size(obj.X);
 
@@ -153,6 +197,34 @@ classdef SumPool < modules.Module
                     Z = obj.X(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
                     Zs = sum(sum(Z,2),3);
                     Zs = Zs + 1e-12 .* ((Zs >= 0) .* 2 -1); % add a weak numerical stabilizer to avoid zero division
+                    
+                    rr = repmat(R(:,i,j,:),[1,hpool,wpool,1]);
+                    zz = Z ./ repmat(Zs,[1,hpool,wpool,1]);
+                    rx = Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
+                    
+                    Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = rx + rr .* zz;
+                end
+            end
+        end
+        
+        function Rx = epsilon_lrp(obj,R,epsilon)
+            % LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+            [N,H,W,D] = size(obj.X);
+
+            hpool = obj.pool(1);        wpool = obj.pool(2);
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+
+            %assume the given pooling and stride parameters are carefully
+            %chosen
+            Hout = (H - hpool)/hstride + 1;
+            Wout = (W - wpool)/wstride + 1;
+            
+            Rx = zeros(N,H,W,D);
+            for i = 1:Hout
+                for j = 1:Wout
+                    Z = obj.X(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
+                    Zs = sum(sum(Z,2),3);
+                    Zs = Zs + epsilon .* ((Zs >= 0) .* 2 -1); % add epsilon stabilizer to avoid zero division
                     
                     rr = repmat(R(:,i,j,:),[1,hpool,wpool,1]);
                     zz = Z ./ repmat(Zs,[1,hpool,wpool,1]);
