@@ -198,7 +198,7 @@ class SumPool(Module):
             for j in xrange(Wout):
                 Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
                 Zs = Z.sum(axis=(1,2),keepdims=True)
-                Zs += epsilon*((Zs >= 0)*2-1) # add a weak numerical stabilizer to cushion an all-zero input
+                Zs += epsilon*((Zs >= 0)*2-1) # add a epsilon stabilizer to cushion an all-zero input
 
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += (Z/Zs) * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 
