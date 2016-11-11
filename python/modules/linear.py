@@ -132,6 +132,10 @@ class Linear(Module):
 
         if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
             return self._simple_lrp(R)
+        elif lrp_var.lower() == 'flat':
+            return self._flat_lrp(R)
+        elif lrp_var.lower() == 'ww' or lr lrp_var.lower() == 'w^2':
+            return self._ww_lrp(R)
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
@@ -148,6 +152,22 @@ class Linear(Module):
         Zs = Z.sum(axis=1)[:,na,:] +self.B[na,na,:] #preactivations
         return ((Z / Zs) * R[:,na,:]).sum(axis=2)
 
+    def _flat_lrp(self,R):
+        '''
+        distribute relevance for each output evenly to all inputs.
+        note that for fully connected layers, this results in a uniform lower layer relevance map.
+        '''
+        Z = np.ones_like(self.W[na,:,:])
+        Zs = Z.sum(axis=1)[:,na,:]
+        return ((Z / Zs) * R[:,na,:]).sum(axis=2)
+
+    def _ww_lrp(self,R):
+        '''
+        LRR according to Eq(12) in https://arxiv.org/pdf/1512.02479v1.pdf
+        '''
+        Z = self.W[na,:,:]**2
+        Zs = Z.sum(axis=1)[:,na,:]
+        return ((Z / Zs) * R[:,na,:]).sum(axis=2)
 
     def _epsilon_lrp(self,R,epsilon):
         '''

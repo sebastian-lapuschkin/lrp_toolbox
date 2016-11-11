@@ -91,6 +91,10 @@ classdef Linear < modules.Module
 
            if isempty(lrp_var) || strcmpi(lrp_var,'none') || strcmpi(lrp_var,'simple')
               R = obj.simple_lrp(R);
+           elseif strcmpi(lrp_var,'flat')
+              R = obj.flat_lrp(R);
+           elseif strcmpi(lrp_var,'ww') || strcmpi(lrp_var,'w^2')
+              R = obj.ww_lrp(R);
            elseif strcmpi(lrp_var,'epsilon')
               R = obj.epsilon_lrp(R,param);
            elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
@@ -115,7 +119,32 @@ classdef Linear < modules.Module
            Rr = repmat(reshape(R,[N,1,obj.n]),[1,obj.m,1]);
            R = sum((Z ./ repmat(Zs,[1,obj.m,1])) .* Rr,3);
        end
+       
+       
+       function R = flat_lrp(obj,R)
+           % distribute relevance for each output evenly to all inputs.
+           %note that for fully connected layers, this results in a uniform lower layer relevance map.
+           N = size(obj.X,1);
+           %localized preactivations
+           Z = ones(N, obj.m, obj.n);
+           Zs = sum(Z,2);
 
+           Rr = repmat(reshape(R,[N,1,obj.n]),[1,obj.m,1]);
+           R = sum((Z ./ repmat(Zs,[1,obj.m,1])) .* Rr,3);
+       end
+       
+       function R = ww_lrp(obj,R)
+           % LRR according to Eq(12) in https://arxiv.org/pdf/1512.02479v1.pdf
+           N = size(obj.X,1);
+           Wr = repmat(reshape(obj.W,[1,obj.m,obj.n]),[N,1,1]);
+
+           %localized preactivations
+           Z = Wr.^2 ;
+           Zs = sum(Z,2);
+
+           Rr = repmat(reshape(R,[N,1,obj.n]),[1,obj.m,1]);
+           R = sum((Z ./ repmat(Zs,[1,obj.m,1])) .* Rr,3);
+       end
 
        function R = epsilon_lrp(obj,R,epsilon)
            % LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
