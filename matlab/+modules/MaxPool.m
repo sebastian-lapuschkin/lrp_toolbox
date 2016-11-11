@@ -134,7 +134,55 @@ classdef MaxPool < modules.Module
            obj.Y = [];
         end
         
-        function Rx = lrp(obj,R,varargin)
+        
+       function R = lrp(obj,R,lrp_var, param)
+           % performs LRP by calling subroutines, depending on lrp_var and param
+           %
+           % Parameters
+           % ----------
+           %
+           % R : matrix
+           % relevance input for LRP.
+           % should be of the same shape as the previusly produced output by Maxpool.forward
+           %
+           % lrp_var : str
+           % either 'none' or 'simple' or None for standard Lrp ,
+           % since 'alpha' and 'epsilon' do not make much sense, the layer defaults to 'simple' lrp
+           % picking flat or 'ww' defaults to 'flat'
+           % 
+           %
+           % param : double
+           % the respective parameter for the lrp method of choice
+           %
+           % Returns
+           % -------
+           % R : the backward-propagated relevance scores.
+           % shaped identically to the previously processed inputs in Linear.forward
+
+           if nargin < 4 || (exist('param','var') && isempty(param))
+               param = 0;
+           end
+           if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
+               lrp_var = [];
+           end
+
+           if isempty(lrp_var) || strcmpi(lrp_var,'none') || strcmpi(lrp_var,'simple')
+              R = obj.simple_lrp(R);
+           elseif strcmpi(lrp_var,'flat')
+              R = obj.flat_lrp(R);
+           elseif strcmpi(lrp_var,'ww') || strcmpi(lrp_var,'w^2')
+              R = obj.flat_lrp(R); % defaults to flat relevance projection
+           elseif strcmpi(lrp_var,'epsilon')
+              R = obj.simple_lrp(R); % defaults to naive variant
+           elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
+              R = obj.simple_lrp(R); % defaults to naive variant
+           else
+              fprintf('unknown lrp variant %s\n',lrp_var)
+           end
+
+       end
+        
+        function Rx = simple_lrp(obj,R)
             % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
             [N,H,W,D] = size(obj.X);
 
@@ -153,6 +201,33 @@ classdef MaxPool < modules.Module
                     y = repmat(obj.Y(:,i,j,:),[1 hpool wpool 1]);
                     
                     Z = x == y;
+                    Zs = sum(sum(Z,2),3);
+
+                    rr = repmat(R(:,i,j,:),[1,hpool,wpool,1]);
+                    zz = Z ./ repmat(Zs,[1,hpool,wpool,1]);
+                    rx = Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :);
+                    
+                    Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = rx + rr .* zz;
+                end
+            end
+        end
+        
+        function Rx = flat_lrp(obj,R)
+            % distribute relevance for each output evenly to the output neurons' receptive fields.
+            [N,H,W,D] = size(obj.X);
+
+            hpool = obj.pool(1);        wpool = obj.pool(2);
+            hstride = obj.stride(1);    wstride = obj.stride(2);
+
+            %assume the given pooling and stride parameters are carefully
+            %chosen
+            Hout = (H - hpool)/hstride + 1;
+            Wout = (W - wpool)/wstride + 1;
+            
+            Rx = zeros(N,H,W,D);
+            for i = 1:Hout
+                for j = 1:Wout              
+                    Z = ones(N,hpool,wpool,D);
                     Zs = sum(sum(Z,2),3);
 
                     rr = repmat(R(:,i,j,:),[1,hpool,wpool,1]);

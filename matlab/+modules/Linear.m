@@ -122,8 +122,8 @@ classdef Linear < modules.Module
        
        
        function R = flat_lrp(obj,R)
-           % distribute relevance for each output evenly to all inputs.
-           %note that for fully connected layers, this results in a uniform lower layer relevance map.
+           % distribute relevance for each output evenly to the output neurons' receptive fields.
+           % note that for fully connected layers, this results in a uniform lower layer relevance map.
            N = size(obj.X,1);
            %localized preactivations
            Z = ones(N, obj.m, obj.n);

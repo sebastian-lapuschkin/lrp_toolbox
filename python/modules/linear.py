@@ -120,6 +120,8 @@ class Linear(Module):
             either 'none' or 'simple' or None for standard Lrp ,
             'epsilon' for an added epsilon slack in the denominator
             'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+            'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
+            'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
 
         param : double
             the respective parameter for the lrp method of choice
@@ -154,7 +156,7 @@ class Linear(Module):
 
     def _flat_lrp(self,R):
         '''
-        distribute relevance for each output evenly to all inputs.
+        distribute relevance for each output evenly to the output neurons' receptive fields.
         note that for fully connected layers, this results in a uniform lower layer relevance map.
         '''
         Z = np.ones_like(self.W[na,:,:])
