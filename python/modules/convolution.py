@@ -208,7 +208,7 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                Z = self.W[na,...]
+                Z = self.W[na,...]**2
                 Zs = Z.sum(axis=(1,2,3),keepdims=True)
 
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
