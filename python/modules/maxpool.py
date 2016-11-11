@@ -151,9 +151,9 @@ class MaxPool(Module):
         elif lrp_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
             return self._flat_lrp(R) # defaults to flat relevance projection
         elif lrp_var.lower() == 'epsilon':
-            return self._simple_lrp(R) #defaults to naive variant
+            return self._simple_lrp(R) # defaults to naive variant
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
-            return self._simple_lrp(R) #defaults to naive variant
+            return self._simple_lrp(R) # defaults to naive variant
         else:
             print 'Unknown lrp variant', lrp_var
 

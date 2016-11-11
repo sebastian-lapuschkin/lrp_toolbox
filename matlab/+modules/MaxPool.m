@@ -148,7 +148,7 @@ classdef MaxPool < modules.Module
            % lrp_var : str
            % either 'none' or 'simple' or None for standard Lrp ,
            % since 'alpha' and 'epsilon' do not make much sense, the layer defaults to 'simple' lrp
-           % picking flat or 'ww' defaults to 'flat'
+           % picking 'flat' or 'ww' defaults to 'flat'
            % 
            %
            % param : double

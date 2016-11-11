@@ -138,6 +138,7 @@ class SumPool(Module):
             either 'none' or 'simple' or None for standard Lrp ,
             'epsilon' for an added epsilon slack in the denominator
             'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+            picking 'flat' or 'ww' defaults to 'flat' (weights for sum pooling are uniform)
 
         param : double
             the respective parameter for the lrp method of choice
@@ -150,6 +151,10 @@ class SumPool(Module):
 
         if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
             return self._simple_lrp(R)
+        elif lrp_var.lower() == 'flat':
+            return self._flat_lrp(R)
+        elif lr_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
+            return self._flat_lrp(R) # defaults to flat relevance projection
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
@@ -181,6 +186,27 @@ class SumPool(Module):
 
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += (Z/Zs) * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 
+        return Rx
+
+
+    def _flat_lrp(self,R):
+        # distribute relevance for each output evenly to the output neurons' receptive fields.
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        Rx = np.zeros_like(self.X,dtype=np.float)
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = np.ones([N,hpool,wpool,D])
+                Zs = Z.sum(axis=(1,2),keepdims=True)
+                Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
         return Rx
 
 
