@@ -34,3 +34,10 @@ class Tanh(Module):
 
     def clean(self):
         self.Y = None
+
+    def lrp(self,R,*args,**kwargs):
+        # component-wise operations within this layer
+        # ->
+        # just propagate R further down.
+        # makes sure subroutines never get called.
+        return R

@@ -122,48 +122,6 @@ class SumPool(Module):
         self.X = None
         self.Y = None
 
-
-    def lrp(self,R, lrp_var=None,param=1.):
-        '''
-        performs LRP by calling subroutines, depending on lrp_var and param
-
-        Parameters
-        ----------
-
-        R : numpy.ndarray
-            relevance input for LRP.
-            should be of the same shape as the previously produced output by SumPool.forward
-
-        lrp_var : str
-            either 'none' or 'simple' or None for standard Lrp ,
-            'epsilon' for an added epsilon slack in the denominator
-            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
-            picking 'flat' or 'ww' defaults to 'flat' (weights for sum pooling are uniform)
-
-        param : double
-            the respective parameter for the lrp method of choice
-
-        Returns
-        -------
-        R : the backward-propagated relevance scores.
-            shaped identically to the previously processed inputs in SumPool.forward
-        '''
-
-        if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
-            return self._simple_lrp(R)
-        elif lrp_var.lower() == 'flat':
-            return self._flat_lrp(R)
-        elif lr_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
-            return self._flat_lrp(R) # defaults to flat relevance projection
-        elif lrp_var.lower() == 'epsilon':
-            return self._epsilon_lrp(R,param)
-        elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
-            return self._alphabeta_lrp(R,param)
-            #return self._simple_lrp(R)
-        else:
-            print 'Unknown lrp variant', lrp_var
-
-
     def _simple_lrp(self,R):
         '''
         LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
@@ -211,6 +169,11 @@ class SumPool(Module):
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
         return Rx
 
+    def _ww_lrp(self,R):
+        '''
+        due to uniform weights used for sum pooling (1), this method defaults to _flat_lrp(R)
+        '''
+        return self._flat_lrp(R)
 
     def _epsilon_lrp(self,R,epsilon):
         '''

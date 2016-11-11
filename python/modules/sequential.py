@@ -228,11 +228,38 @@ class Sequential(Module):
         self.modules = bestLayers
 
 
+    def set_lrp_parameters(self,lrp_var=None,param=None):
+        for m in self.modules:
+            m.set_lrp_parameters(lrp_var=lrp_var,param=param)
 
-
-    def lrp(self,R,lrp_var=None,param=0):
+    def lrp(self,R,lrp_var=None,param=None):
         '''
-        Performs LRP using the network and temporary data produced by a forward call
+        Performs LRP by calling subroutines, depending on lrp_var and param or
+        preset values specified via Module.set_lrp_parameters(lrp_var,lrp_param)
+
+        If lrp parameters have been pre-specified (per layer), the corresponding decomposition
+        will be applied during a call of lrp().
+
+        Specifying lrp parameters explicitly when calling lrp(), e.g. net.lrp(R,lrp_var='alpha',param=2.),
+        will override the preset values for the current call.
+
+        How to use:
+
+        net.forward(X) #forward feed some data you wish to explain to populat the net.
+
+        then either:
+
+        net.lrp() #to perform the naive approach to lrp implemented in _simple_lrp for each layer
+
+        or:
+
+        for m in net.modules:
+            m.set_lrp_parameters(...)
+        net.lrp() #to preset a lrp configuration to each layer in the net
+
+        or:
+
+        net.lrp(somevariantname,someparameter) # to explicitly call the specified parametrization for all layers (where applicable) and override any preset configurations.
 
         Parameters
         ----------
@@ -241,10 +268,12 @@ class Sequential(Module):
             for which the output relevance is to be computed
             dimensionality should be equal to the previously computed predictions
 
-        lrpvar : str
+        lrp_var : str
             either 'none' or 'simple' or None for standard Lrp ,
             'epsilon' for an added epsilon slack in the denominator
-            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+            'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+            'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
+            'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
 
         param : double
             the respective parameter for the lrp method of choice

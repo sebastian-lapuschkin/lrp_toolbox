@@ -62,14 +62,32 @@ for i in I[:10]:
     R = nn.lrp(ypred,'epsilon',1.)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
     #R = nn.lrp(ypred,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
-
     #R = nn.lrp(Y[na,i],'epsilon',1.) #compute first layer relevance according to the true class label
-
-
 
     #yselect = 3
     #yselect = (np.arange(Y.shape[1])[na,:] == yselect)*1.
     #R = nn.lrp(yselect,'epsilon',0.1) #compute first layer relvance for an arbitrarily selected class
+
+    '''
+    """
+    #you may also specify different decompositions for each layer, e.g. as below:
+    #first, set all layers (by calling set_lrp_parameters on the container module
+    #of class Sequential) to perform alpha-beta decomposition with alpha = 1.
+    #this causes the resulting relevance map to display excitation potential for the prediction
+    """
+    nn.set_lrp_parameters('alpha',1.)
+    """
+    #set the first layer (a convolutional layer) decomposition variant to 'w^2'. This may be especially
+    #usefill if input values are ranged [0 V], with 0 being a frequent occurrence, but one still wishes to know about
+    #the relevance feedback propagated to the pixels below the filter
+    #the result with display relevance in important areas despite zero input activation energy.
+    """
+    nn.modules[0].set_lrp_parameters('ww') # also try 'flat'
+    # compute the relevance map
+    '''
+
+
+    R = nn.lrp(ypred)
 
 
     #sum over the third (color channel) axis. not necessary here, but for color images it would be.

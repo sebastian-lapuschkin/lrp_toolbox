@@ -157,49 +157,6 @@ class Convolution(Module):
         self.DY = None
 
 
-
-
-    def lrp(self,R,lrp_var=None,param=1.):
-        '''
-        performs LRP by calling subroutines, depending on lrp_var and param
-
-        Parameters
-        ----------
-
-        R : numpy.ndarray
-            relevance input for LRP.
-            should be of the same shape as the previously produced output by Linear.forward
-
-        lrp_var : str
-            either 'none' or 'simple' or None for standard Lrp ,
-            'epsilon' for an added epsilon slack in the denominator
-            'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
-            'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
-            'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
-
-        param : double
-            the respective parameter for the lrp method of choice
-
-        Returns
-        -------
-        R : the backward-propagated relevance scores.
-            shaped identically to the previously processed inputs in Convolution.forward
-        '''
-
-        if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
-            return self._simple_lrp(R)
-        elif lrp_var.lower() == 'flat':
-            return self._flat_lrp(R)
-        elif lrp_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
-            return self._ww_lrp(R)
-        elif lrp_var.lower() == 'epsilon':
-            return self._epsilon_lrp(R,param)
-        elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
-            return self._alphabeta_lrp(R,param)
-        else:
-            print 'Unknown lrp variant', lrp_var
-
-
     def _simple_lrp(self,R):
         '''
         LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
@@ -232,7 +189,7 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                Z = np.ones(N,hf,wf,df,nf)
+                Z = np.ones((N,hf,wf,df,NF))
                 Zs = Z.sum(axis=(1,2,3),keepdims=True)
 
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)

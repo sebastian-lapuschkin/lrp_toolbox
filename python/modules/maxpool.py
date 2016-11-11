@@ -201,3 +201,20 @@ class MaxPool(Module):
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
         return Rx
 
+    def _ww_lrp(self,R):
+        '''
+        There are no weights to use. default to _flat_lrp(R)
+        '''
+        return self._flat_lrp(R)
+
+    def _epsilon_lrp(self,R,param):
+        '''
+        Since there is only one (or several equally strong) dominant activations, default to _simple_lrp
+        '''
+        return self._simple_lrp(R)
+
+    def _alphabeta_lrp(self,R,param):
+        '''
+        Since there is only one (or several equally strong) dominant activations, default to _simple_lrp
+        '''
+        return self._simple_lrp(R)

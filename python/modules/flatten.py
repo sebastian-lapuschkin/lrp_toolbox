@@ -43,4 +43,6 @@ class Flatten(Module):
         '''
         Receives upper layer input relevance R and reshapes it to match the input neurons.
         '''
+        # just propagate R further down.
+        # makes sure subroutines never get called.
         return np.reshape(R,self.inputshape)

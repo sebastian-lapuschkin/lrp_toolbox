@@ -26,10 +26,15 @@ class Rect(Module):
         self.Y = np.maximum(0,X)
         return self.Y
 
-
     def backward(self,DY):
         return DY*(self.Y!=0)
 
-
     def clean(self):
         self.Y = None
+
+    def lrp(self,R,*args,**kwargs):
+        # component-wise operations within this layer
+        # ->
+        # just propagate R further down.
+        # makes sure subroutines never get called.
+        return R
