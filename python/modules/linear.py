@@ -134,7 +134,7 @@ class Linear(Module):
             return self._simple_lrp(R)
         elif lrp_var.lower() == 'flat':
             return self._flat_lrp(R)
-        elif lrp_var.lower() == 'ww' or lr lrp_var.lower() == 'w^2':
+        elif lrp_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
             return self._ww_lrp(R)
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
