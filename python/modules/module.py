@@ -104,7 +104,7 @@ class Module:
 
         if lrp_var == None and param == None:
             # module.lrp(R) has been called without further parameters.
-            # set default values
+            # set default values / preset values
             lrp_var = self.lrp_var
             param = self.lrp_param
 

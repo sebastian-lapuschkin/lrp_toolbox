@@ -35,6 +35,8 @@ classdef SoftMax < modules.Module
         end
 
         function R = lrp(obj, R, varargin)
+            % just propagate R further down.
+            % makes sure subroutines never get called.
             R = R .* obj.X;
         end
 

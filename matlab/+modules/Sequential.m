@@ -282,43 +282,71 @@ classdef Sequential < modules.Module
 
 
 
-        
+        function set_lrp_parameters(obj,lrp_var,param)
+            if nargin < 3 || (exist('param','var') && isempty(param))
+                param = [];
+            end
+            if nargin < 2 || (exist('lrp_var','var') && isempty(lrp_var))
+                lrp_var = [];
+            end
+            
+            for i = 1:length(obj.modules)
+                obj.modules{i}.set_lrp_parameters(lrp_var,param);
+            end
+        end
         
         function R = lrp(obj,R, lrp_var, param)
-            %R = lrp(obj,R)
-            %
-            %Performs LRP using the network and temporary data produced by a forward call
-            %
-            %Parameters
-            %----------
-            %R : matrix
-            %final layer relevance values. usually the network's prediction of some data points
-            %for which the output relevance is to be computed
-            %dimensionality should be equal to the previously computed predictions
-            %
-            %lrp_var : str
-            %either 'none' or 'simple' or [] for standard Lrp ,
-            %'epsilon' for an added epsilon slack in the denominator
-            %'alphabeta' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
-            %
-            %param : double
-            %the respective parameter for the lrp method of choice
-            %
-            %Returns
-            %-------
-            %
-            %R : matrix
-            %the first layer relevances as produced by the neural net wrt to the previously forward
-            %passed input data. dimensionality is equal to the previously into forward entered input data
-            %
-            %Note
-            %----
-            %
-            %Requires the net to be populated with temporary variables, i.e. forward needed to be called with the input
-            %for which the explanation is to be computed. calling clean in between forward and lrp invalidates the
-            %temporary data
+            % Performs LRP by calling subroutines, depending on lrp_var and param or
+            % preset values specified via Module.set_lrp_parameters(lrp_var,lrp_param)
+            % 
+            % If lrp parameters have been pre-specified (per layer), the corresponding decomposition
+            % will be applied during a call of lrp().
+            % 
+            % Specifying lrp parameters explicitly when calling lrp(), e.g. net.lrp(R,lrp_var='alpha',param=2.),
+            % will override the preset values for the current call.
+            % 
+            % How to use:
+            % 
+            % net.forward(X) #forward feed some data you wish to explain to populat the net.
+            % 
+            % then either:
+            % 
+            % net.lrp() #to perform the naive approach to lrp implemented in _simple_lrp for each layer
+            % 
+            % or:
+            % 
+            % for i = 1:length(net.modules)
+            %     net.modules{i}.set_lrp_parameters(...)
+            % end
+            % net.lrp() #to preset a lrp configuration to each layer in the net
+            % 
+            % or:
+            % 
+            % net.lrp(somevariantname,someparameter) # to explicitly call the specified parametrization for all layers (where applicable) and override any preset configurations.
+            % 
+            % Parameters
+            % ----------
+            % 
+            % R : matrix or tensor
+            %     relevance input for LRP.
+            %     should be of the same shape as the previously produced output by <Module>.forward
+            % 
+            % lrp_var : str
+            %     either 'none' or 'simple' or None for standard Lrp ,
+            %     'epsilon' for an added epsilon slack in the denominator
+            %     'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
+            %     'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
+            %     'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
+            % 
+            % param : double
+            %     the respective parameter for the lrp method of choice
+            % 
+            % Returns
+            % -------
+            % R : the backward-propagated relevance scores.
+            %     shaped identically to the previously processed inputs in <Module>.forward
             if nargin < 4 || (exist('param','var') && isempty(param))
-                param = 0;
+                param = [];
             end
             if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
                 lrp_var = [];

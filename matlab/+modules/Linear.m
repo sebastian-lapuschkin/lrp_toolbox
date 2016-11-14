@@ -57,55 +57,10 @@ classdef Linear < modules.Module
             obj.dB = [];
         end
 
+
         
         
-       function R = lrp(obj,R,lrp_var, param)
-           % performs LRP by calling subroutines, depending on lrp_var and param
-           %
-           % Parameters
-           % ----------
-           %
-           % R : matrix
-           % relevance input for LRP.
-           % should be of the same shape as the previusly produced output by Linear.forward
-           %
-           % lrp_var : str
-           % either 'none' or 'simple' or None for standard Lrp ,
-           % 'epsilon' for an added epsilon slack in the denominator
-           % 'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beat = 1
-           %
-           % param : double
-           % the respective parameter for the lrp method of choice
-           %
-           % Returns
-           % -------
-           % R : the backward-propagated relevance scores.
-           % shaped identically to the previously processed inputs in Linear.forward
-
-           if nargin < 4 || (exist('param','var') && isempty(param))
-               param = 0;
-           end
-           if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
-               lrp_var = [];
-           end
-
-           if isempty(lrp_var) || strcmpi(lrp_var,'none') || strcmpi(lrp_var,'simple')
-              R = obj.simple_lrp(R);
-           elseif strcmpi(lrp_var,'flat')
-              R = obj.flat_lrp(R);
-           elseif strcmpi(lrp_var,'ww') || strcmpi(lrp_var,'w^2')
-              R = obj.ww_lrp(R);
-           elseif strcmpi(lrp_var,'epsilon')
-              R = obj.epsilon_lrp(R,param);
-           elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
-              R = obj.alphabeta_lrp(R,param);
-           else
-              fprintf('unknown lrp variant %s\n',lrp_var)
-           end
-
-       end
-
-
+        
        function R = simple_lrp(obj,R)
            % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
            N = size(obj.X,1);

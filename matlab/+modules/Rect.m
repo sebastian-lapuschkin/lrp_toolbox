@@ -32,6 +32,13 @@ classdef Rect < modules.Module
             Y = max(0,X);
             obj.Y = Y;
         end
+        
+        function R = lrp(obj,R,varargin)
+            % component-wise operations within this layer
+            % ->
+            % just propagate R further down.
+            % makes sure subroutines never get called.
+        end
 
     end
 

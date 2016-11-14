@@ -32,6 +32,13 @@ classdef Tanh < modules.Module
             Y = tanh(X);
             obj.Y = Y;
         end
+        
+        function R = lrp(obj,R,varargin)
+            % component-wise operations within this layer
+            % ->
+            % just propagate R further down.
+            % makes sure subroutines never get called.
+        end
 
     end
 

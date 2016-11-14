@@ -134,54 +134,7 @@ classdef MaxPool < modules.Module
            obj.Y = [];
         end
         
-        
-       function R = lrp(obj,R,lrp_var, param)
-           % performs LRP by calling subroutines, depending on lrp_var and param
-           %
-           % Parameters
-           % ----------
-           %
-           % R : matrix
-           % relevance input for LRP.
-           % should be of the same shape as the previusly produced output by Maxpool.forward
-           %
-           % lrp_var : str
-           % either 'none' or 'simple' or None for standard Lrp ,
-           % since 'alpha' and 'epsilon' do not make much sense, the layer defaults to 'simple' lrp
-           % picking 'flat' or 'ww' defaults to 'flat'
-           % 
-           %
-           % param : double
-           % the respective parameter for the lrp method of choice
-           %
-           % Returns
-           % -------
-           % R : the backward-propagated relevance scores.
-           % shaped identically to the previously processed inputs in Linear.forward
-
-           if nargin < 4 || (exist('param','var') && isempty(param))
-               param = 0;
-           end
-           if nargin < 3 || (exist('lrp_var','var') && isempty(lrp_var))
-               lrp_var = [];
-           end
-
-           if isempty(lrp_var) || strcmpi(lrp_var,'none') || strcmpi(lrp_var,'simple')
-              R = obj.simple_lrp(R);
-           elseif strcmpi(lrp_var,'flat')
-              R = obj.flat_lrp(R);
-           elseif strcmpi(lrp_var,'ww') || strcmpi(lrp_var,'w^2')
-              R = obj.flat_lrp(R); % defaults to flat relevance projection
-           elseif strcmpi(lrp_var,'epsilon')
-              R = obj.simple_lrp(R); % defaults to naive variant
-           elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
-              R = obj.simple_lrp(R); % defaults to naive variant
-           else
-              fprintf('unknown lrp variant %s\n',lrp_var)
-           end
-
-       end
-        
+          
         function Rx = simple_lrp(obj,R)
             % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
             [N,H,W,D] = size(obj.X);
@@ -237,6 +190,21 @@ classdef MaxPool < modules.Module
                     Rx(: , (i-1)*hstride+1:(i-1)*hstride+hpool , (j-1)*wstride+1:(j-1)*wstride+wpool , :) = rx + rr .* zz;
                 end
             end
+        end
+        
+        function Rx = ww_lrp(obj,R)
+            % There are no weights to use. default to flat_lrp(R)
+            Rx = obj.flat_lrp(R);
+        end
+        
+        function Rx = epsilon_lrp(obj,R,epsilon)
+            % Since there is only one (or several equally strong) dominant activations, default to _simple_lrp
+            Rx = obj.simple_lrp(R);
+        end
+        
+        function Rx = alphabeta_lrp(obj,R,alpha)
+            % Since there is only one (or several equally strong) dominant activations, default to _simple_lrp
+            Rx = obj.simple_lrp(R);
         end
     end
 end
