@@ -1,17 +1,17 @@
 classdef SoftMax < modules.Module
-    % @author: Sebastian Bach
+    % @author: Sebastian Lapuschkin
     % @author: Gregoire Montavon
-    % @maintainer: Sebastian Bach
-    % @contact: sebastian.bach@hhi.fraunhofer.de
+    % @maintainer: Sebastian Lapuschkin
+    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
     % @date: 14.08.2015
     % @version: 1.0
-    % @copyright: Copyright (c)  2015, Sebastian Bach, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+    % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
     % @license : BSD-2-Clause
     %
     % Softmax Layer
 
 
-    properties    
+    properties
         %temporary variables
         X
         Y
@@ -19,6 +19,7 @@ classdef SoftMax < modules.Module
 
     methods
         function obj = SoftMax
+            obj = obj@modules.Module();
         end
 
         function clean(obj)
@@ -33,7 +34,9 @@ classdef SoftMax < modules.Module
             obj.Y = Y;
         end
 
-        function R = lrp(obj, R, lrp_var, param)
+        function R = lrp(obj, R, varargin)
+            % just propagate R further down.
+            % makes sure subroutines never get called.
             R = R .* obj.X;
         end
 

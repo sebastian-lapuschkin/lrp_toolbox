@@ -1,10 +1,10 @@
 function data = read(path, fmt)
-    % @author: Sebastian Bach
-    % @maintainer: Sebastian Bach
-    % @contact: sebastian.bach@hhi.fraunhofer.de
+    % @author: Sebastian Lapuschkin
+    % @maintainer: Sebastian Lapuschkin
+    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
     % @date: 14.08.2015
     % @version: 1.0
-    % @copyright: Copyright (c)  2015, Sebastian Bach, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+    % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
     % @license : BSD-2-Clause
     %
     %data = read(path, fmt)
