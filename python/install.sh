@@ -18,8 +18,8 @@
 # This installation requires administrator level privileges.
 
 # INSTALL REQUIRED PYTHON PACKAGES
-sudo apt-get install python-numpy python-numpy-dbg python-scipy python-matplotlib python-skimage
-#sudo pip install skimage #python skimage 0.12.3+ for newer ubuntu/windows compatibility
+apt-get install python-numpy python-numpy-dbg python-scipy python-matplotlib python-skimage
+#pip install skimage #python skimage 0.12.3+ for newer ubuntu/windows compatibility
 
 
 
