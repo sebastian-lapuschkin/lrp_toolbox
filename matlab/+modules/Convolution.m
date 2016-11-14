@@ -263,7 +263,7 @@ classdef Convolution < modules.Module
             Rx = zeros(N,Hx,Wx,df);
             for i = 1:Hout
                 for j = 1:Wout       
-                    Z = Wr; % N x hf x wf x df x Nf
+                    Z = Wr.^2; % N x hf x wf x df x Nf
                     
                     Zs = sum(sum(sum(Z,2),3),4);  % N x Nf
                     Zs = repmat(reshape(Zs,[N 1 1 1 Nf]),[1 hf wf df 1]); % N x hf x wf x df x Nf

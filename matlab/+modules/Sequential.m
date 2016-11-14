@@ -295,6 +295,7 @@ classdef Sequential < modules.Module
             end
         end
         
+        
         function R = lrp(obj,R, lrp_var, param)
             % Performs LRP by calling subroutines, depending on lrp_var and param or
             % preset values specified via Module.set_lrp_parameters(lrp_var,lrp_param)

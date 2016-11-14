@@ -131,7 +131,7 @@ classdef Module < handle
               R = obj.ww_lrp(R);
            elseif strcmpi(lrp_var,'epsilon')
               R = obj.epsilon_lrp(R,param);
-           elseif strcmpi(lrp_var,'alphabeta') || stcmpi(lrp_var, 'alpha')
+           elseif strcmpi(lrp_var,'alphabeta') || strcmpi(lrp_var, 'alpha')
               R = obj.alphabeta_lrp(R,param);
            else
               error('unknown lrp variant %s\n',lrp_var)
