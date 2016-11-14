@@ -20,7 +20,7 @@ import data_io.*
 import render.*
 
 %load neural network, as well as the MNIST test data and some labels
-nn = model_io.read('../models/MNIST/LeNet-5.txt'); % 99.23% prediction accuracy
+nn = model_io.read('../models/MNIST/LeNet-5.mat'); % 99.23% prediction accuracy
 X = data_io.read('../data/MNIST/test_images.mat');
 Y = data_io.read('../data/MNIST/test_labels.mat');
 
