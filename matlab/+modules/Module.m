@@ -26,23 +26,47 @@ classdef Module < handle
             %implemented via inheriting classes
         end
 
-        function R = lrp(obj,R,varargin)
-            %implemented via inheriting classes
-        end
-
-
         function DY = backward(obj,DY)
              %implemented via inheriting classes
         end
 
         function train(obj, X, Y, varargin)
-            %implemented via inheriting classes
+            error(['Training not implemented for class ' class(obj)])
         end
 
         function X = forward(obj,X)
             %implemented via inheriting classes
         end
+        
+        function R = lrp(obj,R,varargin)
+            %implemented via inheriting classes
+        end
+        
+        % ---------------------------------------------------------
+        % Methods below should be implemented by inheriting classes
+        % ---------------------------------------------------------
+        
+        function R = simple_lrp(R)
+            error(['simple_lrp not implemented for class ' class(obj)])
+        end
+        
+        function R = flat_lrp(R)
+            error(['flat_lrp not implemented for class ' class(obj)])
+        end
+        
+        function R = ww_lrp(R)
+            error(['ww_lrp not implemented for class ' class(obj)])
+        end
 
+        function R = epsilon_lrp(R,epsilon)
+            error(['epsilon_lrp not implemented for class ' class(obj)])
+        end
+        
+        function R = alphabeta_lrp(R,alpha)
+            error(['alpha_lrp not implemented for class ' class(obj)])
+        end
+
+        
     end
 
 end
