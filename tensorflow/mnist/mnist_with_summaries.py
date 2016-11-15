@@ -35,8 +35,9 @@ import sys
 sys.path.append("../../python")
 import render
 import numpy as np
-from layers import linear
+#from layers import linear
 import pdb
+from linear import linear
 
 FLAGS = None
 
@@ -106,6 +107,7 @@ def nn_layer(input_tensor, input_dim, output_dim, layer_name, act=tf.nn.relu, re
 def forward(x):
     # hidden1 = nn_layer(x, 784, 500, 'layer1')
     # y = nn_layer(hidden1, 500, 10, 'layer2', act=tf.identity)
+    pdb.set_trace()
     hidden1 = linear(x, 500, name='layer1')
     y = linear(hidden1, 10, activation_fn = tf.identity, name='layer2')
   

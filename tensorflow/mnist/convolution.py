@@ -1,6 +1,6 @@
 import tensorflow as tf
 from module import Module
-
+import variables
 
 
 class convolution(Module):
@@ -20,18 +20,21 @@ class convolution(Module):
         self.stride_height = stride_height
         self.stride_width = stride_width
         self.strides = [1,stride_height, stride_width,1]
-        self.check_shape()
+        self.pad = pad
+        
+        self.check_input_shape()
 
-        wb = Weights()
-        self.weights, self.biases = wb.weights, wb.biases
+        self.weights = variables.weights(self.weights_shape)
+        self.biases = variables.biases(self.output_dim)
+        
 
-    def check_shape(self):
+    def check_input_shape(self):
         if len(self.input_shape)!=4:
             raise ValueError('Expected dimension of input tensor: 4')
 
     def forward(self):
         with tf.name_scope('activations'):
-            conv = tf.nn.conv2d(self.input_tensor, self.weights, strides = self.strides, padding=pad)
+            conv = tf.nn.conv2d(self.input_tensor, self.weights, strides = self.strides, padding=self.pad)
             activations = tf.reshape(tf.nn.bias_add(conv, self.biases), conv.get_shape())
             #activations = activation_fn(conv, name='activation')
             tf.histogram_summary(name + '/activations', activations)
