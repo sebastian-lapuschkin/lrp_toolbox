@@ -292,6 +292,7 @@ Adding the constraint $\alpha + \beta = 1$ ensures the relevance conservation pr
 This decomposition method is especially usefull when paired with a networks making use of ReLU activation layers, since hidden layer inputs will always be $\geq 0$ and their pre-activation outputs also need to be $\geq 0$ to ``fire''. This means that positively weighted connections $w_{ij}$ --- which all factor into $z_{ij}^+$ --- propagate the inputs in an activatingly, while negative weights create deactivating messages $z_{ij}^-$. So by choosing $\alpha$ (and therefore $\beta$) appropriately, allows to choose what is backwards-propagated in terms of relevance. For example setting $\alpha = 1$, causes $\beta = 0$ will result in relevance maps which yield insight into which features cause neuron activations, while $\alpha=2, \beta=-1$ yields a more balanced explanation with still more focus on the neuron-exciting inputs. Be careful, however, with setting a variable to 0: Sum-pooling after a ReLu activation layer will only yield positive activations. Here, setting $\alpha=0,\beta=1$ will result in no heatmap at all, since there are no inhibiting layer inputs to propagate the relevance to.
 
 \paragraph{The $w^2$-decomposition formula}
+The $w^2$-rule was first introduced in \cite{MonArXiv16} and is obtained by choosing the closest root to $\x$ in direction of maximal descent when using Deep Taylor Decomposition.
 \begin{align}
 todo\label{eq:lrp_ww}
 \end{align}
