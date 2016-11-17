@@ -25,7 +25,7 @@ The  implementations  for  Matlab  and  python  are intended as a sandbox or pla
 
 #### Caffe:
 * Minimal output versions implemented.
-* Matthew Zeiler's Deconvolution, Karen Simonyan's Sensitivity Maps, and Grégoire Montavon's w^2-Decomposition are in, alongside the flat weight decomposition for uniformly projecting relevance scores to a neuron's receptive field have been implemented.
+* Matthew Zeiler's Deconvolution, Karen Simonyan's Sensitivity Maps, and aspects of Grégoire Montavon's Deep Taylor Decomposition are implemented, alongside the flat weight decomposition for uniformly projecting relevance scores to a neuron's receptive field have been implemented.
 
 #### Also:
 * Various optimizations, refactoring, bits and pieces here and there.
