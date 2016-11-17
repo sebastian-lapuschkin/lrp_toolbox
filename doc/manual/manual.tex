@@ -726,9 +726,8 @@ The first two files are
 
 \texttt{$\langle imagefilename\rangle$\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.png} and 
 
-\texttt{$\langle imagefilename\rangle$\textunderscore heatmap.png}. Those files are simply the image as it enters the quadratic receptive field of the neural network, and the resulting heatmap. While they are easily to be read in image viewers, they are unsuited for further processing of the heatmap.
+\texttt{$\langle imagefilename\rangle$\textunderscore heatmap.png}. Those files are simply the image as it enters the quadratic receptive field of the neural network, and the resulting heatmap. While they are easily to be read in image viewers, they are unsuited for further processing of the heatmap. Note that both image files are \emph{not} written out when using the implementations named \texttt{*\_minimaloutput}. This code only writes out the results as plain the text files described below.
 
-For that reason the file 
 
 \texttt{$\langle imagefilename\rangle$\textunderscore rawhm.txt} provides the raw unnormalized heatmap scores as plain text. 
 The format is as follows: 
@@ -806,7 +805,10 @@ Then, outfiles are written as e.g. \texttt{~/home/user99/results/03102015/data25
 
 
 \item \texttt{relpropformulatype} (integer) \\
-Set to 0 for the $\epsilon$-type formula, 2 for the $\alpha$-$\beta$-type formula, 11 or 99 for Sensitivity Analysis and 26 for Deconvolution.
+Set to 0 for the $\epsilon$-type formula, 2 for the $\alpha$-$\beta$-type formula, 11 or 99 for Sensitivity Analysis and 26 for Deconvolution, 54 for $\epsilon$+flat, 56  for $\epsilon+w^2$, 58 for $\alpha-\beta$+flat and 60 for $\alpha-\beta+w^2$.
+
+\item \texttt{auxiliaryvariable\_maxlayerindexforflatdistinconv} (integer) \\
+Defines the layer index below (and including) for which ---  for the  \texttt{relpropformulatype}s 54 to 60 --- either flat or $w^2$ decomposition is applied instead of either $\epsilon$ or $\alpha-\beta$.
 
 \item \texttt{epsstab} (float) \\
 Value of $\epsilon$ for the $\epsilon$-type formula. Must be non-negative.
