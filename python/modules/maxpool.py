@@ -119,44 +119,6 @@ class MaxPool(Module):
         self.Y = None
 
 
-    def lrp(self,R, lrp_var=None,param=1.):
-        '''
-        performs LRP by calling subroutines, depending on lrp_var and param
-
-        Parameters
-        ----------
-
-        R : numpy.ndarray
-            relevance input for LRP.
-            should be of the same shape as the previously produced output by Maxpool.forward
-
-        lrp_var : str
-            either 'none' or 'simple' or None for standard Lrp ,
-            since 'alpha' and 'epsilon' do not make much sense, the layer defaults to 'simple' lrp
-            picking flat or 'ww' defaults to 'flat'
-
-        param : double
-            the respective parameter for the lrp method of choice
-
-        Returns
-        -------
-        R : the backward-propagated relevance scores.
-            shaped identically to the previously processed inputs in Linear.forward
-        '''
-
-        if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
-            return self._simple_lrp(R)
-        elif lrp_var.lower() == 'flat':
-            return self._flat_lrp(R)
-        elif lrp_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
-            return self._flat_lrp(R) # defaults to flat relevance projection
-        elif lrp_var.lower() == 'epsilon':
-            return self._simple_lrp(R) # defaults to naive variant
-        elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
-            return self._simple_lrp(R) # defaults to naive variant
-        else:
-            print 'Unknown lrp variant', lrp_var
-
 
 
     def _simple_lrp(self,R):
