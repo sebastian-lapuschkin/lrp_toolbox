@@ -591,9 +591,8 @@ input_shape {
 \end{verbatim}
 which can be found in the file \texttt{deploy.prototxt} as part of the model description.
 This means that this model file allows to compute a 10-fold parallel forward pass. \texttt{void net::Backward\_Relevance\_multi} can be used with such a file to compute a 10-fold parallel LRP backward pass.
-
 Both interfaces require a forward pass to be run before calling them. The result is at best undefined otherwise.
-Note that for the source file for parallel computation \texttt{int numprocessed=10;} has to be set to the same value as the first \texttt{dim:} entry in the \texttt{*.prototxt}. Otherwise, an error will occur. E.g.~if in the \texttt{*.prototxt} file the respective line reads \texttt{dim: 5}, then \texttt{int numprocessed=5;} should be set.
+
 
 
 For the first interface: 
@@ -615,6 +614,10 @@ The second interface is a vectorized version of the first interface, i.e. \textt
 \item 2 for the $\alpha-\beta$-type formula
 \item 11 or 99 for Sensitivity Analysis \cite{DBLP:journals/corr/SimonyanVZ13}
 \item 26 for Deconvolution \cite{DBLP:conf/eccv/ZeilerF14}
+\item 54 for $\epsilon$ and flat decompositions below a given layer
+\item 56 for $\epsilon$ and $w^2$ decompositions below a given layer
+\item 58 for $\alpha-\beta$ and flat decompositions below a given layer
+\item 60 for $\alpha-\beta$ and $w^2$ decompositions below a given layer
 \end{itemize}
 
 
@@ -623,6 +626,8 @@ The second interface is a vectorized version of the first interface, i.e. \textt
 \texttt{relpropopts.epsstab} the $\epsilon$ for the $\epsilon$-type formula
 
 \texttt{relpropopts.lastlayerindex} is the index of choice of the highest layer, e.g. the starting point for LRP.
+
+\texttt{auxiliaryvariable\_maxlayerindexforflatdistinconv} proves the layer index from which on either flat or $w^2$ relevance decomposition is performed (see \texttt{lrp.relpropformulatype}s 54 to 60.
 
 \texttt{relpropopts.firstlayerindex} is the index of the lowest layer at which relevance scores are taken and copied into the output vector of vectors \texttt{rawhm}. 
 
@@ -635,17 +640,17 @@ const int wid = bottom_vecs_[i][0]->width();
 
 Channel inversion is performed, which means that \texttt{rawhm[ch]} is taken from channel \texttt{C-1-ch}.
 
-Other variables which are not supported in this release and have to be set to defaults (0) are:
+Other variables which are not supported in this release and have to be set to defaults (in parentheses) are:
 
-\texttt{relpropopts.codeexectype}
+\texttt{relpropopts.codeexectype} (0)
 
-\texttt{relpropopts.lrn\_forward\_type}
+\texttt{relpropopts.lrn\_forward\_type} (0)
 
-\texttt{relpropopts.lrn\_backward\_type}
+\texttt{relpropopts.lrn\_backward\_type} (1)
 
-\texttt{relpropopts.maxpoolingtoavgpoolinginbackwardpass}
+\texttt{relpropopts.maxpoolingtoavgpoolinginbackwardpass} (0)
 
-\texttt{relpropopts.biastreatmenttype}
+\texttt{relpropopts.biastreatmenttype} (0)
 
 
 
@@ -661,28 +666,48 @@ Other variables which are not supported in this release and have to be set to de
         the model by listing its computational layers line by line as
 
         \begin{verbatim}
-<Layername_i> [<input_size> <output_size>]
+<Layername_i> [<shape parameters>]
 [<Layer_params_i>]
         \end{verbatim}
      
-     	Since all implemented modules except for \texttt{modules.Linear} (for python, and \texttt{+modules.Linear} for Matlab) operate point-wise on the given data, the optional
-        information indicated by brackets \texttt{[ ]} is not used and only the name of the layer is written, e.g.
+     	The following layers apply component-wise transformations to the input and thus only require a single line to be fully parameterized, e.g.
      	
      	\begin{verbatim}  
 Rect       
 Tanh         
 SoftMax
+Flatten
         \end{verbatim}
-        for ReLu non-linearities, tanh-units and the softmax layer respectively. The exception formed by the linear layer implementation 				\texttt{modules.Linear} incorporates in raw text form as
+        for ReLu non-linearities, tanh-units and the softmax and flattening layer respectively. The linear layer implementation \texttt{modules.Linear} incorporates in raw text form as
         \begin{verbatim}
 Linear m n
 W
 B
        \end{verbatim}       
         with $m$ and $n$ being integer values describing the dimensions of the weight matrix $W$ as $[m \times n]$ and
-        $W$ being the human readable ascii-representation of the matrix, where each row of $W$ is written out as a
+        $W$ being the human readable ascii-representation of the matrix, where $W$ is reshaped to a s	ingle vector in C-order and written out as a
         white space separated line of floating point values.
-        After the $m$ lines describing $W$, the bias term $B$ is written out as a single line of $n$ white space separated floating point values.
+        After the line describing $W$, the bias term $B$ is written out as a single line of $n$ white space separated floating point values.
+        
+        
+		Both Max- and SumPooling layer share the same structure, except for the layer name:
+		\begin{verbatim}
+SumPool hpool wpool hstride wstride
+		\end{verbatim}
+		
+		and
+		\begin{verbatim}
+MaxPool hpool wpool hstride wstride
+		\end{verbatim}	    
+        with $hpool$ and $wpool$ being the pooling operations respective height and width and $hstride$ and $wstride$ being the vertical and horizontal stride between pooling applications.
+        
+        Finally, Convolution layers are parsed out as
+        \begin{verbatim}
+Convolution hf wf df nf hstride wstride 
+W
+B
+        \end{verbatim}
+        where $hstride$ and $wstride$ serve the same purpose as for the pooling layers, and $hf, wf, df$ and $nf$ are the filter bank's height, width and depth ( = input depth = number of input channels) and number of filters ( = output depth = number of output channels) respectively. As with the Linear layer $W$ are the learned weights, reshaped in C-order to a single vector written out as a single line of white-space separated values. $B$ is the vector if bias terms of the layer, equalling in length to $nf$.
         
         An example of a simple network trained to solve the \texttt{XOR}-problem is given below. The model file is also included as plain text in \texttt{<toolbox\_path>/models/XOR/xor\_net\_small.txt}
         
