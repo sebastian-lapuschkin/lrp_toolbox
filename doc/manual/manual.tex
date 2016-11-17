@@ -461,8 +461,12 @@ Package structure:
 		\item \texttt{Module} implements an abstract class for neural network modules, defining a common interface which all other classes inheriting \texttt{Module} implement. The inherited default behaviour of all method stubs is to do nothing when called.
 	\begin{itemize}
 	\item If not implemented by inheriting methods, the function \texttt{forward(X)} will return \texttt{X} without change.
-	\item \texttt{lrp(R,...)} implements a decomposition selector function used by all inheriting layer implementations and will return the decomposed relevance scores.
 	\item \texttt{set\_lrp\_parameters(lrp\_var,lrp\_param)} allows to pre-set lrp parameters per layer, with \texttt{lrp\_var} identifying the desired decomposition method per name as string type input, and \texttt{lrp\_param} providing a method-specific parameter.
+	\item \texttt{lrp(R, lrp\_var, param)} performs LRP wrt to an initial relevance input \texttt{R} and a previously fed-forward batch of data via a call of \texttt{forward(X)}. The parameters \texttt{lrp\_var} and \texttt{param} are optional. If not given,  the model (e.g. each layer) tries to use pre-set lrp parameters or will default to the simple lrp implementation from Equation \ref{eq:lrp_naive}.  
+				
+				\texttt{lrp\_param $\in$ $\lbrace$ None\py, []\mat,'none' , 'simple', 'epsilon','eps', 'alphabeta',} \texttt{'alpha','ww','w\^{}2','flat' $\rbrace$} defines the decomposition alternative to use for all layers during the application of LRP. By default, the simple decomposition method in Equation \ref{eq:lrp_naive} will be applied, or any specific lrp parameters set using \texttt{set\_lrp\_parameters}. Setting the parameter to \texttt{'epsilon'} or \texttt{'alphabeta'} will cause the application of Equations \ref{eq:lrp_epsilon} and \ref{eq:lrp_alphabeta} respectively. \texttt{'eps'} and \texttt{'alpha'} are short equivalents for both methods. \texttt{'ww'} or \texttt{'w\^{}2'} will apply Equation \ref{eq:lrp_ww} and \texttt{'flat'} will apply Equation \ref{eq:lrp_flat}. Some layers do have default fall-back decompositions when the provided decomposition choice does not make sense.
+				
+				The parameter \texttt{param} may be used to set the corresponding free parameters $\epsilon$ and $\alpha$ of both methods. Default value is \texttt{[]\mat} or \texttt{None\py}.
 	\end{itemize}			
 			
 		\item \texttt{Sequential} represents the instance of an artificial neural network.
@@ -471,16 +475,11 @@ Package structure:
 				
 				\item \texttt{forward(X)} receives an input \texttt{X}, propagates it through the network and populates the network with input-specific data and internal data representations. Returns a network output.
 				
-				\item \texttt{train(X, Y, Xval, Yval, batchsize, iters, lrate, status, shuffle\_data)} implements a training procedure for the neural network implementation, using the error backpropagation algorithm. \texttt{train} receives a set of training data \texttt{X}		 and training labels  \texttt{Y},   on which the network is trained over \texttt{iters} (default is 10000) training iterations with mini batches of \texttt{batchsize} samples at a time. Every \texttt{status} (default is 250) training iterations, the network is evaluated on the validation data \texttt{Xval} with labels \texttt{Yval}. If no input for the validation set is provided the whole training data is used for estimating the prediction performance. \texttt{shuffle\_data} is a boolean variable which specifies whether the training data is to be permuted randomly or not. A training iteration consists of a forward pass of a minibatch, a backward pass of the delta between the prediction and the expected results followed by an update step. The speed of learning is determined by \texttt{lrate} (default is 0.005).
-				 \item \texttt{backward(DY)} performs a backward pass through the network, taking the error gradient \texttt{as input.}
+				\item \texttt{train(X, Y, Xval, Yval, batchsize, iters, lrate, lrate\_decay, lfactor\_initial, status, convergence, transform)} implements a training procedure for the neural network implementation, using the error backpropagation algorithm. \texttt{train} receives a set of training data \texttt{X}		 and training labels  \texttt{Y},   on which the network is trained over \texttt{iters} (default is 10000) training iterations with mini batches of \texttt{batchsize} (default 25) samples at a time. Every \texttt{status} (default is 250) training iterations, the network is evaluated on the validation data \texttt{Xval} with labels \texttt{Yval}. If no input for the validation set is provided the whole training data is used for estimating the prediction performance. A training iteration consists of a forward pass of a minibatch, a backward pass of the delta between the prediction and the expected results followed by an update step. The speed of learning is determined by \texttt{lrate} (default is 0.005). \texttt{lrate\_decay} controls whether and how the learning rate will diminish during trainig, depending on the network performance. The default value is \texttt{'none'}, with alternatives being \texttt{'linear'} and \texttt{'sublinear'}. \texttt{lfactor\_initial} (default 1.0) is a multiplicative factor to the base learning rate. Using this, with multiple consecutive calls of \texttt{train} allows for a step-wise decrease in the learning rate over the complete network training. \texttt{convergence} (-1) is an integer value defining the number of iterations allowed without measurable network improvements, until model convergence is declared and the training is stopped. Values smaller than zero will disable this convergence check. The input variable \texttt{transform} accepts the handle of a function, which is to be applied to each input batch. This allows for slight input transformations, such as the addition of noise, etc. Default value is \texttt{None}, which is equivalent to the application of an identity function (aka. does nothing).
+				 \item \texttt{backward(DY)} performs a backward pass through the network, taking the error gradient \texttt{DY} as input.
 				 \item \texttt{update(lrate)} updates the network modules, after the error gradient has been computed using \texttt{backward}. \texttt{lrate} is a multiplicative factor determining the training velocity.
-				\item \texttt{lrp(R, lrp\_var, param)} performs LRP wrt to an initial relevance input \texttt{R} and a previously fed-forward batch of data via a call of \texttt{forward(X)}. The parameters \texttt{lrp\_var} and \texttt{param} are optional.
-				
-				\texttt{lrp\_param $\in$ $\lbrace$ None\py, []\mat,'none' , 'simple', 'epsilon', 'alphabeta' $\rbrace$} defines the decomposition alternative to use for all layers during the application of LRP. By default, the simple decomposition method in Equation \ref{eq:lrp_naive} will be applied. Setting the parameter to \texttt{'epsilon'} or \texttt{'alphabeta'} will cause the application of Equations \ref{eq:lrp_epsilon} and \ref{eq:lrp_alphabeta} respectively.
-				
-				The parameter \texttt{param} may be used to set the corresponding free parameters $\epsilon$ and $\alpha$ of both methods. Default value is $0$.
-				
-				The method returns first layer relevance values $R_d^{(1)}$.
+				\item \texttt{lrp(R,lrp\_var, lrp\_param)}
+				The method returns first layer relevance values $R_d^{(1)}$. See the description of  \texttt{modules.Module.lrp} for details.
 				
 				
 				\item \texttt{clean()} iterates over all layers of the neural network and calls \texttt{clean()} on the implementing modules, removing temporary data necessary for LRP	which has been memorized during the forward pass. This method is called in \texttt{model\_io.write()}. 
@@ -492,7 +491,7 @@ Package structure:
 				
 				\item \texttt{forward(X)} performs a forward-pass of the input \texttt{X} and returns an \texttt{n} dimensional output by applying $Y  = \texttt{X}W + B$, where $W$ is a weight matrix, $B$ the bias term and $Y$ the output.
 								
-				\item \texttt{lrp(R, lrp\_var, param)} performs LRP with upper layer relevances $R^{(l+1)}$ and returns relevance values $R^{(l)}$ for the layer input. See the description of \texttt{modules.Sequential.lrp} for details on the possible range of parameters.
+				\item \texttt{lrp(R, lrp\_var, param)} performs LRP with upper layer relevances $R^{(l+1)}$ and returns relevance values $R^{(l)}$ for the layer input. See the description of \texttt{modules.Module.lrp} for details on the possible range of parameters.
 				
 			\end{itemize}
 		\item \texttt{Tanh} implements an activation layer with non-linear $\tanh$ units.
