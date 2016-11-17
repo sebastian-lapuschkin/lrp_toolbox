@@ -312,7 +312,7 @@ The resulting relevance maps will yield explanations of input representations in
 
 \section{Implementation and Examples}
 \label{sec:implementation}
-This section will provide detailed information about the implementation of the LRP Toolbox and demonstrate how it is used and parameters at hand of basic working examples.
+This section will provide detailed information about the implementation of the LRP Toolbox and demonstrates the basic workflow.
 
 \subsection*{How to use the toolbox: Parameters and Results}
 
@@ -329,9 +329,9 @@ with the usual workflow consisting of the following steps:
 \item Apply LRP to obtain input layer relevances $R^{(1)}_d$ explaining the decision of the classifier for $\x$ ...
 	\begin{itemize}
 		\item wrt to the prediction $y_{\text{pred}}$ 
-		\item wrt to a chosen prediction target $y_{\text{choice}}$
+		\item or: wrt to a chosen prediction target $y_{\text{choice}}$
 	\end{itemize}
-	by setting setting the desired final layer relevance as input to LRP. See \cite{bach15}, \texttt{mini.$\lbrace$py,m$\rbrace$} and \texttt{lrp\_demo.$\lbrace$py,m$\rbrace$} for details and examples.
+	by setting the desired final layer relevance as input to LRP. See \cite{bach15}, \texttt{mini.$\lbrace$py,m$\rbrace$}, \texttt{lrp\_demo.$\lbrace$py,m$\rbrace$} and \texttt{lrp\_cnn\_demo.$\lbrace$py,m$\rbrace$} for details and examples.
 \item Visualize input-layer relevances $R_d^{(1)}$ as a heatmap (optional)
 \end{enumerate}
 
@@ -357,7 +357,7 @@ In the following, minimal working examples for both Matlab and python demonstrat
 \subfloat[python : true class]{\includegraphics[width=0.25\textwidth]{./graphics/hm_py.png}}
 \hspace{0.11\textwidth}
 \subfloat[python : class $2$]{\includegraphics[width=0.25\textwidth]{./graphics/hm_py2.png}}
-\caption{(a) and (b) : The produced heatmaps as a result of the execution of both above listed example cases. (c) : The input digit explained as a $2$, e.g.~the input for \texttt{nn.lrp()} has been set to \texttt{np.array([0,0,1,0,0,0,0,0,0,0])[na,:]}. The image is a result of the python implementation.  For both languages, the input parameters in angle brackets specifying the loaded model and data locations have been set to\\
+\caption{(a) and (b) : Heatmap visualizations computed as a result of the execution of both above listed code samples. (c) : The input digit explained as a $2$ by setting input for \texttt{nn.lrp()} to \texttt{np.array([0,0,1,0,0,0,0,0,0,0])[na,:]}. The image is a result of the python implementation.  For both languages, the input parameters in angle brackets specifying the loaded model and data locations have been set to\\
 \texttt{ <model\_path> = '<toolbox\_path>/models/MNIST/long-rect.txt'} and\\
 \texttt{ <data\_path> =  '<toolbox\_path>/data/MNIST/test\_images.txt'}\\
 The resulting rgb-images have been written to a location specified by \texttt{<i\_path>}.
@@ -366,14 +366,16 @@ Slight differences in digit outlines and color hue are the result of internal di
 \end{figure}
 
 \subsubsection*{Interpretation of Heatmap Scores}
-LRP computes a relevance score $R_d^{(1)}$ for each component of the classifier input $x_d$ in its given state. Let us assume that positive values $f(\x)$ indicate the presence of an object or concept within the training data.
+LRP computes a relevance score $R_d^{(1)}$ for each component of the classifier input $x_d$ in its given state. For the given model (high) positive values $f(\x)$ indicate the presence of an object or concept in an input sample.
 Likewise, positive values $R_d^{(1)}$ argue for evidence for the presence of a concept --- the (chosen) prediction target --- via the state of $x_d$. 
 
-Figure \ref{fig:example} (a) and (b) demonstrates heatmaps for an input digit showing a hand-written $7$ next to a heatmap visualizing the input layer relevance values rating the input pixel's contribution towards the detection of a digit $7$. (High) positive scores are visualized in orange to red color, with colder color hues signifying neutral (green) to negative (blue) contributions to the detection of class $7$.
+Figures \ref{fig:example} (a) and (b) demonstrate heatmaps for an input digit showing a hand-written $7$ next to a heatmap visualizing the input layer relevance values rating the input pixel's contribution towards the detection of a digit $7$, as computed with the samples implementations in  \texttt{mini.$\lbrace$py,m$\rbrace$}. (High) positive scores are visualized in orange to red color, while colder color hues signify neutral (green) to negative (blue) contributions to the detection of class $7$.
 
-Note that due to the heatmap the top horizontal bar of the digit has been identified as a striking feature of the detected class, the ''leg'' of the hand written digit is rated as less important. This can be explained as this feature can be shared by digit classes $2$,$4$ and $9$, while a straight horizontal bar at the top is not. Digits of class $5$ however might share this feature, yet (due to our observation) tend to be angled differently in general, e.g. sloping down to the left more. Note the also strong positive evidence outside the written digit: At the bottom, a small area has been identified as containing high positive evidence speaking for class $7$, with a less pronounced counterpart to the right. This can be interpreted as the absence of color contributing to the $7$-ness of the data point. In other words: If those pixels would be colored black, the digit would more closely resemble a $2$. The same interpretation can be applied to the horizontal bar at the top of the image. LRP attributes high relevance to the blank pixels above and below the horizontal bar. Coloring those pixels black would cause the $7$ to resemble a thickly drawn digit $9$. Note the negative evidence --- speaking against the $7$-ness of the input digit --- to the right of the top bar of the $7$, explaining that the classifier would predict the input image as a seven with increased certainty, if the horizontal bar would be longer. This example shows, that heatmaps computed by LRP are not segmentation masks but rate each input unit --- on top of the object and in background areas --- according to how their state influences the prediction of the classifier output.
+Note that due to the heatmap the top horizontal bar of the digit has been identified as a striking feature of the detected class, the ''leg'' of the hand written digit is rated as less important. This can be explained as this feature can be shared by digit classes $2$,$4$ and $9$, while a straight horizontal bar at the top is not. Digits of class $5$ however might share this feature, yet (due to our observation) tend to be angled differently in general, e.g. sloping down to the left more.  Note the also strong positive evidence outside the written digit: At the bottom, a small area has been identified as containing high positive evidence speaking for class $7$, with a less pronounced counterpart to the right. This can be interpreted as the absence of color contributing to the $7$-ness of the data point. In other words: If those pixels would be colored black, the digit would more closely resemble a $2$. The same interpretation can be applied to the horizontal bar at the top of the image. LRP attributes high relevance to the blank pixels above and below the horizontal bar. Coloring those pixels black would cause the $7$ to resemble a thickly drawn digit $9$. Note the negative evidence --- speaking against the $7$-ness of the input digit --- to the left of the top bar of the $7$, explaining that the classifier would predict the input image as a seven with increased certainty, if the horizontal bar would be longer. This example shows, that heatmaps computed by LRP are not segmentation masks but rate each input unit --- on top of the object and in background areas --- according to how their state influences the prediction of the classifier output.
 
-Figure \ref{fig:example} (c) demonstrates the capability of the LRP algorithm to explain \emph{would-be} decisions of a classifier, e.g. in the above case why and how the input digit resembles a $2$ in the eyes of the classifier, or what parts are considered \emph{wrong}. The classifier considers the empty space below the angle at the top of the seven as evidence for the digit being a $2$, yet attributes negative evidence to the digit's \emph{pointy end} to the top right, since the typical member of class $2$ can be expected to be more round in shape. The classifier also identifies most of the ''foot'' missing in the input digit, in order for it to more closely resemble a digit $2$.
+Figure \ref{fig:example} (c) demonstrates the capability of the LRP algorithm to explain \emph{would-be} decisions of a classifier, e.g. in the above case why and how the input digit resembles a $2$ in the eyes of the classifier, or what parts are considered \emph{wrong}. The classifier considers the empty space below the angle at the top of the seven as evidence for the digit being a $2$, yet attributes negative evidence to the digit's \emph{pointy end} to the top right, since the typical member of class $2$ can be expected to be more round in shape. The classifier also identifies most of the ''foot'' as missing (rather: as unexpected for the explanation target) in the input digit, in order for it to more closely resemble a digit $2$.
+
+Pixel-wise explanation always need to be interpreted in context of the problem the classifier has been trained to solve, or vice versa provide an insight to the problem setting with its peculiarities in the first place (E.g. for an application of LRP leading to interesting discoveries about the Pascal VOC \cite{everingham2010pascal} data set, see \cite{lapuschkin2016analyzing}).
 
 
 

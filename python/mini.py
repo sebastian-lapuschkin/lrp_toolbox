@@ -28,4 +28,4 @@ R = nn.lrp(Ypred) # lrp to explain prediction of X
 # render rgb images and save as image
 digit = render.digit_to_rgb(X)
 hm = render.hm_to_rgb(R, X) # render heatmap R, use X as outline
-render.save_image([digit, hm], './hm_py.png')
+render.save_image([digit, hm], '../hm_py.png')
