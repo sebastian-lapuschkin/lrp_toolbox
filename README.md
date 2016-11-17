@@ -7,7 +7,7 @@ of  the  input  by  using  the  topology  of  the  learned  model  itself.
 
 The LRP Toolbox provides simple and accessible stand-alone implementations of LRP for artificial neural networks supporting Matlab and python. The Toolbox realizes LRP functionality for the Caffe Deep Learning Framework as an extension of Caffe source code published in 10/2015.
 
-The  implementations  for  Matlab  and  python  shall  serve  as  a  playing field to familiarize oneself with the LRP algorithm and are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
+The  implementations  for  Matlab  and  python  are intended as a sandbox or playground to familiarize the user to the LRP algorithm and  thus are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
 
 <img src="doc/images/1.png" width="280">
 <img src="doc/images/2.png" width="280">
@@ -17,12 +17,15 @@ The  implementations  for  Matlab  and  python  shall  serve  as  a  playing fie
 <img src="doc/images/scooter10.jpg" width="210"><img src="doc/images/scooter_10_hm.jpg" width="210">
 
 
+### Obtaining the LRP Toolbox:
+You can directly download the latest full release / current verson from github. However, if you prefer to only download what is necessary for your project/language/purpose, make use of the pre-packaged downloads available at [heatmapping.org](http://www.heatmapping.org/)
 
-### Installing the Toolbox -- TL;DR version:
 
-For whichever language / purpose you wish to make use of this toolbox download the appropriate sub-package (*python*, *matlab*, *caffe-master-lrp* -- or do a full clone of the project) and then just run the installation script for your implementation of choice, e.g.
+### Installing the Toolbox:
 
-    git clone https://github.com/sebastian-lapuschkin/lrp_toolbox/
+After having obtained the toolbox code, data and models of choice, simply move into the subpackage folder of you choice -- matlab, python or caffe-master-lrp -- and execute the installation script (written for Ubuntu 14.04 or newer). 
+
+    <obtain the toolbox>
     cd lrp_toolbox/$yourChoice
     bash install.sh
 
