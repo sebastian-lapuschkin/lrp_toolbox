@@ -17,11 +17,20 @@ The  implementations  for  Matlab  and  python  are intended as a sandbox or pla
 <img src="doc/images/scooter10.jpg" width="210"><img src="doc/images/scooter_10_hm.jpg" width="210">
 
 
+### See the LRP Toolbox in Action
+To try out either the python-based MNIST demo, or the Caffe based ImageNet demo, click on the respective panels:
+[<img src="http://heatmapping.org/images/mnist.png" width=210>](http://heatmapping.org/mnist.html)
+[<img src="http://heatmapping.org/images/caffe.png" width=210>](http://heatmapping.org/caffe.html)
+
+
+
 ### New in version 1.2.0
 #### The standalone implementations for python and Matlab:
 * Convnets with Sum- and Maxpooling are now supported, including demo code.
 * LRP-parameters can now be set for each layer individually
 * w² and flat weight decomposition implemented.
+
+
 
 #### Caffe:
 * Minimal output versions implemented.
@@ -29,6 +38,8 @@ The  implementations  for  Matlab  and  python  are intended as a sandbox or pla
 
 #### Also:
 * Various optimizations, refactoring, bits and pieces here and there.
+
+
 
 ### Obtaining the LRP Toolbox:
 You can directly download the latest full release / current verson from github. However, if you prefer to only download what is necessary for your project/language/purpose, make use of the pre-packaged downloads available at [heatmapping.org](http://www.heatmapping.org/)
