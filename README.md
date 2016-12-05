@@ -18,7 +18,7 @@ The  implementations  for  Matlab  and  python  are intended as a sandbox or pla
 
 
 ### See the LRP Toolbox in Action
-To try out either the python-based MNIST demo, or the Caffe based ImageNet demo, click on the respective panels:
+To try out either the python-based MNIST demo, or the Caffe based ImageNet demo in your browser, click on the respective panels:
 [<img src="http://heatmapping.org/images/mnist.png" width=210>](http://heatmapping.org/mnist.html)
 [<img src="http://heatmapping.org/images/caffe.png" width=210>](http://heatmapping.org/caffe.html)
 
