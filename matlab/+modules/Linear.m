@@ -2,10 +2,10 @@ classdef Linear < modules.Module
     % @author: Sebastian Lapuschkin
     % @author: Gregoire Montavon
     % @maintainer: Sebastian Lapuschkin
-    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
+    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de, wojciech.samek@hhi.fraunhofer.de
     % @date: 14.08.2015
     % @version: 1.0
-    % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+    % @copyright: Copyright (c)  2015-2017, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller, Wojciech Samek
     % @license : BSD-2-Clause
     %
     % This module implements a linear neural network layer
@@ -32,7 +32,7 @@ classdef Linear < modules.Module
             obj.B = zeros(1,n);
             obj.W = randn(m,n).* m .^ (-.5);
         end
-        
+
         function Y = forward(obj,X)
             Y = X * obj.W + repmat(obj.B,size(X,1),1);
             obj.X = X;
@@ -58,9 +58,9 @@ classdef Linear < modules.Module
         end
 
 
-        
-        
-        
+
+
+
        function R = simple_lrp(obj,R)
            % LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
            N = size(obj.X,1);
@@ -74,8 +74,8 @@ classdef Linear < modules.Module
            Rr = repmat(reshape(R,[N,1,obj.n]),[1,obj.m,1]);
            R = sum((Z ./ repmat(Zs,[1,obj.m,1])) .* Rr,3);
        end
-       
-       
+
+
        function R = flat_lrp(obj,R)
            % distribute relevance for each output evenly to the output neurons' receptive fields.
            % note that for fully connected layers, this results in a uniform lower layer relevance map.
@@ -87,7 +87,7 @@ classdef Linear < modules.Module
            Rr = repmat(reshape(R,[N,1,obj.n]),[1,obj.m,1]);
            R = sum((Z ./ repmat(Zs,[1,obj.m,1])) .* Rr,3);
        end
-       
+
        function R = ww_lrp(obj,R)
            % LRR according to Eq(12) in https://arxiv.org/pdf/1512.02479v1.pdf
            N = size(obj.X,1);
@@ -124,16 +124,16 @@ classdef Linear < modules.Module
            Xr = repmat(obj.X,[1,1,obj.n]);
            Rr = repmat(reshape(R,[N,1,obj.n]),[1,obj.m,1]);
 
-           
+
            beta = 1 - alpha;
            Z = Wr .* Xr ; %localized preactivations
-           
+
            if ~(alpha == 0)
                 Zp = Z .* (Z > 0);
                 Zsp = sum(Zp,2) + repmat(reshape(obj.B .* (obj.B > 0),[1,1,obj.n]),[N,1,1]);
                 Ralpha = alpha .* sum((Zp ./ repmat(Zsp,[1,obj.m,1])) .* Rr,3);
            else
-                Ralpha = 0; 
+                Ralpha = 0;
            end
 
            if ~(beta == 0)
@@ -143,7 +143,7 @@ classdef Linear < modules.Module
            else
                 Rbeta = 0;
            end
-           
+
            R = Ralpha + Rbeta;
        end
 

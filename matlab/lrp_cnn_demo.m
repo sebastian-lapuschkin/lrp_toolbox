@@ -1,9 +1,9 @@
 % @author: Sebastian Lapuschkin
 % @maintainer: Sebastian Lapuschkin
-% @contact: sebastian.lapuschkin@hhi.fraunhofer.de
-% @date: 10.11.2015
+% @contact: sebastian.lapuschkin@hhi.fraunhofer.de, wojciech.samek@hhi.fraunhofer.de
+% @date: 10.11.2016
 % @version: 1.2+
-% @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+% @copyright: Copyright (c)  2015-2017 , Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller, Wojciech Samek
 % @license : BSD-2-Clause
 %
 %The purpose of this module is to demonstrate the process of obtaining pixel-wise explanations for given data points at hand of the MNIST hand written digit data set.
@@ -66,8 +66,8 @@ for i = I(1:10)
     %yselect = 4;
     %yselect = (1:size(Y,2) == yselect)*1.;
     %R = nn.lrp(yselect); %compute first layer relevance for an arbitrarily selected class
-    
-    
+
+
     % % you may also specify different decompositions for each layer, e.g. as below:
     % % first, set all layers (by calling set_lrp_parameters on the container module
     % % of class Sequential) to perform alpha-beta decomposition with alpha = 1.
@@ -81,20 +81,20 @@ for i = I(1:10)
     % %the result with display relevance in important areas despite zero input activation energy.
     % nn.modules{1}.set_lrp_parameters('ww'); % also try 'flat'
     % % compute the relevance map
-    % R = nn.lrp(ypred); 
+    % R = nn.lrp(ypred);
 
-    
+
     %render input and heatmap as rgb images
     digit = render.digit_to_rgb(x,3);
-    
+
     %turn digit back upright. the axis fliping is caused by the
     %vec2im-implementation with fortan indexing order in mind.
     digit = permute(digit,[2 1 3]);
-    
+
     hm = render.hm_to_rgb(R,x,3,[],2);
     %same for the heatmap.
     hm = permute(hm,[2 1 3]);
-    
+
     img = render.save_image({digit,hm},'../heatmap.png');
     imshow(img); axis off ; drawnow;
     input('hit enter!')

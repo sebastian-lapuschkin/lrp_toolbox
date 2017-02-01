@@ -1,10 +1,10 @@
 function model = read(path, fmt)
     % @author: Sebastian Lapuschkin
     % @maintainer: Sebastian Lapuschkin
-    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
+    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de, wojciech.samek@hhi.fraunhofer.de
     % @date: 14.08.2015
     % @version: 1.2+
-    % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+    % @copyright: Copyright (c)  2015-2017, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller, Wojciech Samek
     % @license : BSD-2-Clause
     %
     %model = read(path, fmt)
@@ -155,7 +155,7 @@ function model = read_txt(path)
                 n = str2double(lineparts{5});
                 s1 = str2double(lineparts{6});
                 s2 = str2double(lineparts{7});
-                
+
                 filtersize = [h w d n];
                 stride = [s1 s2];
                 layer = modules.Convolution(filtersize,stride);
@@ -173,11 +173,11 @@ function model = read_txt(path)
                 w = str2double(lineparts{3});
                 s1 = str2double(lineparts{4});
                 s2 = str2double(lineparts{5});
-                
+
                 pool = [h w];
                 stride = [s1 s2];
                 layer = modules.SumPool(pool,stride);
-                modools{end+1} = layer;          
+                modools{end+1} = layer;
             elseif length(line) >= 7 && all(line(1:7) == 'MaxPool')
                 % Format of max pooling layer
                 % MaxPool <mask_heigth> <mask_width> <stride_axis_1> <stride_axis_2>
@@ -186,7 +186,7 @@ function model = read_txt(path)
                 w = str2double(lineparts{3});
                 s1 = str2double(lineparts{4});
                 s2 = str2double(lineparts{5});
-                
+
                 pool = [h w];
                 stride = [s1 s2];
                 layer = modules.MaxPool(pool,stride);
@@ -199,8 +199,8 @@ function model = read_txt(path)
                 modools{end+1} = modules.Tanh();
             elseif length(line) == 7 && all(line(1:7) == 'SoftMax')
                 modools{end+1} = modules.SoftMax();
-           
-                
+
+
             % TODO
             % elseif Convolution,Flatting,Pooling...
             else

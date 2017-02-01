@@ -1,10 +1,10 @@
 function out = enlarge_image(img,scaling)
     % @author: Sebastian Lapuschkin
     % @maintainer: Sebastian Lapuschkin
-    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
+    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de, wojciech.samek@hhi.fraunhofer.de
     % @date: 14.08.2015
     % @version: 1.0
-    % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+    % @copyright: Copyright (c)  2015-2017, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller, Wojciech Samek
     % @license : BSD-2-Clause
     %
     %out = enlarge_image(img,scaling)
@@ -32,7 +32,7 @@ function out = enlarge_image(img,scaling)
     if scaling < 1
        fprintf('scaling factor needs to be an integer >= 1\n')
     end
-    
+
     if length(size(img)) == 2
         [H,W] = size(img);
         out = zeros(H*scaling,W*scaling);
@@ -44,13 +44,13 @@ function out = enlarge_image(img,scaling)
               out(fh:fh+scaling-1,fw:fw+scaling-1) = img(h,w);
           end
         end
-    
+
     elseif length(size(img)) == 3
         [H,W,D] = size(img);
         out = zeros(H*scaling, W*scaling, D);
         for h = 1:H
             fh = (h-1)*scaling+1;
-            
+
             for w = 1:W
                 fw = (w-1)*scalling+1;
                 out(fh:fh+scaling-1,fw:fw+scaling-1) = img(h,w,:);

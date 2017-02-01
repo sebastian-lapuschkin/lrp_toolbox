@@ -1,10 +1,10 @@
 function write(model, path, fmt)
     % @author: Sebastian Lapuschkin
     % @maintainer: Sebastian Lapuschkin
-    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
+    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de, wojciech.samek@hhi.fraunhofer.de
     % @date: 14.08.2015
     % @version: 1.2+
-    % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+    % @copyright: Copyright (c)  2015-2017, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller, Wojciech Samek
     % @license : BSD-2-Clause
     %
     %write(model, path, fmt)
@@ -113,11 +113,11 @@ function write_txt(model,path)
             s1 = mod.stride(1);
             s2 = mod.stride(2);
             fprintf(fid,'Convolution %i %i %i %i %i %i\n',hf,wf,df,nf,s1,s2);
-            
+
             W = permute(mod.W,[4 3 2 1]); %switch around axes to flatten out a C-order indexed version of mod.W
             line = sprintf( '%e ', W(:)); line(end:end+1) = '\n';
             fprintf(fid,line);
-            
+
             line = sprintf( '%e ',  mod.B(:)); line(end:end+1) = '\n';
             fprintf(fid, line);
         elseif isa(mod,'modules.SumPool')

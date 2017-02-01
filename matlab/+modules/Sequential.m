@@ -2,10 +2,10 @@ classdef Sequential < modules.Module
     % @author: Sebastian Lapuschkin
     % @author: Gregoire Montavon
     % @maintainer: Sebastian Lapuschkin
-    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de
+    % @contact: sebastian.lapuschkin@hhi.fraunhofer.de, wojciech.samek@hhi.fraunhofer.de
     % @date: 14.08.2015
     % @version: 1.2+
-    % @copyright: Copyright (c)  2015, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller
+    % @copyright: Copyright (c)  2015-2017, Sebastian Lapuschkin, Alexander Binder, Gregoire Montavon, Klaus-Robert Mueller, Wojciech Samek
     % @license : BSD-2-Clause
     %
     %  Top level access point and incorporation of the neural network implementation.
@@ -30,8 +30,8 @@ classdef Sequential < modules.Module
             obj = obj@modules.Module();
             obj.modules = modules;
         end
-        
-        
+
+
         function X = forward(obj,X)
             %X = forward(obj,X)
             %
@@ -51,7 +51,7 @@ classdef Sequential < modules.Module
                 X = obj.modules{i}.forward(X);
             end
         end
-        
+
         function DY = backward(obj, DY)
             for i = length(obj.modules):-1:1
                 DY = obj.modules{i}.backward(DY);
@@ -213,7 +213,7 @@ classdef Sequential < modules.Module
                 %periodically evaluate network and optionally adjust
                 %learning rate or check for convergence
                 if mod(d,status) == 0
-                    
+
                     %if given, also evaluate on validation data
                     if ~isempty(Xval) && ~isempty(Yval)
                        Ypred = obj.forward(Xval);
@@ -223,8 +223,8 @@ classdef Sequential < modules.Module
                        l1loss = sum(abs(Ypred(:) - Yval(:)))/size(Yval,1);
                        disp(' ')
                        disp(['Accuracy after ' num2str(d) ' iterations on validation set: ' num2str(acc*100) '% (l1-loss: '  num2str(l1loss) ')'])
-                       
-                    else %evaluate on training data only   
+
+                    else %evaluate on training data only
                         Ypred = obj.forward(X);
                         [~,argmaxPred]  = max(Ypred,[],2);
                         [~,argmaxTruth] = max(Y,[],2);
@@ -289,59 +289,59 @@ classdef Sequential < modules.Module
             if nargin < 2 || (exist('lrp_var','var') && isempty(lrp_var))
                 lrp_var = [];
             end
-            
+
             for i = 1:length(obj.modules)
                 obj.modules{i}.set_lrp_parameters(lrp_var,param);
             end
         end
-        
-        
+
+
         function R = lrp(obj,R, lrp_var, param)
             % Performs LRP by calling subroutines, depending on lrp_var and param or
             % preset values specified via Module.set_lrp_parameters(lrp_var,lrp_param)
-            % 
+            %
             % If lrp parameters have been pre-specified (per layer), the corresponding decomposition
             % will be applied during a call of lrp().
-            % 
+            %
             % Specifying lrp parameters explicitly when calling lrp(), e.g. net.lrp(R,lrp_var='alpha',param=2.),
             % will override the preset values for the current call.
-            % 
+            %
             % How to use:
-            % 
+            %
             % net.forward(X) #forward feed some data you wish to explain to populat the net.
-            % 
+            %
             % then either:
-            % 
+            %
             % net.lrp() #to perform the naive approach to lrp implemented in _simple_lrp for each layer
-            % 
+            %
             % or:
-            % 
+            %
             % for i = 1:length(net.modules)
             %     net.modules{i}.set_lrp_parameters(...)
             % end
             % net.lrp() #to preset a lrp configuration to each layer in the net
-            % 
+            %
             % or:
-            % 
+            %
             % net.lrp(somevariantname,someparameter) # to explicitly call the specified parametrization for all layers (where applicable) and override any preset configurations.
-            % 
+            %
             % Parameters
             % ----------
-            % 
+            %
             % R : matrix or tensor
             %     relevance input for LRP.
             %     should be of the same shape as the previously produced output by <Module>.forward
-            % 
+            %
             % lrp_var : str
             %     either 'none' or 'simple' or None for standard Lrp ,
             %     'epsilon' for an added epsilon slack in the denominator
             %     'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
             %     'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
             %     'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
-            % 
+            %
             % param : double
             %     the respective parameter for the lrp method of choice
-            % 
+            %
             % Returns
             % -------
             % R : the backward-propagated relevance scores.
@@ -359,7 +359,7 @@ classdef Sequential < modules.Module
         end
 
 
-        
+
 
     end
 
