@@ -11,18 +11,18 @@ cd ..
 # download and extract the MNIST hand written data set if neccessary
 if ! [[ -f data/MNIST/test_images.mat && -f data/MNIST/test_labels.mat ]] 
 then
-    fname=data_mnist_mat.tar.gz
+    fname=data_mnist_mat.zip
     wget -nc http://heatmapping.org/files/lrp_toolbox/data/$fname
-    tar xvf $fname
+    unzip $fname
     rm $fname
 fi
 
 # download and extract the model required for successfully run the demo
 if  ! [ -f models/MNIST/long-rect.mat ]
 then
-    fname=models_mnist_mat.tar.gz
+    fname=models_mnist_mat.zip
     wget -nc http://heatmapping.org/files/lrp_toolbox/models/$fname
-    tar xvf $fname
+    unzip $fname
     rm $fname
 fi
 
