@@ -3,17 +3,17 @@
 # 1) GO TO CAFFE ROOT
 # 2) RUN THIS
 # 3) BUILD CAFFE
-
+# (this script will be called in install.sh)
 
 # transformations :
-# #  #include "hdf5/serial/hdf5.h" -> #include "hdf5/serial/hdf5.h"
-# #  #include "hdf5/serial/hdf5_hl.h" -> #include "hdf5/serial/hdf5_hl.h"    #sadly using sed destroys this script , at the same time makes it safe to use it repeatedly
-#  links hdf5
-#  modifies makefile.
+# include "hdf5/serial/hdf5.h" -> #include "hdf5/serial/hdf5.h"
+# include "hdf5/serial/hdf5_hl.h" -> #include "hdf5/serial/hdf5_hl.h"    #sadly using sed destroys this script , at the same time makes it safe to use it repeatedly
+# links hdf5 to where it can be found by caffe make and modifies makefile.
+# adapts include paths and library names for the demonstrator
 
 
 distro="$( lsb_release -a | grep Release: )"
-if [[ "$distro" == *16.04 ]] ||  [[ "$distro" == *15.04 ]]
+if [[ "$distro" == *16.04 ]]
 then	
 	if [ -f distro.patched ]
 	then
@@ -43,20 +43,3 @@ then
 	fi
 fi
 
-
-
-
-# DO THE FOLLOWING MANUALLY FOR NOW
-
-
-
-
-#modify INCLUDE_DIRS in Makefile.config
-#   INCLUDE_DIRS := $(PYTHON_INCLUDE) /usr/local/include /usr/include/hdf5/serial/
-
-# replace in build.sh:
-#  -lMagick++ -lMagickWand -lMagickCore  -> -lMagick++-6.Q16 -lMagickWand-6.Q16 -lMagickCore-6.Q16#
-#  -I /usr/include/ImageMagick -> -I /usr/include/ImageMagick-6/ -I /usr/include/x86_64-linux-gnu/ImageMagick-6/
-
-
-# this works. nice.
