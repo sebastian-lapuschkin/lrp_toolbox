@@ -6,8 +6,8 @@
 # (this script will be called in install.sh)
 
 # transformations :
-# include "hdf5/serial/hdf5.h" -> #include "hdf5/serial/hdf5.h"
-# include "hdf5/serial/hdf5_hl.h" -> #include "hdf5/serial/hdf5_hl.h"    #sadly using sed destroys this script , at the same time makes it safe to use it repeatedly
+# include "hdf5.h" -> #include "hdf5/serial/hdf5.h"
+# include "hdf5_hl.h" -> #include "hdf5/serial/hdf5_hl.h"
 # links hdf5 to where it can be found by caffe make and modifies makefile.
 # adapts include paths and library names for the demonstrator
 
@@ -23,7 +23,7 @@ then
 
 		echo "running patch."
 		echo "step 1: manipulate header paths for hdf5 "
-		find . -type f -exec sed -i -e 's^"hdf5/serial/hdf5.h"^"hdf5/serial/hdf5.h"^g' -e 's^"hdf5/serial/hdf5_hl.h"^"hdf5/serial/hdf5_hl.h"^g' '{}' \;
+		find . -type f -exec sed -i -e 's^"hdf5.h"^"hdf5/serial/hdf5.h"^g' -e 's^"hdf5_hl.h"^"hdf5/serial/hdf5_hl.h"^g' '{}' \;
 
 		echo "step 2: create symlinks for hdf5 libraries. please enter your super user pw on prompt "
 		here=$PWD
