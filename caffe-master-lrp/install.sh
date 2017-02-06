@@ -69,6 +69,10 @@ cd .. ; rm -r cuda_dl
 apt-get install libatlas-base-dev
 apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 
+#the code as originally been written for and on ubuntu 14.04
+#this script here modifies includes and library names for caffe and the demonstator to compile on 16.04. will do nothing on 14.04 and only execute once.
+bash caffe-lrp-16.04-patch.sh
+
 
 # COMPILE CAFFE CODE
 make clean
