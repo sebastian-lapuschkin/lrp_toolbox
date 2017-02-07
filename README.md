@@ -35,7 +35,7 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 #### Caffe:
 * Minimal output versions implemented.
-* Matthew Zeiler's Deconvolution, Karen Simonyan's Sensitivity Maps, and aspects of Grégoire Montavon's Deep Taylor Decomposition are implemented, alongside the flat weight decomposition for uniformly projecting relevance scores to a neuron's receptive field have been implemented.
+* Matthew Zeiler et al.'s  Deconvolution, Karen Simonyan et al.'s Sensitivity Maps, and aspects of Grégoire Montavon et al.'s Deep Taylor Decomposition are implemented, alongside the flat weight decomposition for uniformly projecting relevance scores to a neuron's receptive field have been implemented.
 
 #### Also:
 * Various optimizations, refactoring, bits and pieces here and there.
