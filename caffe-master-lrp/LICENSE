@@ -8,6 +8,10 @@ All other contributions:
 Copyright (c) 2014, 2015, the respective contributors
 All rights reserved.
 
+All contributions by Fraunhofer Heinrich Hertz Institute and TU Berlin:
+Copyright (c) 2015-2017, Sebastian Lapuschkin, Alexander Binder, Grégoire Montavon, Klaus-Robert Müller, Wojciech Samek
+All rights reserved. Free for academic use only. Patent pending.
+
 Caffe uses a shared copyright model: each contributor holds copyright over
 their contributions to Caffe. The project versioning records all such
 contribution and copyright details. If a contributor wants to further mark
@@ -42,3 +46,5 @@ CONTRIBUTION AGREEMENT
 By contributing to the BVLC/caffe repository through pull-request, comment,
 or otherwise, the contributor releases their content to the
 license and copyright terms herein.
+
+
