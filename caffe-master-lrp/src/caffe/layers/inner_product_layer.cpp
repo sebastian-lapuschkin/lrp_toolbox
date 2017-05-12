@@ -129,15 +129,15 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		const bool thenightstartshere) {
 
 	switch (ro.relpropformulatype) {
-	case 0: {
-		//epsstab
+	case 0: // epsilon-type formula
+	{
 		switch (ro.codeexectype) {
 		case 0: {
 			//slowneasy
 			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
-			break;
+		break;
 		default: {
 			LOG(FATAL) << "unknown value for ro.codeexectype "
 					<< ro.codeexectype << std::endl;
@@ -147,9 +147,10 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		} //	switch(ro.codeexectype)
 
 	}
-		break;
-	case 2: {
-		//alphabeta
+	break;
+
+	case 2: // (alpha-beta)-type formula
+	{
 		switch (ro.codeexectype) {
 		case 0:
 		case 1:
@@ -168,78 +169,95 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		} //	switch(ro.codeexectype)
 
 	}
-		break;
-	case 6: 
-	case 56: {
-		//epsstab
-		switch (ro.codeexectype) {
-		case 0: {
-			//slowneasy
-			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
-		}
-			break;
-		default: {
-			LOG(FATAL) << "unknown value for ro.codeexectype "
-					<< ro.codeexectype << std::endl;
-			exit(1);
-		}
-			break;
-		} //	switch(ro.codeexectype)
+	break;
 
+	case 54: // epsilon + flat below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			Backward_Relevance_cpu_flatdist_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+		else
+		{
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
 	}
-	case 11: //gradient in demonstrator
-	case 58:
+	break;
+
+	case 56: // epsilon + w^2 below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
 		{
-		//alphabeta
-		switch (ro.codeexectype) {
-		case 0: 
-		case 1:
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
-			//slowneasy
-			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
+			Backward_Relevance_cpu_wsquare(top,
+					propagate_down, bottom,
+					layerindex, ro );
 		}
-			break;
-		default: {
-			LOG(FATAL) << "unknown value for ro.codeexectype "
-					<< ro.codeexectype << std::endl;
-			exit(1);
-		}
-			break;
-
-		} //	switch(ro.codeexectype)
-
-		}
-		break;
-
-	case 60:
+		else
 		{
-		//alphabeta
-		switch (ro.codeexectype) {
-		case 0: 
-		case 1:
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
+
+	case 58: // (alpha-beta) + flat below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
 		{
-			//slowneasy
-			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
 		}
-			break;
-		default: {
-			LOG(FATAL) << "unknown value for ro.codeexectype "
-					<< ro.codeexectype << std::endl;
-			exit(1);
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			Backward_Relevance_cpu_flatdist_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
 		}
-			break;
-
-		} //	switch(ro.codeexectype)
-
+		else
+		{
+			Backward_Relevance_cpu_alphabeta_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
 		}
-		break;
+	}
+	break;
 
+	case 60: // (alpha-beta) + w^2 below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
 
-	case 8:
-	case 54:
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			Backward_Relevance_cpu_wsquare(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+		else
+		{
+			Backward_Relevance_cpu_alphabeta_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
+
+	case 100: // decomposition type per layer: (alpha-beta) for conv layers, epsilon for inner product layers
 	{
 		switch (ro.codeexectype) {
 		case 0: {
@@ -247,7 +265,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
-			break;
+		break;
 		default: {
 			LOG(FATAL) << "unknown value for ro.codeexectype "
 					<< ro.codeexectype << std::endl;
@@ -255,34 +273,86 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		}
 			break;
 		} //	switch(ro.codeexectype)
+
 	}
-		break;
+	break;
+
+	case 102: // composite method + flat below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			Backward_Relevance_cpu_flatdist_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+		else
+		{
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
+
+	case 104: // decomposition type per layer + w^2 below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			Backward_Relevance_cpu_wsquare(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+		else
+		{
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
 
 
+
+	// EXPERIMENTAL AND OTHERS BELOW
+
+	case 6: // (alpha-beta) + z^beta on lowest considered layer
+	case 8: // epsilon + z^beta on lowest considered layer
+	case 11: //gradient in demonstrator
 	case 18:
 	case 22:
+	{
+		int fc6layerindex=15;
+		if (layerindex > fc6layerindex )
 		{
-			int fc6layerindex=15;
-			if (layerindex > fc6layerindex )
-			{
-				relpropopts ro2=ro;
-				ro2.relpropformulatype=0;
-				ro2.alphabeta_beta=0;
-				Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro2);
-			}
-			else
-			{
-				relpropopts ro2=ro;
-				ro2.relpropformulatype=0;
-				ro2.alphabeta_beta=1;
-				Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro2);
-			}
+			relpropopts ro2=ro;
+			ro2.relpropformulatype=0;
+			ro2.alphabeta_beta=0;
+			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+				bottom, layerindex, ro2);
 		}
-		break;
-	case 26: {
-		//zeiler
+		else
+		{
+			relpropopts ro2=ro;
+			ro2.relpropformulatype=0;
+			ro2.alphabeta_beta=1;
+			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+				bottom, layerindex, ro2);
+		}
+	}
+	break;
+
+
+	case 26: //zeiler: deconvolution
+	{
 		switch (ro.codeexectype) {
 		case 0: {
 			//slowneasy
@@ -329,7 +399,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(
 		//memset(bottom_diff, 0, sizeof(Dtype) * bottom[i]->count());
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
 
-		
+
 		const Dtype* top_data = top[i]->cpu_data();
 		Blob < Dtype > topdata_witheps((top[i])->shape());
 
@@ -387,7 +457,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(
 		//memset(bottom_diff, 0, sizeof(Dtype) * bottom[i]->count());
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
 
-		
+
 		const Dtype* top_data = top[i]->cpu_data();
 		Blob < Dtype > topdata_witheps((top[i])->shape());
 
@@ -427,10 +497,10 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
 		const vector<Blob<Dtype>*>& bottom, const int layerindex,
 		const relpropopts & ro) {\
-	
+
 	if(ro.alphabeta_beta <0)
 	{
-		LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ; 
+		LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ;
 	}
 
 	for (int i = 0; i < top.size(); ++i) {
@@ -446,7 +516,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 
 		Blob < Dtype > pos_sums(1, 1, M_, N_);
 		Blob < Dtype > neg_sums(1, 1, M_, N_);
-		
+
 		Dtype* pos_sums_data = pos_sums.mutable_cpu_data();
 		Dtype* neg_sums_data = neg_sums.mutable_cpu_data();
 		memset(pos_sums_data, 0, sizeof(Dtype) * M_ * N_);
@@ -466,13 +536,13 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 									* weights[enind * K_ + kernelind]);
 
 				}
-				
-				
+
+
 			}
 		}
 		*/
-		
-		
+
+
 		if(bias_term_)
 		{
 			switch(ro.biastreatmenttype)
@@ -492,7 +562,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 										* weights[enind * K_ + kernelind]);
 
 					}
-					
+
 					Dtype bterm=bias_multiplier_.cpu_data()[mind] * this->blobs_[1]->cpu_data()[enind];
 					pos_sums_data[mind * N_ + enind] += std::max(Dtype(0.),bterm);
 					neg_sums_data[mind * N_ + enind] += std::min(Dtype(0.),bterm);
@@ -517,7 +587,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 										* weights[enind * K_ + kernelind] + bterm / K_ );
 
 					}
-					
+
 
 				}
 			}
@@ -525,11 +595,11 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			break;
 			default:
 			{
-				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype; 
+				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype;
 			}
 			break;
 			} //			switch(ro.biastreatmenttype)
-			
+
 		}
 		else //if(bias_term_)
 		{
@@ -546,11 +616,11 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 										* weights[enind * K_ + kernelind]);
 
 					}
-					
+
 				}
 			}
 		} // else of if(bias_term_)
-		
+
 		float beta=ro.alphabeta_beta;
 		float alpha = 1.0 + beta;
 
@@ -559,8 +629,8 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			{
 			case 0: //ignore bias
 			{
-		
-		
+
+
 		for (long mind = 0; mind < M_; ++mind) {
 			for (long enind = 0; enind < N_; ++enind) {
 				Dtype z1 = 0;
@@ -594,8 +664,8 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			break;
 			case 1: //distrib bias as 1/n
 			{
-		
-		
+
+
 		for (long mind = 0; mind < M_; ++mind) {
 			for (long enind = 0; enind < N_; ++enind) {
 				Dtype bterm=bias_multiplier_.cpu_data()[mind] * this->blobs_[1]->cpu_data()[enind];
@@ -631,7 +701,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			break;
 			default:
 			{
-				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype; 
+				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype;
 			}
 			break;
 			} //			switch(ro.biastreatmenttype)
@@ -667,7 +737,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 				} //			for (long enind = 0; enind < N_; ++enind) {
 			} //		for (long mind = 0; mind < M_; ++mind) {
 		} //else of if (this->bias_term_) {
-			
+
 		//  if (bias_term_) {
 		//    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, 1, (Dtype)1.,
 		//        bias_multiplier_.cpu_data(),
