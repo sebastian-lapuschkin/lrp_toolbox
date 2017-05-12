@@ -182,9 +182,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
 			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
-			Backward_Relevance_cpu_flatdist_slowneasy(top,
-					propagate_down, bottom,
-					layerindex, ro );
+			LOG(FATAL) << "DISABLED";
+			exit(1);
+			//Backward_Relevance_cpu_flatdist_slowneasy(top, propagate_down, bottom,	layerindex, ro );
 		}
 		else
 		{
@@ -206,9 +206,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
 			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
-			Backward_Relevance_cpu_wsquare(top,
-					propagate_down, bottom,
-					layerindex, ro );
+			LOG(FATAL) << "DISABLED";
+			exit(1);
+			//Backward_Relevance_cpu_wsquare(top, propagate_down, bottom,	layerindex, ro );
 		}
 		else
 		{
@@ -229,9 +229,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
 			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
-			Backward_Relevance_cpu_flatdist_slowneasy(top,
-					propagate_down, bottom,
-					layerindex, ro );
+			//Backward_Relevance_cpu_flatdist_slowneasy(top, propagate_down, bottom,layerindex, ro );
+			LOG(FATAL) << "DISABLED";
+			exit(1);
 		}
 		else
 		{
@@ -253,9 +253,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
 			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
-			Backward_Relevance_cpu_wsquare(top,
-					propagate_down, bottom,
-					layerindex, ro );
+			LOG(FATAL) << "DISABLED";
+			exit(1);
+			//Backward_Relevance_cpu_wsquare(top,	propagate_down, bottom, layerindex, ro );
 		}
 		else
 		{
@@ -297,9 +297,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
 			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
-			Backward_Relevance_cpu_flatdist_slowneasy(top,
-					propagate_down, bottom,
-					layerindex, ro );
+			LOG(FATAL) << "DISABLED";
+			exit(1);
+			//Backward_Relevance_cpu_flatdist_slowneasy(top, propagate_down, bottom, layerindex, ro );
 		}
 		else
 		{
@@ -321,9 +321,9 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
 			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
-			Backward_Relevance_cpu_wsquare(top,
-					propagate_down, bottom,
-					layerindex, ro );
+			LOG(FATAL) << "DISABLED";
+			exit(1);
+			//Backward_Relevance_cpu_wsquare(top,propagate_down, bottom,layerindex, ro );
 		}
 		else
 		{
