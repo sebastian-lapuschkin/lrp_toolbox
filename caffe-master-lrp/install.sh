@@ -21,8 +21,8 @@
 
 
 # INSTALL GENERAL DEPENDENCIES
-sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler gcc-4.6 build-essential
-sudo apt-get install --no-install-recommends libboost-all-dev
+apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler gcc-4.6 build-essential
+apt-get install --no-install-recommends libboost-all-dev
 
 
 
