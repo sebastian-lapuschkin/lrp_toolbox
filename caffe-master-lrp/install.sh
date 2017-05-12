@@ -41,14 +41,17 @@ sudo apt-get install --no-install-recommends libboost-all-dev
 # comment/uncomment the following lines accodringly.
 # cuda headers are required for building caffe.
 
+echo "Cuda installation disabled. This is something you better do yourself, after all."
+
 # prepare download folder
-mkdir cuda_dl ; cd cuda_dl
+#mkdir cuda_dl ; cd cuda_dl
+
 
 # local debian package installation. caution, causes an update of installed packages! 
-wget -nc http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
-dpkg -i cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
-apt-get update
-apt-get install cuda
+#wget -nc http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
+#dpkg -i cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
+#apt-get update
+#apt-get install cuda
 
 # network-based debian package installation. disabled by default.
 #wget -nc http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.5-18_amd64.deb
@@ -61,7 +64,7 @@ apt-get install cuda
 #sh cuda_7.5.18_linux.run
 
 # cleanup after cuda installation
-cd .. ; rm -r cuda_dl
+#cd .. ; rm -r cuda_dl
 
 
 
