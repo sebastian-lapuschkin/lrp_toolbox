@@ -36,13 +36,13 @@ standalone_rootpath
 someimages
 
 epsstab
-100
+1
 
 alphabeta_beta
 1
 
 relpropformulatype
-2
+100
 
 auxiliaryvariable_maxlayerindexforflatdistinconv
 0
