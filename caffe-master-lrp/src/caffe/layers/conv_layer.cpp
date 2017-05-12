@@ -93,6 +93,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 				case 0:
 				{
 					//slowneasy
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 					Backward_Relevance_cpu_epsstab_slowneasy(top,
 						 propagate_down, bottom,
 						 layerindex, ro );
@@ -117,7 +118,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 			{
 				case 0:
 				{
-
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 					Backward_Relevance_cpu_alphabeta_4cases(top,
 						 propagate_down, bottom,
 						 layerindex, ro );
@@ -126,6 +127,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 				case 1:
 				{
 					//slowneasy
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 					Backward_Relevance_cpu_alphabeta_slowneasy(top,
 						 propagate_down, bottom,
 						 layerindex, ro );
@@ -190,12 +192,14 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 			}
 			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
 				Backward_Relevance_cpu_flatdist_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 				Backward_Relevance_cpu_epsstab_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -212,12 +216,14 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 
 			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
 				Backward_Relevance_cpu_wsquare(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 				Backward_Relevance_cpu_epsstab_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -233,12 +239,14 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 			}
 			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
 				Backward_Relevance_cpu_flatdist_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 				Backward_Relevance_cpu_alphabeta_4cases(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -255,12 +263,14 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 
 			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
 				Backward_Relevance_cpu_wsquare(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 				Backward_Relevance_cpu_alphabeta_4cases(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -274,6 +284,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 			{
 				case 0:
 				{
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 					Backward_Relevance_cpu_alphabeta_4cases(top,
 						 propagate_down, bottom,
 						 layerindex, ro );
@@ -282,6 +293,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 				case 1:
 				{
 					//slowneasy
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 					Backward_Relevance_cpu_alphabeta_slowneasy(top,
 						 propagate_down, bottom,
 						 layerindex, ro );
@@ -305,12 +317,14 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 			}
 			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
 				Backward_Relevance_cpu_flatdist_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 				Backward_Relevance_cpu_alphabeta_4cases(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -327,12 +341,14 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 
 			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
 				Backward_Relevance_cpu_wsquare(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 				Backward_Relevance_cpu_alphabeta_4cases(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -402,6 +418,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 			{
 				case 0:
 				{
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (Deconvolution: Zeiler)";
 					//slowneasy
 					Backward_Relevance_cpu_zeilerlike_slowneasy(top,
 						 propagate_down, bottom,

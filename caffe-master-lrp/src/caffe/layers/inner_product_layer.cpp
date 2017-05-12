@@ -134,6 +134,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		switch (ro.codeexectype) {
 		case 0: {
 			//slowneasy
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
@@ -156,6 +157,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		case 1:
 		{
 			//slowneasy
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
@@ -179,12 +181,14 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		}
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
 			Backward_Relevance_cpu_flatdist_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
 		}
 		else
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
@@ -201,12 +205,14 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
 			Backward_Relevance_cpu_wsquare(top,
 					propagate_down, bottom,
 					layerindex, ro );
 		}
 		else
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
@@ -222,12 +228,14 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		}
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
 			Backward_Relevance_cpu_flatdist_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
 		}
 		else
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 			Backward_Relevance_cpu_alphabeta_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
@@ -244,12 +252,14 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
 			Backward_Relevance_cpu_wsquare(top,
 					propagate_down, bottom,
 					layerindex, ro );
 		}
 		else
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 			Backward_Relevance_cpu_alphabeta_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
@@ -262,6 +272,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		switch (ro.codeexectype) {
 		case 0: {
 			//slowneasy
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
@@ -285,12 +296,14 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		}
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
 			Backward_Relevance_cpu_flatdist_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
 		}
 		else
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
@@ -307,12 +320,14 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 
 		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
 			Backward_Relevance_cpu_wsquare(top,
 					propagate_down, bottom,
 					layerindex, ro );
 		}
 		else
 		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top,
 					propagate_down, bottom,
 					layerindex, ro );
@@ -355,6 +370,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 	{
 		switch (ro.codeexectype) {
 		case 0: {
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (Deconvolution: Zeiler)";
 			//slowneasy
 			Backward_Relevance_cpu_zeilerlike_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
