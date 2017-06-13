@@ -32,7 +32,8 @@ class SoftMax(Module):
     def lrp(self,R,*args,**kwargs):
         # just propagate R further down.
         # makes sure subroutines never get called.
-        return R*self.X
+        #return R*self.X
+        return R
 
     def clean(self):
         self.X = None
