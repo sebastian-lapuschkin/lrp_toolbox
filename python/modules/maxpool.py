@@ -136,7 +136,7 @@ class MaxPool(Module):
         for i in xrange(Hout):
             for j in xrange(Wout):
                 Z = self.Y[:,i:i+1,j:j+1,:] == self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ]
-                Zs = Z.sum(axis=(1,2),keepdims=True)
+                Zs = Z.sum(axis=(1,2),keepdims=True,dtype=np.float)
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
         return Rx
 

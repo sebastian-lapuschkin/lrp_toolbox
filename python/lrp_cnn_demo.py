@@ -64,10 +64,13 @@ for i in I[:10]:
 
     #R = nn.lrp(Y[na,i],'epsilon',1.) #compute first layer relevance according to the true class label
 
-    #yselect = 3
-    #yselect = (np.arange(Y.shape[1])[na,:] == yselect)*1.
-    #R = nn.lrp(yselect,'epsilon',0.1) #compute first layer relvance for an arbitrarily selected class
 
+    '''
+    #compute first layer relvance for an arbitrarily selected class
+    for yselect in range(10):
+        yselect = (np.arange(Y.shape[1])[na,:] == yselect)*1.
+        R = nn.lrp(yselect,'epsilon',0.1)
+    '''
 
     '''
     # you may also specify different decompositions for each layer, e.g. as below:
@@ -92,11 +95,11 @@ for i in I[:10]:
     #sum over the third (color channel) axis. not necessary here, but for color images it would be.
     R = R.sum(axis=3)
     #same for input. create brightness image in [0,1].
-    x = ((x+1.)/2.).sum(axis=3)
+    xs = ((x+1.)/2.).sum(axis=3)
 
     #render input and heatmap as rgb images
-    digit = render.digit_to_rgb(x, scaling = 3)
-    hm = render.hm_to_rgb(R, X = x, scaling = 3, sigma = 2)
+    digit = render.digit_to_rgb(xs, scaling = 3)
+    hm = render.hm_to_rgb(R, X = xs, scaling = 3, sigma = 2)
     digit_hm = render.save_image([digit,hm],'../heatmap.png')
     data_io.write(R,'../heatmap.npy')
 
