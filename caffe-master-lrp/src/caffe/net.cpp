@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "hdf5.h"
+#include "hdf5/serial/hdf5.h"
 
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
@@ -872,7 +872,39 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 		if(i==lastlayerindex)
 		{
 
-			//if (true == thenightstartshere) {
+          if(true==ro.has_init_relevance)
+          {
+            			for (int s = 0; s < top_vecs_[i].size(); ++s) {
+				LOG(INFO) << "top.size() " << top_vecs_[i].size();
+
+				Dtype* top_diff = top_vecs_[i][s]->mutable_cpu_diff();
+
+				const Dtype* top_data = top_vecs_[i][s]->cpu_data();
+
+				LOG(INFO) << "softmaxlayer top_vecs_[i][s]->count()"
+						<< top_vecs_[i][s]->count() << std::endl;
+
+
+				memset(top_diff, 0, sizeof(Dtype) * top_vecs_[i][s]->count());
+
+				  for (int c = 0; c < (int) classinds.size(); ++c) {
+					int classindex = classinds[c];
+
+					if( classindex >= top_vecs_[i][s]->count() )
+					{
+						LOG(FATAL) << "classindex >= top_vecs_[i][s]->count(), probably score for lrp is getting inserted at the wrong layer! " << classindex  << " vs "<< top_vecs_[i][s]->count();
+					}
+
+					top_diff[classindex] = ro.relevance_for_init;
+					LOG(INFO) << "inserting in layer at classindex" <<classindex <<" value from configfile " << ro.relevance_for_init
+							<< std::endl;
+				  }
+				} //for (int s = 0; s < top.size(); ++s) {
+          }
+          else
+          {
+
+
 				for (int s = 0; s < top_vecs_[i].size(); ++s) {
 				LOG(INFO) << "top.size() " << top_vecs_[i].size();
 
@@ -899,9 +931,9 @@ void Net<Dtype>::Backward_Relevance(const std::vector<int> & classinds,
 							<< std::endl;
 				  }
 				} //for (int s = 0; s < top.size(); ++s) {
-			//}
+			}
 
-			//thenightstartshere=true;
+
 		}
 
 

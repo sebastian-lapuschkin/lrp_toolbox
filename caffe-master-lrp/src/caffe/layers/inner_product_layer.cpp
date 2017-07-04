@@ -763,6 +763,143 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 } //for (int i = 0; i < top.size(); ++i)
 }
 
+template<typename Dtype>
+void InnerProductLayer<Dtype>::Backward_Relevance_cpu_flatweight_slowneasy(
+		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
+		const vector<Blob<Dtype>*>& bottom, const int layerindex,
+		const relpropopts & ro) {
+
+        // an inplace relu may alter the layer, thats why the forward here
+        Forward_cpu( bottom, top);
+
+	for (int i = 0; i < top.size(); ++i) {
+		const Dtype* top_diff = top[i]->cpu_diff();
+
+		Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
+	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
+
+
+		LOG(INFO) << "top.size()" << top.size();// << "part of it:" << i<< " weight shape: " << topdata_witheps.shape_string();
+		LOG(INFO) << "M_, K_, N_" << M_ << " "<< K_ << " "<< N_;
+
+
+        Blob < Dtype > weightones(this->blobs_[0]->shape());
+        Dtype* weightones_data_m=weightones.mutable_cpu_data();
+   	    caffe_set(weightones.count(), Dtype(1.0), weightones_data_m);
+
+        const Dtype* weightones_data=weightones.cpu_data();
+        Dtype divfac= 1./((Dtype)( K_));
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, M_, K_, N_, divfac, top_diff, weightones_data, (Dtype) 0., bottom[i]->mutable_cpu_diff());
+
+
+	} //for (int i = 0; i < top.size(); ++i)
+}
+
+
+
+template<typename Dtype>
+void InnerProductLayer<Dtype>::Backward_Relevance_cpu_wsquare_slowneasy(
+		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
+		const vector<Blob<Dtype>*>& bottom, const int layerindex,
+		const relpropopts & ro) {
+
+        // an inplace relu may alter the layer, thats why the forward here
+        Forward_cpu( bottom, top);
+
+    //top-data M X N
+    /// bottom data M X K
+    // weights  N X K
+
+	for (int i = 0; i < top.size(); ++i) {
+		const Dtype* top_diff = top[i]->cpu_diff();
+		const Dtype* bottom_data = bottom[i]->cpu_data();
+		Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
+		//memset(bottom_diff, 0, sizeof(Dtype) * bottom[i]->count());
+	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
+
+
+		const Dtype* top_data = top[i]->cpu_data();
+		Blob < Dtype > topdata_witheps((top[i])->shape());
+
+		LOG(INFO) << "top.size()" << top.size() << "part of it:" << i
+				<< " weight shape: " << topdata_witheps.shape_string();
+		LOG(INFO) << "M_, K_, N_" << M_ << " "<< K_ << " "<< N_;
+		int outcount = topdata_witheps.count();
+		if (topdata_witheps.count() != M_ * N_) {
+			LOG(FATAL) << "Incorrect weight shape: "
+					<< topdata_witheps.shape_string()
+					<< " Incorrect weight count: " << topdata_witheps.count()
+					<< " " << outcount << " expected count " << M_ * N_;
+
+			exit(1);
+		}
+
+		Dtype* topdata_witheps_data = topdata_witheps.mutable_cpu_data();
+		caffe_copy < Dtype > (outcount, top_diff, topdata_witheps_data);
+
+		for (int c = 0; c < outcount; ++c) {
+			//something_J =R_j / (output_j + eps * sign (output_j) )
+			if (top_data[c] > 0) {
+				topdata_witheps_data[c] /= top_data[c] + ro.epsstab;
+			} else if (top_data[c] < 0) {
+				topdata_witheps_data[c] /= top_data[c] - ro.epsstab;
+			}
+		} //for(int c=0;c< M * N ;++c)
+
+        Blob < Dtype > weightpower2(this->blobs_[0]->shape());
+        Dtype* weightpower2_data_m=weightpower2.mutable_cpu_data();
+
+        const Dtype* weightpointer=this->blobs_[0]->cpu_data();
+   		for (int c = 0; c < weightpower2.count(); ++c) {
+            weightpower2_data_m[c]=weightpointer[c]*weightpointer[c];
+        }
+
+    //top-data M X N
+    /// bottom data M X K
+    // weights  N X K
+
+
+         // weight is : N x K
+        // needs to sum to 1 over: K, so wsums must be length N
+
+        Blob < Dtype > ones(1,1,1,K_);
+        Dtype* ones_data_m=ones.mutable_cpu_data();
+        caffe_set(ones.count(), Dtype(1.0), ones_data_m);
+
+        Blob < Dtype > wsums(1,1,1,N_);
+        Dtype* wsums_data_m=wsums.mutable_cpu_data();
+
+        const Dtype* weightpower2_data=weightpower2.cpu_data();
+        const Dtype* ones_data=ones.cpu_data();
+        caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasTrans, N_, 1, K_, (Dtype) 1.,  weightpower2_data, ones_data, (Dtype) 0., wsums_data_m);
+
+        const Dtype* wsums_data=wsums.cpu_data();
+    	for (int n = 0; n <  N_; ++n) {
+        if( wsums_data[n] >0)
+        {
+    	    for (int k = 0; k < K_ ; ++k) {
+	            weightpower2_data_m[ n * K_ + k ] /=wsums_data[n] ;
+		    }
+        }
+        }
+
+
+	      //for (int n = 0; n < this->num_; ++n) {
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, M_, K_, N_, (Dtype) 1., top_diff, weightpower2_data, (Dtype) 0., bottom[i]->mutable_cpu_diff());
+
+
+
+
+
+
+
+
+	} //for (int i = 0; i < top.size(); ++i)
+}
+
 #ifdef CPU_ONLY
 STUB_GPU(InnerProductLayer);
 #endif
