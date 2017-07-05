@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "hdf5/serial/hdf5.h"
+#include "hdf5.h"
 
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
