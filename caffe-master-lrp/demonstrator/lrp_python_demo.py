@@ -49,8 +49,12 @@ def simple_lrp_demo():
     lrp_param   =  0.00001
     classind = top_class
 
+    # only needed for the composite methods:            eps_n_flat(relpropformulatype 54), eps_n_square (relpropformulatype 56), ab_n_flat (relpropformulatype 58), ab_n_square (relpropformulatype 60)
+    # interesting switch layer values for caffenet are: 0, 4, 8, 10, 12 | 15, 18, 21 (convolution layers | innerproduct layers)
+    switch_layer = 20
+
     # LRP
-    backward = net.lrp(classind, lrp_opts(lrp_type, lrp_param))
+    backward = net.lrp(classind, lrp_opts(lrp_type, lrp_param, switch_layer))
 
     # post-process the relevance values
     heatmap = process_raw_heatmap(backward)
@@ -106,7 +110,7 @@ def process_raw_heatmap(rawhm, normalize=False):
 
     return heatmap
 
-def lrp_opts(method = 'epsilon', param = 0.):
+def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
     """
     Simple function to make standard lrp and epsilon lrp available more conveniently, something similar could as well be implemented directly in the python wrapper (pycaffe.py)
 
@@ -132,6 +136,26 @@ def lrp_opts(method = 'epsilon', param = 0.):
     elif method == 'alphabeta':
         lrp_opts.relpropformulatype = 2
         lrp_opts.alphabeta_beta     = param
+
+    elif method == 'eps_n_flat':
+        lrp_opts.relpropformulatype = 54
+        lrp_opts.epsstab             = param
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
+
+    elif method == 'eps_n_square':
+        lrp_opts.relpropformulatype = 56
+        lrp_opts.epsstab             = param
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
+
+    elif method == 'ab_n_flat':
+        lrp_opts.relpropformulatype = 58
+        lrp_opts.epsstab             = param
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
+
+    elif method == 'ab_n_square':
+        lrp_opts.relpropformulatype = 60
+        lrp_opts.epsstab             = param
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     else:
         print('unknown method name in lrp_opts helper function, currently only epsilon and alphabeta are supported')
