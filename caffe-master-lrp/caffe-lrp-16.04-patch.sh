@@ -14,7 +14,7 @@
 
 distro="$( lsb_release -a | grep Release: )"
 if [[ "$distro" == *16.04 ]]
-then
+then	
 	if [ -f distro.patched ]
 	then
 		echo "nothing to patch."
@@ -37,8 +37,9 @@ then
 
 		echo "step 4: modify imagemagick include paths and library names for demonstrator"
 		cd demonstrator
-		sed -i -e "s/-lMagick++/-lMagick++-6.Q16/g" -e "s/-lMagickWand/-lMagickWand-6.Q16/g" -e "s/-lMagickCore/-lMagickCore-6.Q16/g" -e "s|-I /usr/include/ImageMagick/|-I /usr/include/ImageMagick-6 -I /usr/include/x86_64-linux-gnu/ImageMagick-6/|g" build.sh
+		sed -i -e "s/-lMagick++/-lMagick++-6.Q16/g" -e "s/-lMagickWand/-lMagickWand-6.Q16/g" -e "s/-lMagickCore/-lMagickCore-6.Q16/g" -e "s|-I /usr/include/ImageMagick/|-I /usr/include/ImageMagick-6 -I /usr/include/x86_64-linux-gnu/ImageMagick-6/|g" build.sh 
 		cd ..
 		touch distro.patched
 	fi
 fi
+
