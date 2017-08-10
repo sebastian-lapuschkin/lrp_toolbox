@@ -417,29 +417,6 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 	break;
 
 
-	case 116: // epsilon + deconv below a given layer index
-	{
-		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
-		{
-			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
-		}
-
-		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
-		{
-			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (Deconvolution: Zeiler)";
-			//slowneasy
-			Backward_Relevance_cpu_zeilerlike_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
-		}
-		else
-		{
-			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
-			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
-		}
-	}
-	break;
-
 
 	default: {
 		LOG(FATAL) << "unknown value for ro.relpropformulatype "

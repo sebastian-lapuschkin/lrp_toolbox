@@ -382,29 +382,6 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-    case 116: // epsilon + deconvolution below a given layer index
-    {
-			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
-			{
-				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
-			}
-
-			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
-			{
-				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (deconv zeilerlike)";
-        Backward_Relevance_cpu_zeilerlike_slowneasy(top,
-           propagate_down, bottom,
-           layerindex, ro );
-			}
-			else
-			{
-				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
-        Backward_Relevance_cpu_epsstab_slowneasy(top,
-					 propagate_down, bottom,
-					 layerindex, ro );
-			}
-		}
-		break;
 
 		case 18: //gregoire ecml paper hack deep taylor ... no ...for deep taylor he wants: zbeta beta0 ... case 6
 		{

@@ -52,8 +52,8 @@ def simple_lrp_demo():
     ## ############# ##
     # LRP parameters: #
     ## ############# ##
-    lrp_type    = 'std_n_deconv'    # (epsilon | alphabeta | eps_n_flat | eps_n_square | std_n_ab)
-    lrp_param   =  0                # (epsilon | beta      | epsilon    | epsilon      | beta    )
+    lrp_type    = 'epsilon'         # (epsilon | alphabeta | eps_n_flat | eps_n_square | std_n_ab)
+    lrp_param   =  0.000001         # (epsilon | beta      | epsilon    | epsilon      | beta    )
     classind    =  282              # (class index  | top_class)
 
     # switch_layer param only needed for the composite methods:            eps_n_flat(relpropformulatype 54), eps_n_square (relpropformulatype 56), ab_n_flat (relpropformulatype 58), ab_n_square (relpropformulatype 60), std_n_ab (relpropformulatype 114)
@@ -241,11 +241,6 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
 
     elif method == 'deconv':
         lrp_opts.relpropformulatype = 26
-
-    elif method == 'std_n_deconv':
-        lrp_opts.relpropformulatype = 116
-        lrp_opts.epsstab            = 0.00000000001
-        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     else:
         print('unknown method name in lrp_opts helper function, currently only epsilon and alphabeta are supported')

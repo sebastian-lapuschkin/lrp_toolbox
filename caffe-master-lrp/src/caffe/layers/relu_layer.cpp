@@ -80,29 +80,7 @@ void ReLULayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
 		}
 		break;
 
-    case 116: // epsilon + deconvolution (zeiler) below a given layer index
-    {
-  		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
-  		{
-  			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
-  		}
-
-  		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
-      {
-          const Dtype* bottom_data = bottom[0]->cpu_data();
-          const Dtype* top_diff = top[0]->cpu_diff();
-          Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
-          const int count = bottom[0]->count();
-          //Dtype negative_slope = this->layer_param_.relu_param().negative_slope();
-          for (int i = 0; i < count; ++i) {
-            bottom_diff[i] = std::max(top_diff[i],Dtype(0.));
-          }
-  		}
-
-  	}
-    break;
-
-		case 26: //zeiler: deconvolution
+    case 26: //zeiler: deconvolution
 		{
 			    const Dtype* bottom_data = bottom[0]->cpu_data();
 			    const Dtype* top_diff = top[0]->cpu_diff();
