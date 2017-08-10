@@ -1,8 +1,10 @@
 import caffe
+import os
 import numpy as np
 import Image
 import matplotlib           as mpl
 import matplotlib.pyplot    as plt
+import copy
 
 # global variables to make this demo more convient to use
 IMAGENET_MEAN_LOCATION  = '../python/caffe/imagenet/ilsvrc_2012_mean.npy'
@@ -17,8 +19,9 @@ def main():
 def simple_lrp_demo():
     """
     Simple example to demonstrate the LRP methods using the Caffe python interface.
-    Calculates the prediction and epsilon LRP heatmap for an example image.
+    Calculates the prediction and LRP heatmap for an example image.
     """
+
 
     # load the pre-trained model
     net = load_model(model = MODEL)
@@ -45,21 +48,38 @@ def simple_lrp_demo():
     out = net.forward()
     top_class = np.argmax(out['prob'])
 
-    lrp_type    = 'epsilon'
-    lrp_param   =  0.00001
-    classind = top_class
 
-    # only needed for the composite methods:            eps_n_flat(relpropformulatype 54), eps_n_square (relpropformulatype 56), ab_n_flat (relpropformulatype 58), ab_n_square (relpropformulatype 60)
-    # interesting switch layer values for caffenet are: 0, 4, 8, 10, 12 | 15, 18, 21 (convolution layers | innerproduct layers)
-    switch_layer = 20
+    ## ############# ##
+    # LRP parameters: #
+    ## ############# ##
+    lrp_type    = 'std_n_deconv'    # (epsilon | alphabeta | eps_n_flat | eps_n_square | std_n_ab)
+    lrp_param   =  0                # (epsilon | beta      | epsilon    | epsilon      | beta    )
+    classind    =  282              # (class index  | top_class)
+
+    # switch_layer param only needed for the composite methods:            eps_n_flat(relpropformulatype 54), eps_n_square (relpropformulatype 56), ab_n_flat (relpropformulatype 58), ab_n_square (relpropformulatype 60), std_n_ab (relpropformulatype 114)
+    # the parameter depicts the first layer for which the second formula type is used.
+    # interesting values for caffenet are: 0, 4, 8, 10, 12 | 15, 18, 21 (convolution layers | innerproduct layers)
+    switch_layer = 13
+
+
+    ## ################################## ##
+    # Heatmap calculation and presentation #
+    ## ################################## ##
 
     # LRP
     backward = net.lrp(classind, lrp_opts(lrp_type, lrp_param, switch_layer))
 
-    # post-process the relevance values
-    heatmap = process_raw_heatmap(backward)
+    mean_over_channels = True
+    normalize_heatmap  = False
 
-    # stretch input to input dimensions (only for visualization, same as preprocessing but without the channel swaps needed to pass it to the model)
+    if lrp_type == 'deconv':# or lrp_type == 'std_n_deconv':
+        mean_over_channels = False
+        normalize_heatmap  = True
+
+    # post-process the relevance values
+    heatmap = process_raw_heatmap(backward, normalize = normalize_heatmap, mean_over_channels=mean_over_channels)
+
+    # stretch input to input dimensions (only for visualization)
     stretched_input = transform_input(example_image, False, False, in_hei = in_hei, in_wid = in_wid, mean=cropped_mean)
 
     # presentation
@@ -73,8 +93,43 @@ def simple_lrp_demo():
     norm = mpl.colors.Normalize(vmin = -max_abs, vmax = max_abs)
 
     plt.subplot(1,2,2)
-    plt.title('{}-LRP heatmap for class {}'.format(lrp_type, classind))
-    plt.imshow(heatmap, cmap='seismic', norm=norm)
+
+    if lrp_type in ['epsilon', 'alphabeta', 'eps', 'ab']:
+        plt.title('{}-LRP heatmap for class {}'.format(lrp_type, classind))
+
+    if lrp_type in ['eps_n_flat', 'eps_n_square', 'std_n_ab']:
+        if lrp_type == 'eps_n_flat':
+            first_method    = 'epsilon'
+            second_method   = 'wflat'
+
+        elif lrp_type == 'eps_n_square':
+            first_method    = 'epsilon'
+            second_method   = 'wsquare'
+
+        elif lrp_type == 'std_n_ab':
+            first_method    = 'epsilon'
+            second_method   = 'alphabeta'
+
+        plt.title('LRP heatmap for class {}\nstarting with {}\n {} from layer {} on.'.format(classind, first_method, second_method, switch_layer))
+
+    if mean_over_channels:
+        # relevance values are averaged over the pixel channels, use a 1-channel colormap (seismic)
+        plt.imshow(heatmap, cmap='seismic', norm=norm, interpolation='none')
+    else:
+        # 1 relevance value per color channel
+
+        if normalize_heatmap:
+            # heatmap in [-1,1], transform to [0,255] for visualization
+            # heatmap *= 127  # now in [-127, +127]
+            # heatmap += 127  # now in [0, 254]
+            heatmap *= 255
+            heatmap *= (heatmap > 0)
+
+        print heatmap
+        print np.max(heatmap), np.min(heatmap)
+
+        plt.imshow(heatmap, interpolation = 'none')
+
     plt.axis('off')
     plt.show()
 
@@ -83,7 +138,7 @@ def simple_lrp_demo():
 # Helper Functions: #
 ## ############### ##
 
-def process_raw_heatmap(rawhm, normalize=False):
+def process_raw_heatmap(rawhm, normalize=False, mean_over_channels=True):
     """
     Process raw heatmap as outputted by the caffe network.
     Inverts channel swap to RGB and brings the heatmap back to the (height, width, channels) format
@@ -96,14 +151,26 @@ def process_raw_heatmap(rawhm, normalize=False):
     normalize:  bool
                 flag indicating whether to normalize the heatmap to the [-1, 1] interval (divide each pixel value by the highest absolute value)
 
+    mean_over_channels: bool
+                flag indicating whether to mean the heatmap values over the last image dimension (color channels)
+
     Returns
     -------
     heatmap:    numpy.ndarray
                 processed heatmap
     """
 
+    # h,w,c format
     rawhm = rawhm[0].transpose(1,2,0)
-    heatmap = rawhm.mean(2)
+
+    heatmap = rawhm
+
+    if mean_over_channels:
+        # color information not used, average over the channels dimension
+        heatmap = heatmap.mean(2)
+    else:
+        # color information important, invert caffe BGR channels wap to RGB
+        heatmap = heatmap[:,:, [2,1,0]]
 
     if normalize:
         heatmap = heatmap / np.max(np.absolute(heatmap))
@@ -112,19 +179,23 @@ def process_raw_heatmap(rawhm, normalize=False):
 
 def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
     """
-    Simple function to make standard lrp and epsilon lrp available more conveniently, something similar could as well be implemented directly in the python wrapper (pycaffe.py)
+    Simple function to make some standard lrp varaints available more conveniently
 
     Parameters
     ----------
-    method:     str
-                method type, either 'epsilon' or 'alphabeta', indicating the LRP method to use
+    method:         str
+                    method type, either 'epsilon' or 'alphabeta', indicating the LRP method to use
 
-    param:      float
-                method parameter value (epsilon for the epsilon method, beta for the alphabeta method)
+    param:          float
+                    method parameter value (epsilon for the epsilon method, beta for the alphabeta method)
+
+    switch_layer:   int
+                    layer in which to switch between lrp formulas (only used for some methods). The given int is the first layer for which the second formula is used
+
     Returns
     -------
     heatmap:    RelPropOpts object
-                the RelPropOpts object that will be given to the lrp function
+                the RelPropOpts object that will be given to the lrp function to execute the desired lrp method
     """
 
     lrp_opts = caffe.RelPropOpts()
@@ -149,12 +220,31 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
 
     elif method == 'ab_n_flat':
         lrp_opts.relpropformulatype = 58
-        lrp_opts.epsstab             = param
+        lrp_opts.alphabeta_beta     = param
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     elif method == 'ab_n_square':
         lrp_opts.relpropformulatype = 60
-        lrp_opts.epsstab             = param
+        lrp_opts.alphabeta_beta     = param
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
+
+    elif method == 'std_n_ab':
+        lrp_opts.relpropformulatype = 114
+        lrp_opts.alphabeta_beta     = param
+        lrp_opts.epsstab            = 0.0000000001
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
+
+    elif method == 'layer_dep':
+        lrp_opts.relpropformulatype = 100
+        lrp_opts.epsstab            = 0.0000000001
+        lrp_opts.alphabeta_beta     = 0.
+
+    elif method == 'deconv':
+        lrp_opts.relpropformulatype = 26
+
+    elif method == 'std_n_deconv':
+        lrp_opts.relpropformulatype = 116
+        lrp_opts.epsstab            = 0.00000000001
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     else:
