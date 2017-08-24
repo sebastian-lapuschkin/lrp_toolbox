@@ -156,6 +156,7 @@ class Sequential(Module):
 
         untilConvergence = convergence;    learningFactor = lfactor_initial
         bestAccuracy = 0.0;                bestLayers = copy.deepcopy(self.modules)
+        bestLoss = np.Inf
 
         N = X.shape[0]
         for d in xrange(iters):
@@ -191,7 +192,7 @@ class Sequential(Module):
 
 
                 #save current network parameters if we have improved
-                if acc > bestAccuracy:
+                if acc >= bestAccuracy and l1loss <= bestLoss:
                     print '    New optimal parameter set encountered. saving....'
                     bestAccuracy = acc
                     bestLayers = copy.deepcopy(self.modules)
