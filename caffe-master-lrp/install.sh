@@ -47,8 +47,8 @@ mkdir cuda_dl ; cd cuda_dl
 # local debian package installation. caution, causes an update of installed packages! 
 wget -nc http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
 dpkg -i cuda-repo-ubuntu1404-7-5-local_7.5-18_amd64.deb
-apt-get update
-apt-get install cuda
+sudo apt-get update
+sudo apt-get install cuda
 
 # network-based debian package installation. disabled by default.
 #wget -nc http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.5-18_amd64.deb
@@ -66,8 +66,8 @@ cd .. ; rm -r cuda_dl
 
 
 # INSTALL ATLAS AND REMAINING DEPENDENCIES
-apt-get install libatlas-base-dev
-apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
+sudo apt-get install libatlas-base-dev
+sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 
 #the code as originally been written for and on ubuntu 14.04
 #this script here modifies includes and library names for caffe and the demonstator to compile on 16.04. will do nothing on 14.04 and only execute once.
@@ -84,7 +84,7 @@ make all -j10
 
 # BUILD DEMONSTRATOR APPLICATION (requires and installs ImageMagick)
 cd demonstrator
-apt-get install libmagick++-dev
+sudo apt-get install libmagick++-dev
 bash build.sh
 chmod +x lrp_demo
 
