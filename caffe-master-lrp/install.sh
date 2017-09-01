@@ -21,8 +21,8 @@
 
 
 # INSTALL GENERAL DEPENDENCIES
-apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler build-essential
-apt-get install --no-install-recommends libboost-all-dev
+sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler build-essential
+sudo apt-get install --no-install-recommends libboost-all-dev
 
 
 
@@ -69,8 +69,8 @@ echo "Cuda installation disabled. This is something you better do yourself, afte
 
 
 # INSTALL ATLAS AND REMAINING DEPENDENCIES
-apt-get install libatlas-base-dev
-apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
+sudo apt-get install libatlas-base-dev
+sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 
 #the code as originally been written for and on ubuntu 14.04
 #this script here modifies includes and library names for caffe and the demonstator to compile on 16.04. will do nothing on 14.04 and only execute once.
@@ -87,7 +87,7 @@ make all -j10
 
 # BUILD DEMONSTRATOR APPLICATION (requires and installs ImageMagick)
 cd demonstrator
-apt-get install libmagick++-dev
+sudo apt-get install libmagick++-dev
 bash build.sh
 chmod +x lrp_demo
 
