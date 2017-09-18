@@ -97,7 +97,7 @@ class ConcatLayer : public Layer<Dtype> {
   virtual inline int ExactNumTopBlobs() const { return 1; }
 
   virtual void Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro , const std::vector<int> & classinds, const bool thenightstartshere);
 
  protected:
@@ -359,9 +359,9 @@ class InnerProductLayer : public Layer<Dtype> {
   virtual inline const char* type() const { return "InnerProduct"; }
   virtual inline int ExactNumBottomBlobs() const { return 1; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
-  
+
   virtual void Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro , const std::vector<int> & classinds, const bool thenightstartshere);
 
  protected:
@@ -373,19 +373,29 @@ class InnerProductLayer : public Layer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
-  
+
   virtual void Backward_Relevance_cpu_epsstab_slowneasy(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro ) ;
-  
+
   virtual void Backward_Relevance_cpu_alphabeta_slowneasy(
   		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
   		const vector<Blob<Dtype>*>& bottom, const int layerindex,
   		const relpropopts & ro);
 
   virtual void Backward_Relevance_cpu_zeilerlike_slowneasy(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro ) ;
+
+  virtual void Backward_Relevance_cpu_flatweight_slowneasy(
+		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
+		const vector<Blob<Dtype>*>& bottom, const int layerindex,
+		const relpropopts & ro);
+
+  virtual void Backward_Relevance_cpu_wsquare_slowneasy(const vector<Blob<Dtype>*>& top,
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
+  	  const int layerindex, const relpropopts & ro );
+
 
   int M_;
   int K_;
@@ -556,7 +566,7 @@ class SoftmaxLayer : public Layer<Dtype> {
   virtual inline const char* type() const { return "Softmax"; }
   virtual inline int ExactNumBottomBlobs() const { return 1; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
-  
+
   void Backward_Relevance_cpu(
   		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
   		const vector<Blob<Dtype>*>& bottom, const int layerindex,
@@ -630,7 +640,7 @@ class SplitLayer : public Layer<Dtype> {
   virtual inline int MinTopBlobs() const { return 1; }
 
   virtual void Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro , const std::vector<int> & classinds, const bool thenightstartshere);
 
  protected:

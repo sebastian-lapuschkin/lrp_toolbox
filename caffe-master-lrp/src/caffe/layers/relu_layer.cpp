@@ -63,6 +63,7 @@ void ReLULayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
 		case 100: // decomposition type per layer: (alpha-beta) for conv layers, epsilon for inner product layers
 		case 102: // decomposition type per layer + flat below a given layer index
 		case 104: // decomposition type per layer + w^2 below a given layer index
+    case 114: // epsilon + alphabeta below a given layer index
 		case 22:
 		{
 			  //if (propagate_down[0]) {
@@ -78,7 +79,8 @@ void ReLULayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
 
 		}
 		break;
-		case 26: //zeiler: deconvolution
+
+    case 26: //zeiler: deconvolution
 		{
 			    const Dtype* bottom_data = bottom[0]->cpu_data();
 			    const Dtype* top_diff = top[0]->cpu_diff();
