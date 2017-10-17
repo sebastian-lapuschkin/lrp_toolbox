@@ -145,8 +145,7 @@ class Sequential(Module):
 
             N : int
                 range of indices [0,N[ to choose from.m, s = divmod(seconds, 60)
-h, m = divmod(m, 60)
-print "%d:%02d:%02d" % (h, m, s)
+
 
             b : the number of unique indices to pick.
             '''
