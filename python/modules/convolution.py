@@ -115,15 +115,16 @@ class Convolution(Module):
 
         DX = np.zeros_like(self.X,dtype=np.float)
 
-        '''
-        for i in xrange(Hy):
-            for j in xrange(Wy):
-                DX[:,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += (self.W[na,...] * DY[:,i:i+1,j:j+1,na,:]).sum(axis=4)  #sum over all the filters
-        '''
 
-        for i in xrange(hf):
-            for j in xrange(wf):
-                DX[:,i:i+Hy:hstride,j:j+Wy:wstride,:] += np.dot(DY,self.W[i,j,:,:].T)
+        if not (hf == wf and self.stride == (1,1)):
+            for i in xrange(Hy):
+                for j in xrange(Wy):
+                    DX[:,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += (self.W[na,...] * DY[:,i:i+1,j:j+1,na,:]).sum(axis=4)  #sum over all the filters
+        else:
+            for i in xrange(hf):
+                for j in xrange(wf):
+                    DX[:,i:i+Hy:hstride,j:j+Wy:wstride,:] += np.dot(DY,self.W[i,j,:,:].T)
+
         return DX #* (hf*wf*df)**.5 / (NF*Hy*Wy)**.5
 
 
@@ -136,15 +137,14 @@ class Convolution(Module):
 
         DW = np.zeros_like(self.W,dtype=np.float)
 
-        '''
-        for i in xrange(Hy):
-            for j in xrange(Wy):
-                DW += (self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :, na] * self.DY[:,i:i+1,j:j+1,na,:]).sum(axis=0)
-        '''
-
-        for i in xrange(hf):
-            for j in xrange(wf):
-                DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2]))
+        if not (hf == wf and self.stride == (1,1)):
+            for i in xrange(Hy):
+                for j in xrange(Wy):
+                    DW += (self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :, na] * self.DY[:,i:i+1,j:j+1,na,:]).sum(axis=0)
+        else:
+            for i in xrange(hf):
+                for j in xrange(wf):
+                    DW[i,j,:,:] = np.tensordot(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:],self.DY,axes=([0,1,2],[0,1,2]))
 
         DB = self.DY.sum(axis=(0,1,2))
         self.W -= lrate * DW / (hf*wf*df*Hy*Wy)**.5
