@@ -1,10 +1,12 @@
 from module import Module
 from linear import Linear
-from tanh import Tanh
+from sequential import Sequential
 from rect import Rect
 from softmax import SoftMax
-from maxpool import MaxPool
-from sumpool import SumPool
-from flatten import Flatten
-from convolution import Convolution
-from sequential import Sequential
+
+# TODO: translate to mx and add the modules 
+# from tanh import Tanh
+# from maxpool import MaxPool
+# from sumpool import SumPool
+# from flatten import Flatten
+# from convolution import Convolution
