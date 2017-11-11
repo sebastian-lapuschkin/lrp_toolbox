@@ -23,7 +23,7 @@ class Tanh(Module):
     def __init__(self):
         Module.__init__(self)
 
-    def forward(self,X):
+    def forward(self,X,*args,**kwargs):
         self.Y = np.tanh(X)
         return self.Y
 

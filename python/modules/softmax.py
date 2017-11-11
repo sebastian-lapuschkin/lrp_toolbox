@@ -23,7 +23,7 @@ class SoftMax(Module):
     def __init__(self):
         Module.__init__(self)
 
-    def forward(self,X):
+    def forward(self,X,*args,**kwargs):
         self.X = X
         self.Y = np.exp(X) / np.exp(X).sum(axis=1,keepdims=True)
         return self.Y

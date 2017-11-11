@@ -52,7 +52,7 @@ class Sequential(Module):
 
 
 
-    def forward(self,X):
+    def forward(self,X,lrp_aware=False):
         '''
         Realizes the forward pass of an input through the net
 
@@ -61,6 +61,12 @@ class Sequential(Module):
         X : numpy.ndarray
             a network input.
 
+        lrp_aware : bool
+            controls whether the forward pass is to be computed with awareness for multiple following
+            LRP calls. this will sacrifice speed in the forward pass but will save time if multiple LRP
+            calls will follow for the current X, e.g. wit different parameter settings or for multiple
+            target classes.
+
         Returns
         -------
         X : numpy.ndarray
@@ -68,7 +74,7 @@ class Sequential(Module):
         '''
 
         for m in self.modules:
-            X = m.forward(X)
+            X = m.forward(X,lrp_aware=lrp_aware)
         return X
 
 
