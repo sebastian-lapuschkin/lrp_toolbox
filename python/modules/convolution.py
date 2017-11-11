@@ -48,7 +48,7 @@ class Convolution(Module):
         self.B = np.zeros([self.n])
 
 
-    def forward(self,X):
+    def forward(self,X,*args,**kwargs):
         '''
         Realizes the forward pass of an input through the convolution layer.
 
@@ -58,6 +58,12 @@ class Convolution(Module):
             a network input, shaped (N,H,W,D), with
             N = batch size
             H, W, D = input size in heigth, width, depth
+
+        lrp_aware : bool
+            controls whether the forward pass is to be computed with awareness for multiple following
+            LRP calls. this will sacrifice speed in the forward pass but will save time if multiple LRP
+            calls will follow for the current X, e.g. wit different parameter settings or for multiple
+            target classes.
 
         Returns
         -------

@@ -37,7 +37,7 @@ class SumPool(Module):
         self.pool = pool
         self.stride = stride
 
-    def forward(self,X):
+    def forward(self,X,*args,**kwargs):
         '''
         Realizes the forward pass of an input through the sum pooling layer.
 

@@ -37,7 +37,7 @@ class MaxPool(Module):
         self.stride = stride
 
 
-    def forward(self,X):
+    def forward(self,X,*args,**kwargs):
         '''
         Realizes the forward pass of an input through the max pooling layer.
 
