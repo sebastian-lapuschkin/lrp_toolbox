@@ -43,7 +43,7 @@ class Linear(Module):
         self.W = np.random.normal(0,1.0*m**(-.5),[self.m,self.n])
 
 
-    def forward(self,X):
+    def forward(self,X,lrp_aware=False):
         '''
         Forward-transforms an input X
 
@@ -58,9 +58,15 @@ class Linear(Module):
         Y : numpy.ndarray
             the transformed data shaped [N,M], with M being the number of output neurons
         '''
+        self.lrp_aware = lrp_aware
+        if self.lrp_aware:
+            self.X = X
+            self.Z = self.W[na,:,:]*self.X[:,:,na]
+            self.Y = self.Z.sum(axis=1) + self.B
+        else:
+            self.X = X
+            self.Y = np.dot(X,self.W)+self.B
 
-        self.X = X
-        self.Y = np.dot(X,self.W)+self.B
         return self.Y
 
 
@@ -105,15 +111,32 @@ class Linear(Module):
         self.dB = None
 
 
+    def _simple_lrp_slow(self,R):
+        '''
+        LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140.
+        This function shows all necessary operations to perform LRP in one place and is therefore not optimized
+        '''
+        Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
+        Zs = Z.sum(axis=1)[:,na,:] +self.B[na,na,:] #preactivations
+        return ((Z / Zs) * R[:,na,:]).sum(axis=2)
 
 
     def _simple_lrp(self,R):
         '''
         LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
         '''
-        Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
-        Zs = Z.sum(axis=1)[:,na,:] +self.B[na,na,:] #preactivations
-        return ((Z / Zs) * R[:,na,:]).sum(axis=2)
+
+        # Has the forward pass been computed lrp-aware?
+        # This exchanges time spent in the forward pass for lower LRP time
+        # and is useful, if e.g. several parameter settings for LRP need to be evaluated
+        # for the same input data.
+        if self.lrp_aware:
+            return (self.Z * (R/self.Y)[:,na,:]).sum(axis=2)
+        else:
+            Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
+            return (Z * (R/self.Y)[:,na,:]).sum(axis=2)
+
+
 
     def _flat_lrp(self,R):
         '''
@@ -124,6 +147,7 @@ class Linear(Module):
         Zs = Z.sum(axis=1)[:,na,:]
         return ((Z / Zs) * R[:,na,:]).sum(axis=2)
 
+
     def _ww_lrp(self,R):
         '''
         LRR according to Eq(12) in https://arxiv.org/pdf/1512.02479v1.pdf
@@ -132,16 +156,37 @@ class Linear(Module):
         Zs = Z.sum(axis=1)[:,na,:]
         return ((Z / Zs) * R[:,na,:]).sum(axis=2)
 
-    def _epsilon_lrp(self,R,epsilon):
+
+    def _epsilon_lrp_slow(self,R,epsilon):
         '''
         LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+        This function shows all necessary operations to perform LRP in one place and is therefore not optimized
         '''
+
         Z = self.W[na,:,:]*self.X[:,:,na] # localized preactivations
         Zs = Z.sum(axis=1)[:,na,:] +self.B[na,na,:] # preactivations
 
         # add slack to denominator. we require sign(0) = 1. since np.sign(0) = 0 would defeat the purpose of the numeric stabilizer we do not use it.
         Zs += epsilon * ((Zs >= 0)*2-1)
-        return ((Z / Zs) * R[:,na,:]).sum(axis=2)
+        return  ((Z / Zs) * R[:,na,:]).sum(axis=2)
+
+
+    def _epsilon_lrp(self,R,epsilon):
+        '''
+        LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+        '''
+
+        Zs = self.Y + epsilon * ((self.Y >= 0)*2-1)#prepare stabilized denominator
+
+        # Has the forward pass been computed lrp-aware?
+        # This exchanges time spent in the forward pass for lower LRP time
+        # and is useful, if e.g. several parameter settings for LRP need to be evaluated
+        # for the same input data.
+        if self.lrp_aware:
+            return (self.Z * (R/Zs)[:,na,:]).sum(axis=2)
+        else:
+            Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
+            return (Z * (R/Zs)[:,na,:]).sum(axis=2)
 
 
     def _alphabeta_lrp(self,R,alpha):

@@ -31,8 +31,22 @@ class Module:
     def train(self, X, Y, *args, **kwargs):
         ''' implements (currently in modules.Sequential only) a simple training routine '''
 
-    def forward(self,X):
-        ''' forward passes the input data X to the layer's output neurons '''
+    def forward(self,X,lrp_aware=False):
+        ''' forward passes the input data X to the layer's output neurons.
+        
+        Parameters
+        ----------
+
+        X : numpy.ndarray
+            the input activations for this layer, shaped [batchsize, ...] 
+
+        lrp_aware : bool
+            controls whether the forward pass is to be computed with awareness for multiple following
+            LRP calls. this will sacrifice speed in the forward pass but will save time if multiple LRP
+            calls will follow for the current X, e.g. wit different parameter settings or for multiple
+            target classes.
+        
+        '''
         return X
 
     def update(self, lrate):
@@ -87,8 +101,10 @@ class Module:
             should be of the same shape as the previously produced output by <Module>.forward
 
         lrp_var : str
-            either 'none' or 'simple' or None for standard Lrp ,
-            'epsilon' for an added epsilon slack in the denominator
+            either 'none' or 'simple' or None for standard LRP ,
+            'slow' or 'simple_slow' for the explicit implementation of LRP,
+            'epsilon' for an added epsilon slack in the denominator,
+            'epsilon_slow' for the explicit implementation of the epsilon stabilized variant
             'alphabeta' or 'alpha' for weighting positive and negative contributions separately. param specifies alpha with alpha + beta = 1
             'flat' projects an upper layer neuron's relevance uniformly over its receptive field.
             'ww' or 'w^2' only considers the square weights w_ij^2 as qantities to distribute relevances with.
@@ -102,7 +118,7 @@ class Module:
             shaped identically to the previously processed inputs in <Module>.forward
         '''
 
-        if lrp_var == None and param == None:
+        if lrp_var is None and param is None:
             # module.lrp(R) has been called without further parameters.
             # set default values / preset values
             lrp_var = self.lrp_var
@@ -110,12 +126,19 @@ class Module:
 
         if lrp_var is None or lrp_var.lower() == 'none' or lrp_var.lower() == 'simple':
             return self._simple_lrp(R)
+        elif lrp_var.lower() == 'slow' or lrp_var.lower() == 'simple_slow':
+            return self._simple_lrp_slow(R)
+
         elif lrp_var.lower() == 'flat':
             return self._flat_lrp(R)
         elif lrp_var.lower() == 'ww' or lrp_var.lower() == 'w^2':
             return self._ww_lrp(R)
+
         elif lrp_var.lower() == 'epsilon':
             return self._epsilon_lrp(R,param)
+        elif lrp_var.lower() == 'epsilon_slow':
+            return self._epsilon_lrp_slow(R,param)
+
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
             return self._alphabeta_lrp(R,param)
         else:
@@ -129,6 +152,9 @@ class Module:
     def _simple_lrp(self,R):
         raise NotImplementedError()
 
+    def _simple_lrp_slow(self,R):
+        raise NotImplementedError()
+
     def _flat_lrp(self,R):
         raise NotImplementedError()
 
@@ -136,6 +162,9 @@ class Module:
         raise NotImplementedError()
 
     def _epsilon_lrp(self,R,param):
+        raise NotImplementedError()
+
+    def _epsilon_lrp_slow(self,R,param):
         raise NotImplementedError()
 
     def _alphabeta_lrp(self,R,param):

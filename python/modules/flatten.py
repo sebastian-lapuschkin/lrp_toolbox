@@ -31,7 +31,7 @@ class Flatten(Module):
         '''
         return np.reshape(DY,self.inputshape)
 
-    def forward(self,X):
+    def forward(self,X,*args,**kwargs):
         '''
         Transforms each sample in X to a one-dimensional array.
         Shape change according to C-order.
