@@ -141,8 +141,11 @@ class Module:
 
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
             return self._alphabeta_lrp(R,param)
+        elif lrp_var.lower() == 'alphabeta_slow' or lrp_var.lower() == 'alpha_slow':
+            return self._alphabeta_lrp_slow(R,param)
+
         else:
-            print 'Unknown lrp variant', lrp_var
+            raise Exception('Unknown lrp variant {}'.format(lrp_var))
 
 
     # ---------------------------------------------------------
@@ -168,4 +171,7 @@ class Module:
         raise NotImplementedError()
 
     def _alphabeta_lrp(self,R,param):
+        raise NotImplementedError()
+
+    def _alphabeta_lrp_slow(self,R,param):
         raise NotImplementedError()

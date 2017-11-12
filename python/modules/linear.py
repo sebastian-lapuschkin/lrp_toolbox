@@ -189,9 +189,10 @@ class Linear(Module):
             return (Z * (R/Zs)[:,na,:]).sum(axis=2)
 
 
-    def _alphabeta_lrp(self,R,alpha):
+    def _alphabeta_lrp_slow(self,R,alpha):
         '''
         LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
+        This function shows all necessary operations to perform LRP in one place and is therefore not optimized
         '''
         beta = 1 - alpha
         Z = self.W[na,:,:]*self.X[:,:,na] # localized preactivations
@@ -211,3 +212,40 @@ class Linear(Module):
             Rbeta = 0
 
         return Ralpha + Rbeta
+
+
+    def _alphabeta_lrp(self,R,alpha):
+        '''
+        LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
+        '''
+        beta = 1 - alpha
+        if self.lrp_aware:
+            Z = self.Z
+        else:
+            Z = self.W[na,:,:]*self.X[:,:,na] # localized preactivations
+        
+        
+        #indices of positive forward predictions
+        Zplus = Z > 0
+        if alpha * beta != 0: #the general case: both parameters are not 0
+            Zp = Z * Zplus
+            Zsp = Zp.sum(axis=1) + (self.B * (self.B > 0))[na,:]
+
+            Zn = Z * np.invert(Zplus)
+            Zsn = self.Y - Zsp
+
+            return alpha * (Zp*(R/Zsp)[:,na,:]).sum(axis=2) + beta * (Zn * (R/Zsn)[:,na,:]).sum(axis=2)
+
+        elif alpha: #only alpha is not 0 -> alpha = 1, beta = 0
+            Zp = Z * Zplus
+            Zsp = Zp.sum(axis=1) + (self.B * (self.B > 0))[na,:]
+            return (Zp*(R/Zsp)[:,na,:]).sum(axis=2)
+
+        elif beta: # only beta is not 0 -> alpha = 0, beta = 1
+            Zn = Z * np.invert(Zplus)
+            Zsn = Zn.sum(axis=1) + (self.B * (self.B < 0))[na,:]
+            return (Zn * (R/Zsn)[:,na,:]).sum(axis=2)
+        
+        else:
+            raise Exception('This case should never occur: alpha={}, beta={}.'.format(alpha, beta))
+
