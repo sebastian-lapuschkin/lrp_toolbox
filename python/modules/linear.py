@@ -227,13 +227,13 @@ class Linear(Module):
             Z = self.W[na,:,:]*self.X[:,:,na] # localized preactivations
 
 
-        #indices of positive forward predictions
+        #index mask of positive forward predictions
         Zplus = Z > 0
         if alpha * beta != 0: #the general case: both parameters are not 0
             Zp = Z * Zplus
             Zsp = Zp.sum(axis=1) + (self.B * (self.B > 0))[na,:]
 
-            Zn = Z * np.invert(Zplus)
+            Zn = Z - Zp
             Zsn = self.Y - Zsp
 
             return alpha * (Zp*(R/Zsp)[:,na,:]).sum(axis=2) + beta * (Zn * (R/Zsn)[:,na,:]).sum(axis=2)
