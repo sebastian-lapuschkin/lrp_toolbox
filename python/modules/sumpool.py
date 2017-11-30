@@ -114,7 +114,7 @@ class SumPool(Module):
         DX = np.zeros_like(self.X)
         for i in xrange(Hout):
             for j in xrange(Wout):
-                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * normalizer # 0normalizer to produce well-conditioned gradients
+                DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * normalizer # normalizer to produce well-conditioned gradients
         return DX
 
 
@@ -122,7 +122,7 @@ class SumPool(Module):
         self.X = None
         self.Y = None
 
-    def _simple_lrp(self,R):
+    def _simple_lrp_slow(self,R):
         '''
         LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
         '''
@@ -143,6 +143,32 @@ class SumPool(Module):
                 Zs += 1e-12*((Zs >= 0)*2-1) # add a weak numerical stabilizer to cushion an all-zero input
 
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += (Z/Zs) * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
+
+        return Rx
+
+
+    def _simple_lrp(self,R):
+        '''
+        LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
+        '''
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        Rx = np.zeros(self.X.shape)
+        normalizer = 1./np.sqrt(hpool*wpool)
+        R_norm = R / (self.Y/normalizer + 1e-12*((self.Y/normalizer >= 0)*2 - 1.)) #factor in normalizer applied to Y in the forward pass
+
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
+                Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += Z * (R_norm[:,i:i+1,j:j+1,:])
 
         return Rx
 
@@ -175,7 +201,8 @@ class SumPool(Module):
         '''
         return self._flat_lrp(R)
 
-    def _epsilon_lrp(self,R,epsilon):
+
+    def _epsilon_lrp_slow(self,R,epsilon):
         '''
         LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
         '''
@@ -198,6 +225,39 @@ class SumPool(Module):
                 Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += (Z/Zs) * R[:,i:i+1,j:j+1,:]  #distribute relevance propoprtional to input activations per layer
 
         return Rx
+
+
+    def _epsilon_lrp(self,R,epsilon):
+        '''
+        LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+        '''
+        N,H,W,D = self.X.shape
+
+        hpool,   wpool   = self.pool
+        hstride, wstride = self.stride
+
+        #assume the given pooling and stride parameters are carefully chosen.
+        Hout = (H - hpool) / hstride + 1
+        Wout = (W - wpool) / wstride + 1
+
+        Rx = np.zeros(self.X.shape)
+        normalizer = 1./np.sqrt(hpool*wpool) #factor in normalizer applied to Y in the forward pass
+        R_norm = R / (self.Y/normalizer + epsilon*((self.Y >= 0)*2 - 1.))
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
+                Rx[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += Z * (R_norm[:,i:i+1,j:j+1,:])
+
+        return Rx
+
+
+
+    #def _epsilon_lrp(self,R,epsilon):
+    #    return self._epsilon_lrp_slow(R,epsilon)
+
+
+
 
 
     # yes, we can do this. no, it will not make sense most of the time.  by default, _lrp_simple will be called. see line 152
