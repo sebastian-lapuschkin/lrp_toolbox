@@ -118,6 +118,7 @@ class Linear(Module):
         '''
         Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
         Zs = Z.sum(axis=1)[:,na,:] +self.B[na,na,:] #preactivations
+        Zs += 1e-12*((Zs >= 0)*2 - 1.) #add weak default stabilizer to denominator
         return ((Z / Zs) * R[:,na,:]).sum(axis=2)
 
 
@@ -130,11 +131,12 @@ class Linear(Module):
         # This exchanges time spent in the forward pass for lower LRP time
         # and is useful, if e.g. several parameter settings for LRP need to be evaluated
         # for the same input data.
+        Zs = self.Y + 1e-12*((self.Y >= 0)*2 - 1.) #add weakdefault stabilizer to denominator
         if self.lrp_aware:
-            return (self.Z * (R/self.Y)[:,na,:]).sum(axis=2)
+            return (self.Z * (R/Zs)[:,na,:]).sum(axis=2)
         else:
             Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
-            return (Z * (R/self.Y)[:,na,:]).sum(axis=2)
+            return (Z * (R/Zs)[:,na,:]).sum(axis=2)
 
 
 
@@ -223,8 +225,8 @@ class Linear(Module):
             Z = self.Z
         else:
             Z = self.W[na,:,:]*self.X[:,:,na] # localized preactivations
-        
-        
+
+
         #indices of positive forward predictions
         Zplus = Z > 0
         if alpha * beta != 0: #the general case: both parameters are not 0
@@ -245,7 +247,7 @@ class Linear(Module):
             Zn = Z * np.invert(Zplus)
             Zsn = Zn.sum(axis=1) + (self.B * (self.B < 0))[na,:]
             return (Zn * (R/Zsn)[:,na,:]).sum(axis=2)
-        
+
         else:
             raise Exception('This case should never occur: alpha={}, beta={}.'.format(alpha, beta))
 
