@@ -118,7 +118,7 @@ class Linear(Module):
         '''
         Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
         Zs = Z.sum(axis=1)[:,na,:] +self.B[na,na,:] #preactivations
-        Zs += 1e-12*((Zs >= 0)*2 - 1.) #add weak default stabilizer to denominator
+        Zs += 1e-16*((Zs >= 0)*2 - 1.) #add weak default stabilizer to denominator
         return ((Z / Zs) * R[:,na,:]).sum(axis=2)
 
 
@@ -131,7 +131,7 @@ class Linear(Module):
         # This exchanges time spent in the forward pass for lower LRP time
         # and is useful, if e.g. several parameter settings for LRP need to be evaluated
         # for the same input data.
-        Zs = self.Y + 1e-12*((self.Y >= 0)*2 - 1.) #add weakdefault stabilizer to denominator
+        Zs = self.Y + 1e-16*((self.Y >= 0)*2 - 1.) #add weakdefault stabilizer to denominator
         if self.lrp_aware:
             return (self.Z * (R/Zs)[:,na,:]).sum(axis=2)
         else:
@@ -231,21 +231,21 @@ class Linear(Module):
         Zplus = Z > 0
         if alpha * beta != 0: #the general case: both parameters are not 0
             Zp = Z * Zplus
-            Zsp = Zp.sum(axis=1) + (self.B * (self.B > 0))[na,:]
+            Zsp = Zp.sum(axis=1) + (self.B * (self.B > 0))[na,:] + 1e-16
 
             Zn = Z - Zp
-            Zsn = self.Y - Zsp
+            Zsn = self.Y - Zsp - 1e-16
 
             return alpha * (Zp*(R/Zsp)[:,na,:]).sum(axis=2) + beta * (Zn * (R/Zsn)[:,na,:]).sum(axis=2)
 
         elif alpha: #only alpha is not 0 -> alpha = 1, beta = 0
             Zp = Z * Zplus
-            Zsp = Zp.sum(axis=1) + (self.B * (self.B > 0))[na,:]
+            Zsp = Zp.sum(axis=1) + (self.B * (self.B > 0))[na,:] + 1e-16
             return (Zp*(R/Zsp)[:,na,:]).sum(axis=2)
 
         elif beta: # only beta is not 0 -> alpha = 0, beta = 1
             Zn = Z * np.invert(Zplus)
-            Zsn = Zn.sum(axis=1) + (self.B * (self.B < 0))[na,:]
+            Zsn = Zn.sum(axis=1) + (self.B * (self.B < 0))[na,:] - 1e-16
             return (Zn * (R/Zsn)[:,na,:]).sum(axis=2)
 
         else:
