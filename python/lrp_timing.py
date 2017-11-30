@@ -38,8 +38,8 @@ I = np.arange(X.shape[0])
 
 # do some benchmarking.
 
-#for B in [1, 16, 64]: #batch sizes for work laptop with only 8GB RAM
-for B in [1, 16, 64, 256]:
+for B in [1, 16, 64]: #batch sizes for work laptop with only 8GB RAM
+#for B in [1, 16, 64, 256]:
 
     forward_times_old = []
     forward_times_new = []
