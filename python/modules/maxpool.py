@@ -121,7 +121,7 @@ class MaxPool(Module):
 
 
 
-    def _simple_lrp(self,R):
+    def _simple_lrp_slow(self,R):
         N,H,W,D = self.X.shape
 
         hpool,   wpool   = self.pool
@@ -139,6 +139,11 @@ class MaxPool(Module):
                 Zs = Z.sum(axis=(1,2),keepdims=True,dtype=np.float) #thanks user wodtko for reporting this bug/fix
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
         return Rx
+
+
+    def _simple_lrp(self,R):
+        return _simple_lrp_slow(R)
+
 
 
     def _flat_lrp(self,R):

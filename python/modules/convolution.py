@@ -163,9 +163,10 @@ class Convolution(Module):
         self.DY = None
 
 
-    def _simple_lrp(self,R):
+    def _simple_lrp_slow(self,R):
         '''
         LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
+        This function shows all necessary operations to perform LRP in one place and is therefore not optimized
         '''
 
         N,Hout,Wout,NF = R.shape
@@ -180,6 +181,26 @@ class Convolution(Module):
                 Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,na,na,na,...]
                 Zs += 1e-12*((Zs >= 0)*2 - 1.) # add a weak numerical stabilizer to cushion division by zero
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+        return Rx
+
+
+
+    def _simple_lrp(self,R):
+        '''
+        LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140
+        '''
+
+        N,Hout,Wout,NF = R.shape
+        hf,wf,df,NF = self.W.shape
+        hstride, wstride = self.stride
+
+        Rx = np.zeros_like(self.X,dtype=np.float)
+        R_norm = R / (self.Y + 1e-12*((self.Y >= 0)*2 - 1.))
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (Z * (R_norm[:,i:i+1,j:j+1,na,:])).sum(axis=4)
         return Rx
 
     def _flat_lrp(self,R):
@@ -220,9 +241,10 @@ class Convolution(Module):
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
         return Rx
 
-    def _epsilon_lrp(self,R,epsilon):
+    def _epsilon_lrp_slow(self,R,epsilon):
         '''
         LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+        This function shows all necessary operations to perform LRP in one place and is therefore not optimized
         '''
 
         N,Hout,Wout,NF = R.shape
@@ -237,6 +259,25 @@ class Convolution(Module):
                 Zs = Z.sum(axis=(1,2,3),keepdims=True) + self.B[na,na,na,na,...]
                 Zs += epsilon*((Zs >= 0)*2-1)
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+        return Rx
+
+
+    def _epsilon_lrp(self,R,epsilon):
+        '''
+        LRP according to Eq(58) in DOI: 10.1371/journal.pone.0130140
+        '''
+
+        N,Hout,Wout,NF = R.shape
+        hf,wf,df,NF = self.W.shape
+        hstride, wstride = self.stride
+
+        Rx = np.zeros_like(self.X,dtype=np.float)
+        R_norm = R / (self.Y + epsilon*((self.Y >= 0)*2 - 1.))
+
+        for i in xrange(Hout):
+            for j in xrange(Wout):
+                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+                Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (Z * (R_norm[:,i:i+1,j:j+1,na,:])).sum(axis=4)
         return Rx
 
 
