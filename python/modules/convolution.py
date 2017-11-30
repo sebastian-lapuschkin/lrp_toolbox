@@ -48,7 +48,7 @@ class Convolution(Module):
         self.B = np.zeros([self.n])
 
 
-    def forward(self,X,*args,**kwargs):
+    def forward(self,X,lrp_aware=False):
         '''
         Realizes the forward pass of an input through the convolution layer.
 
@@ -71,6 +71,8 @@ class Convolution(Module):
             the layer outputs.
         '''
 
+        self.lrp_aware = lrp_aware
+
         self.X = X
         N,H,W,D = X.shape
 
@@ -82,12 +84,21 @@ class Convolution(Module):
         Hout = (H - hf) / hstride + 1
         Wout = (W - wf) / wstride + 1
 
+
         #initialize pooled output
         self.Y = np.zeros((N,Hout,Wout,numfilters))
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
-                self.Y[:,i,j,:] = np.tensordot(X[:, i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ],self.W,axes = ([1,2,3],[0,1,2])) + self.B
+        if self.lrp_aware:
+            self.Z = np.zeros((N, Hout, Wout, hf, wf, df, nf)) #initialize container for precomputed forward messages
+            for i in xrange(Hout):
+                for j in xrange(Wout):
+                    self.Z[:,i,j,...] = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na] # N, hf, wf, df, nf
+                    self.Y[:,i,j,:] = self.Z[:,i,j,...].sum(axis=(1,2,3)) + self.B
+        else:
+            for i in xrange(Hout):
+                for j in xrange(Wout):
+                    self.Y[:,i,j,:] = np.tensordot(X[:, i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ],self.W,axes = ([1,2,3],[0,1,2])) + self.B
+
         return self.Y
 
 
@@ -199,7 +210,11 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+                if self.lrp_aware:
+                    Z = self.Z[:,i,j,...]
+                else:
+                    Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (Z * (R_norm[:,i:i+1,j:j+1,na,:])).sum(axis=4)
         return Rx
 
@@ -276,7 +291,10 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+                if self.lrp_aware:
+                    Z = self.Z[:,i,j,...]
+                else:
+                    Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += (Z * (R_norm[:,i:i+1,j:j+1,na,:])).sum(axis=4)
         return Rx
 
@@ -336,7 +354,11 @@ class Convolution(Module):
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+                if self.lrp_aware:
+                    Z = self.Z[:,i,j,...]
+                else:
+                    Z = self.W[na,...] * self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : , na]
+
                 Zplus = Z > 0 #index mask of positive forward predictions
 
                 if alpha * beta != 0 : #the general case: both parameters are not 0
