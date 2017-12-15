@@ -27,7 +27,7 @@ class Sequential(Module):
     along in- and outputs.
     '''
 
-    def __init__(self,modules):
+    def __init__(self,modules, ctx=mx.cpu()):
         '''
         Constructor
 
@@ -38,7 +38,20 @@ class Sequential(Module):
         '''
         Module.__init__(self)
         self.modules = modules
+        self.set_context(ctx)
 
+    def set_context(self, ctx):
+        '''
+        Change context of all modules. Afterwards, a forward pass is needed before a new backward / lrp call
+
+        Parameters
+        ----------
+        ctx : mxnet.context.Context
+            mx context (usually mx.cpu() or mx.gpu())
+        '''
+        self.ctx = ctx
+        for m in self.modules:
+            m.set_context(ctx)
 
     def forward(self,X):
         '''

@@ -9,6 +9,7 @@
 @license : BSD-2-Clause
 '''
 
+import mxnet as mx
 from mxnet import nd
 from module import Module
 
@@ -20,8 +21,9 @@ class Tanh(Module):
     Tanh Layer
     '''
 
-    def __init__(self):
+    def __init__(self, ctx=mx.cpu()):
         Module.__init__(self)
+        self.ctx=ctx
 
     def forward(self,X):
         self.Y = nd.tanh(X)

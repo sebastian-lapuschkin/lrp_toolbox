@@ -9,6 +9,7 @@
 @license : BSD-2-Clause
 '''
 
+import mxnet as mx
 from mxnet import nd
 from module import Module
 
@@ -17,7 +18,7 @@ from module import Module
 # -------------------------------
 
 class MaxPool(Module):
-    def __init__(self,pool=(2,2),stride=(2,2)):
+    def __init__(self,pool=(2,2),stride=(2,2), ctx=mx.cpu()):
         '''
         Constructor for the max pooling layer object
 
@@ -36,6 +37,7 @@ class MaxPool(Module):
         self.pool = pool
         self.stride = stride
 
+        self.ctx = ctx
 
     def forward(self,X):
         '''

@@ -41,14 +41,31 @@ class Convolution(Module):
 
         Module.__init__(self)
 
-        self.ctx = ctx
-
         self.fh, self.fw, self.fd, self.n = filtersize
         self.stride = stride
 
+        # context sensitive variables
+        self.ctx = ctx
         self.W = nd.random.normal(0,1./(self.fh*self.fw*self.fd)**.5, shape=filtersize, ctx=ctx)
         self.B = nd.zeros([self.n], ctx=ctx)
+        self.Y = None
+        self.Z = None
 
+    def set_context(self, ctx):
+        '''
+        Change module context and copy ndarrays (if needed)
+        '''
+        self.ctx = ctx
+        # copy variables if ctx != variable.context:
+        self.W = self.W.as_in_context(ctx)
+        self.B = self.B.as_in_context(ctx)
+        if not self.Y is None:
+            self.Y = self.Y.as_in_context(ctx)
+        if not self.Z is None:
+            self.Z = self.Z.as_in_context(ctx)
+
+        # new forward pass is needed after context change, reset self.X
+        self.X = None
 
     def forward(self,X,lrp_aware=False):
         '''

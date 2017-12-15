@@ -22,9 +22,10 @@ class Flatten(Module):
     Flattening layer.
     '''
 
-    def __init__(self):
+    def __init__(self, ctx=mx.cpu()):
         Module.__init__(self)
         self.inputshape = []
+        self.ctx=ctx
 
     def backward(self,DY):
         '''

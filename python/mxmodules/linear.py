@@ -39,8 +39,27 @@ class Linear(Module):
         Module.__init__(self)
         self.m = m
         self.n = n
+
+        # context sensitive variables
+        self.ctx = ctx
         self.B = nd.zeros([self.n], ctx=ctx)
         self.W = nd.random_normal(0,1.0*m**(-.5),[self.m,self.n], ctx=ctx)
+
+    def set_context(self, ctx):
+        '''
+        Change module context and copy ndarrays (if needed)
+        '''
+        self.ctx = ctx
+        # copy variables if ctx != variable.context:
+        self.W = self.W.as_in_context(ctx)
+        self.B = self.B.as_in_context(ctx)
+        if not self.Y is None:
+            self.Y = self.Y.as_in_context(ctx)
+        if not self.Z is None:
+            self.Z = self.Z.as_in_context(ctx)
+
+        # new forward pass is needed after context change, reset self.X
+        self.X = None
 
 
     def forward(self,X,lrp_aware=False):

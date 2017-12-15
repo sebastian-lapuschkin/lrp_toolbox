@@ -11,6 +11,7 @@
 
 from module import Module
 
+import mxnet as mx
 from mxnet import nd
 
 # -------------------------------
@@ -20,8 +21,9 @@ class Rect(Module):
     '''
     Rectification Layer
     '''
-    def __init__(self):
+    def __init__(self, ctx=mx.cpu()):
         Module.__init__(self)
+        self.ctx=ctx
 
     def forward(self,X):
         self.Y = nd.maximum(0,X)

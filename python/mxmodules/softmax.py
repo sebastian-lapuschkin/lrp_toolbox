@@ -12,6 +12,7 @@
 from module import Module
 
 import mxnet as mx
+import mxnet as mx
 from mxnet import nd
 
 # -------------------------------
@@ -22,9 +23,9 @@ class SoftMax(Module):
     Softmax Layer
     '''
 
-    def __init__(self, ctx=None):
+    def __init__(self, ctx=mx.cpu()):
         Module.__init__(self)
-        # ctx variable not needed in SoftMax since it has no variables that neeed to be placed on cpu/gpu
+        self.ctx = ctx
 
     def forward(self,X):
         self.X = X

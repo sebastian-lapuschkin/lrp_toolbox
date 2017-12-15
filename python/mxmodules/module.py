@@ -17,12 +17,15 @@ class Module:
     Superclass for all computation layer implementations
     '''
 
-    def __init__(self):
+    def __init__(self, ctx=None):
         ''' The constructor '''
 
         #values for presetting lrp decomposition parameters per layer
         self.lrp_var = None
         self.lrp_param = 1.
+
+        # context for mxnet nd arrays
+        self.ctx = ctx
 
     def backward(self,DY):
         ''' backward passes the error gradient DY to the input neurons '''
@@ -43,7 +46,12 @@ class Module:
         ''' clean can be used to remove any temporary variables from the layer, e.g. just before serializing the layer object'''
         pass
 
-
+    def set_context(self, ctx):
+        '''
+        Change module context
+        if module creates mxnet ndarrays: override method and move arrays to different context
+        '''
+        self.ctx = ctx
 
     def set_lrp_parameters(self,lrp_var=None,param=None):
         ''' pre-sets lrp parameters to use for this layer. see the documentation of Module.lrp for details '''
