@@ -150,6 +150,9 @@ class Sequential(Module):
         # initialize data iterator. attention: last batch is padded with part of the first batch if it smaller than batchsize
         data_iterator = mx.io.NDArrayIter(data=X, label=Y, shuffle=True, batch_size=batchsize, last_batch_handle='pad')
 
+        if not Xval is None and not Yval is None:
+            val_data_iterator = mx.io.NDArrayIter(data=Xval, label=Yval, shuffle=False, batch_size=batchsize, last_batch_handle='discard')
+
         N = X.shape[0]
         for d in xrange(iters):
 
@@ -181,9 +184,31 @@ class Sequential(Module):
             #periodically evaluate network and optionally adjust learning rate or check for convergence.
             if (d+1) % status == 0:
                 if not Xval is None and not Yval is None: #if given, evaluate on validation data (comment Max: mxnet.nd array comparison to list fails, changed to comparison to None )
-                    Ypred = self.forward(Xval)
-                    acc = nd.mean(nd.argmax(Ypred, axis=1) == nd.argmax(Yval, axis=1)).asscalar()
-                    l1loss = (nd.sum(nd.abs(Ypred - Yval))/Yval.shape[0]).asscalar()
+
+                    # feed the whole validation set in batches of batchsize through the network:
+                    val_data_iterator.hard_reset()
+                    while True:
+                        try:
+                            loss = nd.empty(batchsize, ctx=Xval.context)
+                            accs = nd.empty(batchsize, ctx=Xval.context)
+
+                            val_data_batch = val_data_iterator.next()
+                            val_batch_data   = val_data_batch.data[0]
+                            val_batch_labels = val_data_batch.label[0]
+                            val_batch_pred = self.forward(val_batch_data)
+
+                            val_batch_corr_preds = nd.argmax(val_batch_pred, axis=1) == nd.argmax(val_batch_labels, axis=1)
+                            val_batch_l1loss     = nd.sum(nd.abs(val_batch_pred - val_batch_labels), axis=1)
+                            # l1loss = (nd.sum(nd.abs(Ypred - Yval))/Yval.shape[0]).asscalar()
+
+                            nd.concat(accs, val_batch_corr_preds, dim=0)
+                            nd.concat(loss, val_batch_l1loss,     dim=0)
+
+                        except StopIteration:
+                            break
+
+                    acc    = nd.mean(accs).asscalar()
+                    l1loss = nd.mean(loss).asscalar()
                     print 'Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,l1loss)
 
                 else: #evaluate on the training data only
