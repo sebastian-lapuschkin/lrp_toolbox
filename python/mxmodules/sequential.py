@@ -11,15 +11,11 @@
 
 import copy
 import sys
-import numpy as np
 import time
 from module import Module
 
 import mxnet as mx
 from mxnet import nd
-
-# TODO: get rid of np
-import numpy as np
 
 # -------------------------------
 # Sequential layer
@@ -234,11 +230,11 @@ class Sequential(Module):
                     elif lrate_decay == 'sublinear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-(acc*acc)
-                        print '    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, np.round(learningFactor*100,2))
+                        print '    Adjusting learning rate to {0} ~ {1:.2f}% of its initial value'.format(learningFactor*lrate, learningFactor*100)
                     elif lrate_decay == 'linear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-acc
-                        print '    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, np.round(learningFactor*100,2))
+                        print '    Adjusting learning rate to {0} ~ {1:.2f}% of its initial value'.format(learningFactor*lrate, learningFactor*100)
 
                     #refresh number of allowed search steps until convergence
                     untilConvergence = convergence
