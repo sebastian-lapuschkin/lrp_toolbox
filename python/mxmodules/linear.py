@@ -44,6 +44,8 @@ class Linear(Module):
         self.ctx = ctx
         self.B = nd.zeros([self.n], ctx=ctx)
         self.W = nd.random_normal(0,1.0*m**(-.5),[self.m,self.n], ctx=ctx)
+        self.Y = None
+        self.Z = None
 
     def set_context(self, ctx):
         '''
