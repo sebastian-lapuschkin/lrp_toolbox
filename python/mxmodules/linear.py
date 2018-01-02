@@ -21,7 +21,7 @@ class Linear(Module):
     Linear Layer
     '''
 
-    def __init__(self,m,n, ctx=mx.cpu()):
+    def __init__(self,m,n, ctx=mx.cpu(), dtype='float64'):
         '''
         Initiates an instance of a linear computation layer.
 
@@ -42,10 +42,12 @@ class Linear(Module):
 
         # context sensitive variables
         self.ctx = ctx
-        self.B = nd.zeros([self.n], ctx=ctx)
-        self.W = nd.random_normal(0,1.0*m**(-.5),[self.m,self.n], ctx=ctx)
+        self.B = nd.zeros([self.n], ctx=ctx, dtype=dtype)
+        self.W = nd.random_normal(0,1.0*m**(-.5),[self.m,self.n], ctx=ctx, dtype=dtype)
         self.Y = None
         self.Z = None
+
+        self.dtype=dtype
 
     def set_context(self, ctx):
         '''
@@ -152,7 +154,7 @@ class Linear(Module):
         # This exchanges time spent in the forward pass for lower LRP time
         # and is useful, if e.g. several parameter settings for LRP need to be evaluated
         # for the same input data.
-        Zs = self.Y + 1e-16*((self.Y >= 0)*2 - 1.) #add weakdefault stabilizer to denominator
+        Zs = self.Y + 1e-16*( (self.Y >= 0) * 2 - 1.) #add weakdefault stabilizer to denominator
         if self.lrp_aware:
             return nd.sum(self.Z * nd.expand_dims(R/Zs, 1), axis=2)
         else:
@@ -166,9 +168,9 @@ class Linear(Module):
         distribute relevance for each output evenly to the output neurons' receptive fields.
         note that for fully connected layers, this results in a uniform lower layer relevance map.
         '''
-        Z = nd.ones(nd.expand_axis(self.W, 0).shape)
-        Zs = nd.expand_axis(nd.sum(Z, axis=1), axis=1)
-        return nd.sum(((Z / Zs) * nd.expand_axis(R, axis=1)), axis=2)
+        Z = nd.ones(nd.expand_dims(self.W, 0).shape, ctx=self.ctx, dtype=self.dtype)
+        Zs = nd.expand_dims(nd.sum(Z, axis=1), axis=1)
+        return nd.sum(((Z / Zs) * nd.expand_dims(R, axis=1)), axis=2)
 
 
     def _ww_lrp(self,R):
@@ -176,8 +178,8 @@ class Linear(Module):
         LRR according to Eq(12) in https://arxiv.org/pdf/1512.02479v1.pdf
         '''
         Z = nd.expand_dims(self.W**2, axis=0)
-        Zs = nd.expand_axis(nd.sum(Z, axis=1), axis=1)
-        return nd.sum(((Z / Zs) * nd.expand_axis(R, axis=1)), axis=2)
+        Zs = nd.expand_dims(nd.sum(Z, axis=1), axis=1)
+        return nd.sum(((Z / Zs) * nd.expand_dims(R, axis=1)), axis=2)
 
 
     def _epsilon_lrp_slow(self,R,epsilon):

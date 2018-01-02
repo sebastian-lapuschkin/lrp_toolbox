@@ -18,7 +18,7 @@ from mxmodules import Linear, Rect, Sequential, SoftMax, Sequential,Linear,Tanh,
 #   model reading
 #--------------------
 
-def read(path, fmt = None, ctx=mx.cpu()):
+def read(path, fmt = None, ctx=mx.cpu(), dtype='float64'):
     '''
     Read neural network model from given path. Supported are files written in either plain text or via python's pickle module.
 
@@ -87,18 +87,18 @@ def read(path, fmt = None, ctx=mx.cpu()):
     if fmt is None: #try to infer format
         fmt = os.path.splitext(path)[1].replace('.','').lower()
 
-    return _read_as[fmt](path, ctx)
+    return _read_as[fmt](path, ctx, dtype)
 
 
-def _read_pickled(path, ctx=None):
+def _read_pickled(path, ctx=None, dtype=None):
     print 'loading pickled model from',path
     return pickle.load(open(path,'rb'))
 
 
-def _read_txt(path, ctx):
+def _read_txt(path, ctx, dtype):
     print 'loading plain text model from',path
 
-    def _read_txt_helper(path, ctx):
+    def _read_txt_helper(path, ctx, dtype):
         with open(path,'rb') as f:
             content = f.read().split('\n')
 
@@ -116,8 +116,8 @@ def _read_txt(path, ctx):
                     '''
                     _,m,n = line.split();   m = int(m); n = int(n)
                     layer = Linear(m,n)
-                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx).reshape((m,n))
-                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx)
+                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx, dtype='float64').reshape((m,n))
+                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx, dtype='float64')
                     modules.append(layer)
                     c+=3 # the description of a linear layer spans three lines
 
@@ -132,8 +132,8 @@ def _read_txt(path, ctx):
                     _,h,w,d,n,s0,s1 = line.split()
                     h = int(h); w = int(w); d = int(d); n = int(n); s0 = int(s0); s1 = int(s1)
                     layer = Convolution(filtersize=(h,w,d,n), stride=(s0,s1))
-                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx).reshape((h,w,d,n))
-                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx)
+                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx, dtype='float64').reshape((h,w,d,n))
+                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx, dtype='float64')
                     modules.append(layer)
                     c+=3 #the description of a convolution layer spans three lines
 
@@ -181,7 +181,7 @@ def _read_txt(path, ctx):
     # END _read_txt_helper()
 
     try:
-        return _read_txt_helper(path, ctx)
+        return _read_txt_helper(path, ctx, dtype)
 
     except ValueError as e:
         #numpy.reshape may throw ValueErros if reshaping does not work out.

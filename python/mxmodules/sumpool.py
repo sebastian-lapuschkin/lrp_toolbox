@@ -19,7 +19,7 @@ from module import Module
 
 class SumPool(Module):
 
-    def __init__(self,pool=(2,2),stride=(2,2), ctx=mx.cpu()):
+    def __init__(self,pool=(2,2),stride=(2,2), ctx=mx.cpu(), dtype='float64'):
         '''
         Constructor for the sum pooling layer object
 
@@ -38,6 +38,8 @@ class SumPool(Module):
         self.ctx = ctx
         self.pool = pool
         self.stride = stride
+
+        self.dtype=dtype
 
     def forward(self,X):
         '''
@@ -69,7 +71,7 @@ class SumPool(Module):
         normalizer = 1./ ((hpool*wpool)**.5)
 
         #initialize pooled output
-        self.Y = nd.zeros((N,Hout,Wout,D), ctx=self.ctx)
+        self.Y = nd.zeros((N,Hout,Wout,D), ctx=self.ctx, dtype=self.dtype)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -113,7 +115,7 @@ class SumPool(Module):
         normalizer = 1./ ( (hpool * wpool)**.5 )
 
         #distribute the gradient (1 * DY) towards across all contributing inputs evenly
-        DX = nd.zeros_like(self.X, ctx=self.ctx)
+        DX = nd.zeros_like(self.X, ctx=self.ctx, dtype=self.dtype)
         for i in xrange(Hout):
             for j in xrange(Wout):
                 DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * normalizer # 0normalizer to produce well-conditioned gradients
@@ -137,7 +139,7 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        Rx = nd.zeros(self.X.shape, ctx=self.ctx)
+        Rx = nd.zeros(self.X.shape, ctx=self.ctx, dtype=self.dtype)
         for i in xrange(Hout):
             for j in xrange(Wout):
                 Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
@@ -162,11 +164,11 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx=self.ctx)
+        Rx = nd.zeros_like(self.X, ctx=self.ctx, dtype=self.dtype)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                Z = nd.ones([N,hpool,wpool,D], ctx=self.ctx)
+                Z = nd.ones([N,hpool,wpool,D], ctx=self.ctx, dtype=self.dtype)
                 Zs = Z.sum(axis=(1,2),keepdims=True)
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
         return Rx
@@ -190,7 +192,7 @@ class SumPool(Module):
         Hout = (H - hpool) / hstride + 1
         Wout = (W - wpool) / wstride + 1
 
-        Rx = nd.zeros(self.X.shape, ctx=self.ctx)
+        Rx = nd.zeros(self.X.shape, ctx=self.ctx, dtype=self.dtype)
         for i in xrange(Hout):
             for j in xrange(Wout):
                 Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
@@ -220,7 +222,7 @@ class SumPool(Module):
         Wout = (W - wpool) / wstride + 1
 
         #distribute the gradient towards across all inputs evenly
-        Rx = nd.zeros(self.X.shape, ctx=self.ctx)
+        Rx = nd.zeros(self.X.shape, ctx=self.ctx, dtype=self.dtype)
         for i in xrange(Hout):
             for j in xrange(Wout):
                 Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.

@@ -20,7 +20,7 @@ from module import Module
 
 class Convolution(Module):
 
-    def __init__(self, filtersize=(5,5,3,32), stride = (2,2), ctx=mx.cpu()):
+    def __init__(self, filtersize=(5,5,3,32), stride = (2,2), ctx=mx.cpu(), dtype='float64'):
         '''
         Constructor for a Convolution layer.
 
@@ -46,10 +46,13 @@ class Convolution(Module):
 
         # context sensitive variables
         self.ctx = ctx
-        self.W = nd.random.normal(0,1./(self.fh*self.fw*self.fd)**.5, shape=filtersize, ctx=ctx)
-        self.B = nd.zeros([self.n], ctx=ctx)
+        self.W = nd.random.normal(0,1./(self.fh*self.fw*self.fd)**.5, shape=filtersize, ctx=ctx, dtype=dtype)
+        self.B = nd.zeros([self.n], ctx=ctx, dtype=dtype)
         self.Y = None
         self.Z = None
+
+        # precision:
+        self.dtype = dtype
 
     def set_context(self, ctx):
         '''
@@ -105,10 +108,10 @@ class Convolution(Module):
 
 
         #initialize pooled output
-        self.Y = nd.zeros((N,Hout,Wout,numfilters), ctx=self.ctx)
+        self.Y = nd.zeros((N,Hout,Wout,numfilters), ctx=self.ctx, dtype=self.dtype)
 
         if self.lrp_aware:
-            self.Z = nd.zeros((N, Hout, Wout, hf, wf, df, nf), ctx=self.ctx) #initialize container for precomputed forward messages
+            self.Z = nd.zeros((N, Hout, Wout, hf, wf, df, nf), ctx=self.ctx, dtype=self.dtype) #initialize container for precomputed forward messages
             for i in xrange(Hout):
                 for j in xrange(Wout):
                     self.Z[:,i,j,...] = nd.expand_dims(self.W, axis=0) * nd.expand_dims(self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :], axis=4) # N, hf, wf, df, nf
@@ -149,7 +152,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        DX = nd.zeros_like(self.X,dtype="float", ctx=self.ctx)
+        DX = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
 
 
         if not (hf == wf and self.stride == (1,1)):
@@ -171,7 +174,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        DW = nd.zeros_like(self.W,dtype="float", ctx=self.ctx)
+        DW = nd.zeros_like(self.W,ctx=self.ctx, dtype=self.dtype)
 
         if not (hf == wf and self.stride == (1,1)):
             for i in xrange(Hy):
@@ -203,7 +206,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx=self.ctx)
+        Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -224,7 +227,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx=self.ctx)
+        Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
         R_norm = R / (self.Y + 1e-16*((self.Y >= 0)*2 - 1.))
 
         for i in xrange(Hout):
@@ -247,11 +250,11 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx = self.ctx)
+        Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
-                Z = nd.ones((N,hf,wf,df,NF), ctx=self.ctx)
+                Z = nd.ones((N,hf,wf,df,NF), ctx=self.ctx, dtype=self.dtype)
                 Zs = Z.sum(axis=(1,2,3),keepdims=True)
 
                 Rx[:,i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ] += ((Z/Zs) * nd.expand_dims(R[:,i:i+1,j:j+1,:], axis=3) ).sum(axis=4)
@@ -267,7 +270,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx = self.ctx)
+        Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -288,7 +291,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx=self.ctx)
+        Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -308,7 +311,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx=self.ctx)
+        Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
         R_norm = R / (self.Y + epsilon*((self.Y >= 0)*2 - 1.))
 
         for i in xrange(Hout):
@@ -333,7 +336,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx = self.ctx)
+        Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
@@ -371,7 +374,7 @@ class Convolution(Module):
         hf,wf,df,NF = self.W.shape
         hstride, wstride = self.stride
 
-        Rx = nd.zeros_like(self.X,dtype="float", ctx = self.ctx)
+        Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
         for i in xrange(Hout):
             for j in xrange(Wout):
