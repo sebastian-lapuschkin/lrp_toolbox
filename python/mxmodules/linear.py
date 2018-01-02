@@ -21,7 +21,7 @@ class Linear(Module):
     Linear Layer
     '''
 
-    def __init__(self,m,n, ctx=mx.cpu(), dtype='float64'):
+    def __init__(self,m,n, ctx=mx.cpu(), dtype='float32'):
         '''
         Initiates an instance of a linear computation layer.
 

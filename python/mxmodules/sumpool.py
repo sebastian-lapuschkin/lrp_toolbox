@@ -19,7 +19,7 @@ from module import Module
 
 class SumPool(Module):
 
-    def __init__(self,pool=(2,2),stride=(2,2), ctx=mx.cpu(), dtype='float64'):
+    def __init__(self,pool=(2,2),stride=(2,2), ctx=mx.cpu(), dtype='float32'):
         '''
         Constructor for the sum pooling layer object
 

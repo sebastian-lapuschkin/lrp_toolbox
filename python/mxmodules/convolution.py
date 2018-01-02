@@ -20,7 +20,7 @@ from module import Module
 
 class Convolution(Module):
 
-    def __init__(self, filtersize=(5,5,3,32), stride = (2,2), ctx=mx.cpu(), dtype='float64'):
+    def __init__(self, filtersize=(5,5,3,32), stride = (2,2), ctx=mx.cpu(), dtype='float32'):
         '''
         Constructor for a Convolution layer.
 

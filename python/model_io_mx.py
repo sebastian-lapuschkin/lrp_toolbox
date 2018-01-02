@@ -18,7 +18,7 @@ from mxmodules import Linear, Rect, Sequential, SoftMax, Sequential,Linear,Tanh,
 #   model reading
 #--------------------
 
-def read(path, fmt = None, ctx=mx.cpu(), dtype='float64'):
+def read(path, fmt = None, ctx=mx.cpu(), dtype='float32'):
     '''
     Read neural network model from given path. Supported are files written in either plain text or via python's pickle module.
 
@@ -115,9 +115,9 @@ def _read_txt(path, ctx, dtype):
                     <flattened bias vector>
                     '''
                     _,m,n = line.split();   m = int(m); n = int(n)
-                    layer = Linear(m,n)
-                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx, dtype='float64').reshape((m,n))
-                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx, dtype='float64')
+                    layer = Linear(m,n, ctx=ctx, dtype=dtype)
+                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx, dtype=dtype).reshape((m,n))
+                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx, dtype=dtype)
                     modules.append(layer)
                     c+=3 # the description of a linear layer spans three lines
 
@@ -131,9 +131,9 @@ def _read_txt(path, ctx, dtype):
 
                     _,h,w,d,n,s0,s1 = line.split()
                     h = int(h); w = int(w); d = int(d); n = int(n); s0 = int(s0); s1 = int(s1)
-                    layer = Convolution(filtersize=(h,w,d,n), stride=(s0,s1))
-                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx, dtype='float64').reshape((h,w,d,n))
-                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx, dtype='float64')
+                    layer = Convolution(filtersize=(h,w,d,n), stride=(s0,s1), ctx=ctx,dtype=dtype)
+                    layer.W = nd.array([float(weightstring) for weightstring in content[c+1].split() if len(weightstring) > 0], ctx=ctx, dtype=dtype).reshape((h,w,d,n))
+                    layer.B = nd.array([float(weightstring) for weightstring in content[c+2].split() if len(weightstring) > 0], ctx=ctx, dtype=dtype)
                     modules.append(layer)
                     c+=3 #the description of a convolution layer spans three lines
 
@@ -145,7 +145,7 @@ def _read_txt(path, ctx, dtype):
 
                     _,h,w,s0,s1 = line.split()
                     h = int(h); w = int(w); s0 = int(s0); s1 = int(s1)
-                    layer = SumPool(pool=(h,w),stride=(s0,s1))
+                    layer = SumPool(pool=(h,w),stride=(s0,s1), dtype=dtype)
                     modules.append(layer)
                     c+=1 # one line of parameterized layer description
 
