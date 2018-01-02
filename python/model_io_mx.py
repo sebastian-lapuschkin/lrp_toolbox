@@ -25,13 +25,21 @@ def read(path, fmt = None, ctx=mx.cpu(), dtype='float32'):
     Parameters
     ----------
 
-    path : str
-        the path to the file to read
+    path :  str
+            the path to the file to read
 
-    fmt : str
-        optional. explicitly state how to interpret the target file. if not given, format is inferred from path.
-        options are 'pickled','pickle','' and 'nn' to specify the pickle file format and 'txt' for a plain text
-        format shared with the matlab implementation of the toolbox
+    fmt :   str
+            optional. explicitly state how to interpret the target file. if not given, format is inferred from path.
+            options are 'pickled','pickle','' and 'nn' to specify the pickle file format and 'txt' for a plain text
+            format shared with the matlab implementation of the toolbox
+
+    ctx:    mxnet.context.Context
+            device used for all mxnet.ndarray operations
+
+    dtype:  string ('float32' | 'float64')
+            dtype used for all mxnet.ndarray operations
+            (mxnet default is 'float32', 'float64' supported for easier comparison with numpy)
+
 
     Returns
     -------
