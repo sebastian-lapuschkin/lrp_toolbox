@@ -24,6 +24,13 @@ class SoftMax(Module):
     '''
 
     def __init__(self, ctx=mx.cpu()):
+        '''
+        Parameters
+        ----------
+
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
+        '''
         Module.__init__(self)
         self.ctx = ctx
 

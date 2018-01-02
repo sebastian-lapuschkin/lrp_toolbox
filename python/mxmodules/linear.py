@@ -27,10 +27,15 @@ class Linear(Module):
 
         Parameters
         ----------
-        m : int
-            input dimensionality
-        n : int
-            output dimensionality
+        m :     int
+                input dimensionality
+        n :     int
+                output dimensionality
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
+        dtype:  string ('float32' | 'float64')
+                dtype used for all mxnet.ndarray operations
+                (mxnet default is 'float32', 'float64' supported for easier comparison with numpy)
 
         Returns
         -------
@@ -52,6 +57,11 @@ class Linear(Module):
     def set_context(self, ctx):
         '''
         Change module context and copy ndarrays (if needed)
+
+        Parameters
+        ----------
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
         '''
         self.ctx = ctx
         # copy variables if ctx != variable.context:
@@ -73,12 +83,17 @@ class Linear(Module):
         Parameters
         ----------
 
-        X : numpy.ndarray
-            the input, shaped [N,D], where N is the number of samples and D their dimensionality
+        X :         mxnet.ndarray.ndarray.NDArray
+                    the input, shaped [N,D], where N is the number of samples and D their dimensionality
 
+        lrp_aware : bool
+                    controls whether the forward pass is to be computed with awareness for multiple following
+                    LRP calls. this will sacrifice speed in the forward pass but will save time if multiple LRP
+                    calls will follow for the current X, e.g. wit different parameter settings or for multiple
+                    target classes.
         Returns
         -------
-        Y : numpy.ndarray
+        Y : mxnet.ndarray.ndarray.NDArray
             the transformed data shaped [N,M], with M being the number of output neurons
         '''
         self.lrp_aware = lrp_aware
@@ -101,13 +116,13 @@ class Linear(Module):
         Parameters
         ----------
 
-        DY : numpy.ndarray
+        DY : mxnet.ndarray.ndarray.NDArray
             the backpropagated error signal as input, shaped [N,M]
 
         Returns
         -------
 
-        DX : numpy.ndarray
+        DX : mxnet.ndarray.ndarray.NDArray
             the computed output derivative of the error signal wrt X, shaped [N,D]
         '''
 
@@ -128,8 +143,9 @@ class Linear(Module):
         '''
         Removes temporarily stored variables from this layer
         '''
-        self.X = None
-        self.Y = None
+        self.X  = None
+        self.Y  = None
+        self.Z  = None
         self.dW = None
         self.dB = None
 

@@ -37,6 +37,12 @@ class Convolution(Module):
             h = step size for filter application in vertical direction
             w = step size in horizontal direction
 
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
+
+        dtype:  string ('float32' | 'float64')
+                dtype used for all mxnet.ndarray operations
+                (mxnet default is 'float32', 'float64' supported for easier comparison with numpy)
         '''
 
         Module.__init__(self)
@@ -57,6 +63,11 @@ class Convolution(Module):
     def set_context(self, ctx):
         '''
         Change module context and copy ndarrays (if needed)
+
+        Parameters
+        ----------
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
         '''
         self.ctx = ctx
         # copy variables if ctx != variable.context:
@@ -76,21 +87,21 @@ class Convolution(Module):
 
         Parameters
         ----------
-        X : numpy.ndarray
-            a network input, shaped (N,H,W,D), with
-            N = batch size
-            H, W, D = input size in heigth, width, depth
+        X :         mxnet.ndarray.ndarray.NDArray
+                    a network input, shaped (N,H,W,D), with
+                    N = batch size
+                    H, W, D = input size in heigth, width, depth
 
         lrp_aware : bool
-            controls whether the forward pass is to be computed with awareness for multiple following
-            LRP calls. this will sacrifice speed in the forward pass but will save time if multiple LRP
-            calls will follow for the current X, e.g. wit different parameter settings or for multiple
-            target classes.
+                    controls whether the forward pass is to be computed with awareness for multiple following
+                    LRP calls. this will sacrifice speed in the forward pass but will save time if multiple LRP
+                    calls will follow for the current X, e.g. wit different parameter settings or for multiple
+                    target classes.
 
         Returns
         -------
-        Y : numpy.ndarray
-            the layer outputs.
+        Y :         mxnet.ndarray.ndarray.NDArray
+                    the layer outputs.
         '''
 
         self.lrp_aware = lrp_aware
@@ -131,19 +142,19 @@ class Convolution(Module):
         Parameters
         ----------
 
-        DY : numpy.ndarray
-            an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
-            N = number of samples in the batch
-            Hy = heigth of the output
-            Wy = width of the output
-            Dy = output depth = input depth
+        DY :    mxnet.ndarray.ndarray.NDArray
+                an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
+                N = number of samples in the batch
+                Hy = heigth of the output
+                Wy = width of the output
+                Dy = output depth = input depth
 
 
         Returns
         -------
 
-        DX : numpy.ndarray
-            the error gradient propagated towards the input
+        DX :    mxnet.ndarray.ndarray.NDArray
+                the error gradient propagated towards the input
 
         '''
 
@@ -191,8 +202,9 @@ class Convolution(Module):
 
 
     def clean(self):
-        self.X = None
-        self.Y = None
+        self.X  = None
+        self.Y  = None
+        self.Z  = None
         self.DY = None
 
 

@@ -23,6 +23,13 @@ class Flatten(Module):
     '''
 
     def __init__(self, ctx=mx.cpu()):
+        '''
+        Parameters
+        ----------
+
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
+        '''
         Module.__init__(self)
         self.inputshape = []
         self.ctx=ctx

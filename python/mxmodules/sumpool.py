@@ -31,6 +31,13 @@ class SumPool(Module):
 
         stride : tuple (h,w)
             the vertical (h) and horizontal (w) step sizes between filter applications.
+
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
+
+        dtype:  string ('float32' | 'float64')
+                dtype used for all mxnet.ndarray operations
+                (mxnet default is 'float32', 'float64' supported for easier comparison with numpy)
         '''
 
         Module.__init__(self)
@@ -47,14 +54,14 @@ class SumPool(Module):
 
         Parameters
         ----------
-        X : numpy.ndarray
+        X : mxnet.ndarray.ndarray.NDArray
             a network input, shaped (N,H,W,D), with
             N = batch size
             H, W, D = input size in heigth, width, depth
 
         Returns
         -------
-        Y : numpy.ndarray
+        Y : mxnet.ndarray.ndarray.NDArray
             the sum-pooled outputs, reduced in size due to given stride and pooling size
         '''
 
@@ -86,7 +93,7 @@ class SumPool(Module):
         Parameters
         ----------
 
-        DY : numpy.ndarray
+        DY : mxnet.ndarray.ndarray.NDArray
             an error gradient shaped same as the output array of forward, i.e. (N,Hy,Wy,Dy) with
             N = number of samples in the batch
             Hy = heigth of the output
@@ -97,7 +104,7 @@ class SumPool(Module):
         Returns
         -------
 
-        DX : numpy.ndarray
+        DX : mxnet.ndarray.ndarray.NDArray
             the error gradient propagated towards the input
 
         '''

@@ -33,8 +33,12 @@ class Sequential(Module):
 
         Parameters
         ----------
-        modules : list, tuple, etc. enumerable.
-            an enumerable collection of instances of class Module
+        modules :   list, tuple, etc. enumerable.
+                    an enumerable collection of instances of class Module
+
+        ctx:        mxnet.context.Context
+                    device used for all mxnet.ndarray operations
+
         '''
         Module.__init__(self)
         self.modules = modules
@@ -59,12 +63,12 @@ class Sequential(Module):
 
         Parameters
         ----------
-        X : numpy.ndarray
+        X : mxnet.ndarray.ndarray.NDArray
             a network input.
 
         Returns
         -------
-        X : numpy.ndarray
+        X : mxnet.ndarray.ndarray.NDArray
             the output of the network's final layer
         '''
 
@@ -99,17 +103,17 @@ class Sequential(Module):
         Parameters
         ----------
 
-        X : numpy.ndarray
+        X : mxnet.ndarray.ndarray.NDArray
             the training data, formatted to (N,D) shape, with N being the number of samples and D their dimensionality
 
-        Y : numpy.ndarray
+        Y : mxnet.ndarray.ndarray.NDArray
             the training labels, formatted to (N,C) shape, with N being the number of samples and C the number of output classes.
 
-        Xval : numpy.ndarray
+        Xval : mxnet.ndarray.ndarray.NDArray
             some optional validation data. used to measure network performance during training.
             shaped (M,D)
 
-        Yval : numpy.ndarray
+        Yval : mxnet.ndarray.ndarray.NDArray
             the validation labels. shaped (M,C)
 
         batchsize : int
@@ -315,7 +319,7 @@ class Sequential(Module):
 
         Parameters
         ----------
-        R : numpy.ndarray
+        R : mxnet.ndarray.ndarray.NDArray
             final layer relevance values. usually the network's prediction of some data points
             for which the output relevance is to be computed
             dimensionality should be equal to the previously computed predictions
@@ -333,7 +337,7 @@ class Sequential(Module):
         Returns
         -------
 
-        R : numpy.ndarray
+        R : mxnet.ndarray.ndarray.NDArray
             the first layer relevances as produced by the neural net wrt to the previously forward
             passed input data. dimensionality is equal to the previously into forward entered input data
 

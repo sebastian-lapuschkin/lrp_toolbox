@@ -18,7 +18,15 @@ class Module:
     '''
 
     def __init__(self, ctx=None):
-        ''' The constructor '''
+        '''
+        The constructor
+
+        Parameters
+        ----------
+
+        ctx:    mxnet.context.Context
+                device used for all mxnet.ndarray operations
+        '''
 
         #values for presetting lrp decomposition parameters per layer
         self.lrp_var = None
