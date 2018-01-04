@@ -197,14 +197,17 @@ class Sequential(Module):
 
             #periodically evaluate network and optionally adjust learning rate or check for convergence.
             if (d+1) % status == 0:
-                if not Xval is None and not Yval is None: #if given, evaluate on validation data (comment Max: mxnet.nd array comparison to list fails, changed to comparison to None )
-
+                if not Xval is None and not Yval is None: #if given, evaluate on validation data
                     # feed the whole validation set in batches of batchsize through the network:
                     val_data_iterator.hard_reset()
+
+                    cor_pred_sums  = []
+                    loss_sums = []
+
+                    cnt = 0
+
                     while True:
                         try:
-                            loss = nd.empty(batchsize, ctx=Xval.context)
-                            accs = nd.empty(batchsize, ctx=Xval.context)
 
                             val_data_batch = val_data_iterator.next()
                             val_batch_data   = val_data_batch.data[0]
@@ -213,16 +216,18 @@ class Sequential(Module):
 
                             val_batch_corr_preds = nd.argmax(val_batch_pred, axis=1) == nd.argmax(val_batch_labels, axis=1)
                             val_batch_l1loss     = nd.sum(nd.abs(val_batch_pred - val_batch_labels), axis=1)
-                            # l1loss = (nd.sum(nd.abs(Ypred - Yval))/Yval.shape[0]).asscalar()
 
-                            nd.concat(accs, val_batch_corr_preds, dim=0)
-                            nd.concat(loss, val_batch_l1loss,     dim=0)
+                            cor_pred_sums.append(nd.sum(val_batch_corr_preds).asscalar())
+                            loss_sums.append(nd.sum(val_batch_l1loss).asscalar())
+
+                            cnt+=1
 
                         except StopIteration:
                             break
 
-                    acc    = nd.mean(accs).asscalar()
-                    l1loss = nd.mean(loss).asscalar()
+                    acc     = nd.sum(nd.array(cor_pred_sums)).asscalar() / (cnt * batchsize)
+                    l1loss  = nd.sum(nd.array(loss_sums)).asscalar()     / (cnt * batchsize)
+
                     print 'Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,l1loss)
 
                 else: #evaluate on the training data only
