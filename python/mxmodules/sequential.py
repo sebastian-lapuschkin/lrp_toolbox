@@ -282,7 +282,7 @@ class Sequential(Module):
                 # print 'alive' signal
                 #sys.stdout.write('.')
                 l1loss =  (nd.sum(nd.abs(Ypred - batch_labels))/ (1. * Ypred.shape[0])).asscalar()
-                sys.stdout.write('batch# {}, lrate {}, l1-loss {:.4}\n'.format(d+1,lrate*learningFactor,l1loss)) # TODO: does the asnumpy() make it inefficient?
+                sys.stdout.write('batch# {}, lrate {}, l1-loss {:.4}\n'.format(d+1,lrate*learningFactor,l1loss))
                 sys.stdout.flush()
 
         #after training, either due to convergence or iteration limit
