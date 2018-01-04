@@ -1,6 +1,7 @@
 '''
 @author: Sebastian Lapuschkin
 @author: Gregoire Montavon
+@author: Maximilian Kohlbrenner
 @maintainer: Sebastian Lapuschkin
 @contact: sebastian.lapuschkin@hhi.fraunhofer.de, wojciech.samek@hhi.fraunhofer.de
 @date: 14.08.2015
