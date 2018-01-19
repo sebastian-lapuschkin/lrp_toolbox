@@ -136,7 +136,7 @@ class Module:
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
             return self._alphabeta_lrp(R,param)
         else:
-            print 'Unknown lrp variant', lrp_var
+            print('Unknown lrp variant', lrp_var)
 
 
     # ---------------------------------------------------------

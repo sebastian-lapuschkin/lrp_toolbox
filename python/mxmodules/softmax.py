@@ -10,7 +10,7 @@
 @license : BSD-2-Clause
 '''
 
-from module import Module
+from .module import Module
 
 import mxnet as mx
 import mxnet as mx

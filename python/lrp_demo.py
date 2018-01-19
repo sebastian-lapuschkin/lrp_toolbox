@@ -47,8 +47,8 @@ for i in I[:10]:
 
     #forward pass and prediction
     ypred = nn.forward(x)
-    print 'True Class:     ', np.argmax(Y[i])
-    print 'Predicted Class:', np.argmax(ypred),'\n'
+    print('True Class:     ', np.argmax(Y[i]))
+    print('Predicted Class:', np.argmax(ypred),'\n')
 
 
     #compute first layer relevance according to prediction

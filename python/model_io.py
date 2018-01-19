@@ -90,12 +90,14 @@ def read(path, fmt = None):
 
 
 def _read_pickled(path):
-    print 'loading pickled model from',path
-    return pickle.load(open(path,'rb'))
+    print('loading pickled model from',path)
+    with open(path,'rb') as f:
+        p = pickle.load(f, encoding='latin1')
+    return p
 
 
 def _read_txt(path):
-    print 'loading plain text model from',path
+    print('loading plain text model from',path)
 
     def _read_txt_helper(path):
         with open(path,'rb') as f:
@@ -185,15 +187,15 @@ def _read_txt(path):
     except ValueError as e:
         #numpy.reshape may throw ValueErros if reshaping does not work out.
         #In this case: fall back to reading the old plain text format.
-        print 'probable reshaping/formatting error while reading plain text network file.'
-        print 'ValueError message:', e.message
-        print  'Attempting fall-back to legacy plain text format interpretation...'
+        print('probable reshaping/formatting error while reading plain text network file.')
+        print('ValueError message:', e.message)
+        print('Attempting fall-back to legacy plain text format interpretation...')
         return _read_txt_old(path)
-        print 'fall-back successfull!'
+        print('fall-back successfull!')
 
 
 def _read_txt_old(path):
-    print 'loading plain text model from', path
+    print('loading plain text model from', path)
 
     with open(path, 'rb') as f:
         content = f.read().split('\n')
@@ -207,7 +209,7 @@ def _read_txt_old(path):
                 m = int(lineparts[1])
                 n = int(lineparts[2])
                 mod = Linear(m,n)
-                for i in xrange(m):
+                for i in range(m):
                     c+=1
                     mod.W[i,:] = np.array([float(val) for val in content[c].split() if len(val) > 0])
 
@@ -277,13 +279,13 @@ def write(model, path, fmt = None):
 
 
 def _write_pickled(model, path):
-    print 'writing model pickled to',path
+    print('writing model pickled to',path)
     with open(path, 'wb') as f:
         pickle.dump(model,f,pickle.HIGHEST_PROTOCOL)
 
 
 def _write_txt(model,path):
-    print 'writing model as plain text to',path
+    print('writing model as plain text to',path)
 
     if not isinstance(model, Sequential):
         raise Exception('Argument "model" must be an instance of module.Sequential, wrapping a sequence of neural network computation layers, but is {0}'.format(type(model)))

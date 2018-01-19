@@ -12,7 +12,7 @@
 
 import mxnet as mx
 from mxnet import nd
-from module import Module
+from .module import Module
 
 # -------------------------------
 # Sum Pooling layer
@@ -81,8 +81,8 @@ class SumPool(Module):
         #initialize pooled output
         self.Y = nd.zeros((N,Hout,Wout,D), ctx=self.ctx, dtype=self.dtype)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ].sum(axis=(1,2)) * normalizer #normalizer to keep the output well conditioned
         return self.Y
 
@@ -124,8 +124,8 @@ class SumPool(Module):
 
         #distribute the gradient (1 * DY) towards across all contributing inputs evenly
         DX = nd.zeros_like(self.X, ctx=self.ctx, dtype=self.dtype)
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 DX[:,i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ] += DY[:,i:i+1,j:j+1,:] * normalizer # 0normalizer to produce well-conditioned gradients
         return DX
 
@@ -148,8 +148,8 @@ class SumPool(Module):
         Wout = (W - wpool) / wstride + 1
 
         Rx = nd.zeros(self.X.shape, ctx=self.ctx, dtype=self.dtype)
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
                 Zs = Z.sum(axis=(1,2),keepdims=True)
                 Zs += 1e-12*((Zs >= 0)*2-1) # add a weak numerical stabilizer to cushion an all-zero input
@@ -174,8 +174,8 @@ class SumPool(Module):
 
         Rx = nd.zeros_like(self.X, ctx=self.ctx, dtype=self.dtype)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = nd.ones([N,hpool,wpool,D], ctx=self.ctx, dtype=self.dtype)
                 Zs = Z.sum(axis=(1,2),keepdims=True)
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
@@ -201,8 +201,8 @@ class SumPool(Module):
         Wout = (W - wpool) / wstride + 1
 
         Rx = nd.zeros(self.X.shape, ctx=self.ctx, dtype=self.dtype)
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
                 Zs = Z.sum(axis=(1,2),keepdims=True)
                 Zs += epsilon*((Zs >= 0)*2-1) # add a epsilon stabilizer to cushion an all-zero input
@@ -231,8 +231,8 @@ class SumPool(Module):
 
         #distribute the gradient towards across all inputs evenly
         Rx = nd.zeros(self.X.shape, ctx=self.ctx, dtype=self.dtype)
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ] #input activations.
 
                 if not alpha == 0:

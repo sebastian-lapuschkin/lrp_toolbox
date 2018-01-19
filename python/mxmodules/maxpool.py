@@ -12,7 +12,7 @@
 
 import mxnet as mx
 from mxnet import nd
-from module import Module
+from .module import Module
 
 # -------------------------------
 # Max Pooling layer
@@ -77,8 +77,8 @@ class MaxPool(Module):
         #initialize pooled output
         self.Y = nd.zeros((N,Hout,Wout,D))
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 self.Y[:,i,j,:] = X[:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool: , : ].max(axis=(1,2))
         return self.Y
 
@@ -118,8 +118,8 @@ class MaxPool(Module):
         #distribute the gradient towards the max activation(s)
         #the max activation value is already known via self.Y
         DX = nd.zeros_like(self.X,dtype="float")
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 DX[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += DY[:,i:i+1,j:j+1,:] * (self.Y[:,i:i+1,j:j+1,:] == self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ])
         return DX
 
@@ -143,8 +143,8 @@ class MaxPool(Module):
 
         Rx = nd.zeros_like(self.X,dtype="float")
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = self.Y[:,i:i+1,j:j+1,:] == self.X[:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool , : ]
                 Zs = Z.sum(axis=(1,2),keepdims=True,dtype="float") #thanks user wodtko for reporting this bug/fix
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]
@@ -166,8 +166,8 @@ class MaxPool(Module):
 
         Rx = nd.zeros_like(self.X,dtype="float")
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = nd.ones([N,hpool,wpool,D])
                 Zs = Z.sum(axis=(1,2),keepdims=True)
                 Rx[:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool,:] += (Z / Zs) * R[:,i:i+1,j:j+1,:]

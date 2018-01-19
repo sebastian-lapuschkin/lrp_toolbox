@@ -12,7 +12,7 @@
 
 import mxnet as mx
 from mxnet import nd
-from module import Module
+from .module import Module
 
 # -------------------------------
 # Tanh layer

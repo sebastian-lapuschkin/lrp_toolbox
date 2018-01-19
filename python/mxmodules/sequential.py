@@ -13,7 +13,7 @@
 import copy
 import sys
 import time
-from module import Module
+from .module import Module
 
 import mxnet as mx
 from mxnet import nd
@@ -158,7 +158,7 @@ class Sequential(Module):
         t_start = time.time()
         untilConvergence = convergence;    learningFactor = lfactor_initial
         bestAccuracy = 0.0;                bestLayers = copy.deepcopy(self.modules)
-        bestLoss = sys.maxint # changed from np.inf to sys.maxint to avoid numpy import TODO: cast from numpy instead?
+        bestLoss = sys.maxsize # changed from np.inf to sys.maxint to avoid numpy import TODO: cast from numpy instead?
         bestIter = 0
 
         # initialize data iterator. attention: last batch is padded with part of the first batch if it smaller than batchsize
@@ -168,19 +168,19 @@ class Sequential(Module):
             val_data_iterator = mx.io.NDArrayIter(data=Xval, label=Yval, shuffle=False, batch_size=batchsize, last_batch_handle='discard')
 
         N = X.shape[0]
-        for d in xrange(iters):
+        for d in range(iters):
 
             #the actual training:
             #first, get samples from the iterator (currently the data order is random when creating the iterator but stays the same over the batches and epochs)
 
             try:
-                data_batch = data_iterator.next()
+                data_batch = next(data_iterator)
             except StopIteration:
                 # TODO: decide whether to reshuffle the data here
                 # atm: just reset the data iterator. If we wanted to reshuffle, we could as well create a new iterator but this might be less efficient.
                 # print ' ... starting next epoch'
                 data_iterator.hard_reset()
-                data_batch = data_iterator.next()
+                data_batch = next(data_iterator)
 
             #transform batch data (maybe)
             if transform == None:
@@ -209,7 +209,7 @@ class Sequential(Module):
                     while True:
                         try:
 
-                            val_data_batch = val_data_iterator.next()
+                            val_data_batch = next(val_data_iterator)
                             val_batch_data   = val_data_batch.data[0]
                             val_batch_labels = val_data_batch.label[0]
                             val_batch_pred = self.forward(val_batch_data)
@@ -228,20 +228,20 @@ class Sequential(Module):
                     acc     = nd.sum(nd.array(cor_pred_sums)).asscalar() / (cnt * batchsize)
                     l1loss  = nd.sum(nd.array(loss_sums)).asscalar()     / (cnt * batchsize)
 
-                    print 'Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,l1loss)
+                    print('Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,l1loss))
 
                 else: #evaluate on the training data only
                     Ypred = self.forward(X)
                     acc = nd.mean(nd.argmax(Ypred, axis=1) == nd.argmax(Y, axis=1)).asscalar()
                     l1loss = (nd.sum(nd.abs(Ypred - Y))/Y.shape[0]).asscalar()
-                    print 'Accuracy after {0} iterations on training data: {1}% (l1-loss: {2:.4})'.format(d+1,acc*100,l1loss)
+                    print('Accuracy after {0} iterations on training data: {1}% (l1-loss: {2:.4})'.format(d+1,acc*100,l1loss))
 
 
                 #save current network parameters if we have improved
                 #if acc >= bestAccuracy and l1loss <= bestLoss:
                 # only go by loss
                 if l1loss <= bestLoss:
-                    print '    New loss-optimal parameter set encountered. saving....'
+                    print('    New loss-optimal parameter set encountered. saving....')
                     bestAccuracy = acc
                     bestLoss = l1loss
                     bestLayers = copy.deepcopy(self.modules)
@@ -253,18 +253,18 @@ class Sequential(Module):
                     elif lrate_decay == 'sublinear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-(acc*acc)
-                        print '    Adjusting learning rate to {0} ~ {1:.2f}% of its initial value'.format(learningFactor*lrate, learningFactor*100)
+                        print('    Adjusting learning rate to {0} ~ {1:.2f}% of its initial value'.format(learningFactor*lrate, learningFactor*100))
                     elif lrate_decay == 'linear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-acc
-                        print '    Adjusting learning rate to {0} ~ {1:.2f}% of its initial value'.format(learningFactor*lrate, learningFactor*100)
+                        print('    Adjusting learning rate to {0} ~ {1:.2f}% of its initial value'.format(learningFactor*lrate, learningFactor*100))
 
                     #refresh number of allowed search steps until convergence
                     untilConvergence = convergence
                 else:
                     untilConvergence-=1
                     if untilConvergence == 0 and convergence > 0:
-                        print '    No more recorded model improvements for {0} evaluations. Accepting model convergence.'.format(convergence)
+                        print('    No more recorded model improvements for {0} evaluations. Accepting model convergence.'.format(convergence))
                         break
 
                 t_elapsed =  time.time() - t_start
@@ -276,7 +276,7 @@ class Sequential(Module):
                 d, h = divmod(h, 24)
 
                 timestring = '{}d {}h {}m {}s'.format(int(d), int(h), int(m), int(s))
-                print '    Estimate time until current training ends : {} ({:.2f}% done)'.format(timestring, percent_done*100)
+                print('    Estimate time until current training ends : {} ({:.2f}% done)'.format(timestring, percent_done*100))
 
             elif (d+1) % (status/10) == 0:
                 # print 'alive' signal
@@ -286,7 +286,7 @@ class Sequential(Module):
                 sys.stdout.flush()
 
         #after training, either due to convergence or iteration limit
-        print 'Setting network parameters to best encountered network state with {}% accuracy and a loss of {} from iteration {}.'.format(bestAccuracy*100, bestLoss, bestIter)
+        print('Setting network parameters to best encountered network state with {}% accuracy and a loss of {} from iteration {}.'.format(bestAccuracy*100, bestLoss, bestIter))
         self.modules = bestLayers
 
 

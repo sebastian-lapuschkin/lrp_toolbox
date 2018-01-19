@@ -12,7 +12,7 @@
 
 import mxnet as mx
 from mxnet import nd
-from module import Module
+from .module import Module
 
 
 # -------------------------------
@@ -124,13 +124,13 @@ class Convolution(Module):
 
         if self.lrp_aware:
             self.Z = nd.zeros((N, Hout, Wout, hf, wf, df, nf), ctx=self.ctx, dtype=self.dtype) #initialize container for precomputed forward messages
-            for i in xrange(Hout):
-                for j in xrange(Wout):
+            for i in range(Hout):
+                for j in range(Wout):
                     self.Z[:,i,j,...] = nd.expand_dims(self.W, axis=0) * nd.expand_dims(self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :], axis=4) # N, hf, wf, df, nf
                     self.Y[:,i,j,:] = self.Z[:,i,j,...].sum(axis=(1,2,3)) + self.B
         else:
-            for i in xrange(Hout):
-                for j in xrange(Wout):
+            for i in range(Hout):
+                for j in range(Wout):
                     self.Y[:,i,j,:] = nd.sum( nd.expand_dims( X[:, i*hstride:i*hstride+hf: , j*wstride:j*wstride+wf: , : ].transpose((1,2,3,0)), 4) * nd.expand_dims(self.W, 3), axis=(0,1,2))  + self.B
 
         return self.Y
@@ -168,12 +168,12 @@ class Convolution(Module):
 
 
         if not (hf == wf and self.stride == (1,1)):
-            for i in xrange(Hy):
-                for j in xrange(Wy):
+            for i in range(Hy):
+                for j in range(Wy):
                     DX[:,i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ] += ( nd.expand_dims(self.W, axis=0) * nd.expand_dims(DY[:,i:i+1,j:j+1,:], axis=3) ).sum(axis=4)  #sum over all the filters
         else:
-            for i in xrange(hf):
-                for j in xrange(wf):
+            for i in range(hf):
+                for j in range(wf):
                     DX[:,i:i+Hy:hstride,j:j+Wy:wstride,:] += nd.dot(DY,self.W[i,j,:,:].T)
 
         return DX #* (hf*wf*df)**.5 / (NF*Hy*Wy)**.5
@@ -189,12 +189,12 @@ class Convolution(Module):
         DW = nd.zeros_like(self.W,ctx=self.ctx, dtype=self.dtype)
 
         if not (hf == wf and self.stride == (1,1)):
-            for i in xrange(Hy):
-                for j in xrange(Wy):
+            for i in range(Hy):
+                for j in range(Wy):
                     DW += ( nd.expand_dims(self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :], axis=4) * nd.expand_dims(self.DY[:,i:i+1,j:j+1,:], axis=3)).sum(axis=0)
         else:
-            for i in xrange(hf):
-                for j in xrange(wf):
+            for i in range(hf):
+                for j in range(wf):
                     DW[i,j,:,:] = nd.sum( nd.expand_dims(self.X[:,i:i+Hy:hstride,j:j+Wy:wstride,:], axis=4) * nd.expand_dims(self.DY, axis=3) ,axis=(0,1,2))
 
         DB = self.DY.sum(axis=(0,1,2))
@@ -221,8 +221,8 @@ class Convolution(Module):
 
         Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = nd.expand_dims(self.W, 0) * nd.expand_dims(self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , : ], 4)
                 Zs = Z.sum(axis=(1,2,3),keepdims=True) + nd.expand_dims(nd.expand_dims(nd.expand_dims(nd.expand_dims(self.B, 0), 0), 0), 0)
                 Zs += 1e-16*((Zs >= 0)*2 - 1.) # add a weak numerical stabilizer to cushion division by zero
@@ -243,8 +243,8 @@ class Convolution(Module):
         Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
         R_norm = R / (self.Y + 1e-16*((self.Y >= 0)*2 - 1.))
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 if self.lrp_aware:
                     Z = self.Z[:,i,j,...]
                 else:
@@ -265,8 +265,8 @@ class Convolution(Module):
 
         Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = nd.ones((N,hf,wf,df,NF), ctx=self.ctx, dtype=self.dtype)
                 Zs = Z.sum(axis=(1,2,3),keepdims=True)
 
@@ -285,8 +285,8 @@ class Convolution(Module):
 
         Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = nd.expand_dims(self.W, 0)**2
                 Zs = Z.sum(axis=(1,2,3),keepdims=True)
 
@@ -306,8 +306,8 @@ class Convolution(Module):
 
         Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = nd.expand_dims(self.W, axis=0) * nd.expand_dims(self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :], 4)
                 Zs = Z.sum(axis=(1,2,3),keepdims=True) + nd.expand_dims(nd.expand_dims(nd.expand_dims(nd.expand_dims(self.B, 0), 0), 0), 0)
                 Zs += epsilon*((Zs >= 0)*2-1)
@@ -327,8 +327,8 @@ class Convolution(Module):
         Rx = nd.zeros_like(self.X,ctx=self.ctx, dtype=self.dtype)
         R_norm = R / (self.Y + epsilon*((self.Y >= 0)*2 - 1.))
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 if self.lrp_aware:
                     Z = self.Z[:,i,j,...]
                 else:
@@ -351,8 +351,8 @@ class Convolution(Module):
 
         Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 Z = nd.expand_dims(self.W, axis=0) * nd.expand_dims(self.X[:, i*hstride:i*hstride+hf , j*wstride:j*wstride+wf , :], axis=4)
 
                 if not alpha == 0:
@@ -389,8 +389,8 @@ class Convolution(Module):
 
         Rx = nd.zeros_like(self.X,ctx = self.ctx)
 
-        for i in xrange(Hout):
-            for j in xrange(Wout):
+        for i in range(Hout):
+            for j in range(Wout):
                 if self.lrp_aware:
                     Z = self.Z[:,i,j,...]
                 else:
