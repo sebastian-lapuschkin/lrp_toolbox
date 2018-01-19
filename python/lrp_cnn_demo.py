@@ -58,8 +58,8 @@ for i in I[:10]:
 
     #forward pass and prediction
     ypred = nn.forward(x)
-    print 'True Class:     ', np.argmax(Y[i])
-    print 'Predicted Class:', np.argmax(ypred),'\n'
+    print('True Class:     ', np.argmax(Y[i]))
+    print('Predicted Class:', np.argmax(ypred),'\n')
 
     #prepare initial relevance to reflect the model's dominant prediction (ie depopulate non-dominant output neurons)
     mask = np.zeros_like(ypred)

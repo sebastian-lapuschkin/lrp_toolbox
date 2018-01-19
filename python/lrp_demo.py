@@ -40,7 +40,7 @@ Y = np.zeros([X.shape[0],np.unique(Y).size])
 Y[np.arange(Y.shape[0]),I] = 1
 
 acc = np.mean(np.argmax(nn.forward(X), axis=1) == np.argmax(Y, axis=1))
-print 'model test accuracy is: {:0.4f}%'.format(acc)
+print('model test accuracy is: {:0.4f}%'.format(acc))
 
 #permute data order for demonstration. or not. your choice.
 I = np.arange(X.shape[0])
@@ -53,8 +53,8 @@ for i in I[:10]:
 
     #forward pass and prediction
     ypred = nn.forward(x)
-    print 'True Class:     ', np.argmax(Y[i])
-    print 'Predicted Class:', np.argmax(ypred),'\n'
+    print('True Class:     ', np.argmax(Y[i]))
+    print('Predicted Class:', np.argmax(ypred),'\n')
 
     #prepare initial relevance to reflect the model's dominant prediction (ie depopulate non-dominant output neurons)
     mask = np.zeros_like(ypred)
