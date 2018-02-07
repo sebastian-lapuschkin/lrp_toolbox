@@ -27,7 +27,7 @@ class DenseLRP(mx.operator.CustomOp):
 
 @mx.operator.register("dense_lrp")  # register with name "dense_lrp"
 class DenseLRPProp(mx.operator.CustomOpProp):
-    def __init__(self, bias):
+    def __init__(self):
         super(DenseLRPProp, self).__init__(True)
 
     def list_arguments(self):
@@ -52,7 +52,7 @@ class DenseLRPProp(mx.operator.CustomOpProp):
 class DenseLRPBlock(mx.gluon.Block):
     def __init__(self, in_channels, channels, **kwargs):
         super(DenseLRPBlock, self).__init__(**kwargs)
-        self._bias  = self.params.get('bias', shape=(channels), init=weight_initializer) # TODO: correct shape???
+        self._bias  = self.params.get('bias', shape=(channels), init=weight_initializer)
         self.weight = self.params.get('weight', shape=(channels, in_channels))
 
     def forward(self, x):
@@ -64,7 +64,8 @@ class DenseLRPBlock(mx.gluon.Block):
 ## ####################### ##
 
 def dense_hybrid_forward_lrp(self, F, x, weight, bias=None):
-        act = F.Custom(x, self.weight.data(), self.bias.data(), bias=self.bias, op_type='dense_lrp')
+        # act = F.Custom(x, self.weight.data(), self.bias.data(), bias=self.bias, op_type='dense_lrp')
+        act = F.Custom(x, weight, bias, op_type='dense_lrp')
 
         if self.act is not None:
             act = F.BlockGrad(self.act(act) - act) + act
