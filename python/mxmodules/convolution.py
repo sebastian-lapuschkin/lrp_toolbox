@@ -115,8 +115,8 @@ class Convolution(Module):
         numfilters = self.n
 
         #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hf) / hstride + 1
-        Wout = (W - wf) / wstride + 1
+        Hout = (H - hf) // hstride + 1
+        Wout = (W - wf) // wstride + 1
 
 
         #initialize pooled output
