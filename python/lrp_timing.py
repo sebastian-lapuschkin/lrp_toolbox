@@ -37,127 +37,131 @@ I = np.arange(X.shape[0])
 
 
 # do some benchmarking.
+from memory_profiler import profile
+@profile
+def benchmark():
+    for B in [1 ,16, 64]: #batch sizes for work laptop with only 8GB RAM
+    #for B in [1, 16, 64, 256]:
 
-for B in [1, 16, 64]: #batch sizes for work laptop with only 8GB RAM
-#for B in [1, 16, 64, 256]:
+        forward_times_old = []
+        forward_times_new = []
+        forward_times_aware = []
 
-    forward_times_old = []
-    forward_times_new = []
-    forward_times_aware = []
+        lrp_times_old = []  #simple
+        lrp_times_old2 = [] #epsilon
+        lrp_times_old3 = [] #alpha 2, beta -1
+        lrp_times_old4 = [] #alpha 1, beta 0
+        lrp_times_old5 = [] #alpha 0, beta 1
 
-    lrp_times_old = []  #simple
-    lrp_times_old2 = [] #epsilon
-    lrp_times_old3 = [] #alpha 2, beta -1
-    lrp_times_old4 = [] #alpha 1, beta 0
-    lrp_times_old5 = [] #alpha 0, beta 1
+        lrp_times_new = []  #s
+        lrp_times_new2 = [] #e
+        lrp_times_new3 = [] #a2b-1
+        lrp_times_new4 = [] #a1b0
+        lrp_times_new5 = [] #a0b1
 
-    lrp_times_new = []  #s
-    lrp_times_new2 = [] #e
-    lrp_times_new3 = [] #a2b-1
-    lrp_times_new4 = [] #a1b0
-    lrp_times_new5 = [] #a0b1
-
-    lrp_times_aware = []  #s
-    lrp_times_aware2 = [] #e
-    lrp_times_aware3 = [] #a2b-1
-    lrp_times_aware4 = [] #a1b0
-    lrp_times_aware5 = [] #a0b1
+        lrp_times_aware = []  #s
+        lrp_times_aware2 = [] #e
+        lrp_times_aware3 = [] #a2b-1
+        lrp_times_aware4 = [] #a1b0
+        lrp_times_aware5 = [] #a0b1
 
 
-    print('#####################################')
-    print('Measuring Speed Gain for batch of {} on FCNN'.format(B))
-    print('#####################################')
-    for i in range(10):
-        x = X[:B,:]
-        # old code
-        t_start = time.time();  yold = nn.forward(x);                               forward_times_old.append(time.time() - t_start)
-        t_start = time.time();  Rold = nn.lrp(yold, 'simple_slow');                 lrp_times_old.append(time.time() - t_start)
-        t_start = time.time();  REold = nn.lrp(yold, 'epsilon_slow', 0.01);         lrp_times_old2.append(time.time() - t_start)
-        t_start = time.time();  RAold2 = nn.lrp(yold, 'alphabeta_slow', 2.);          lrp_times_old3.append(time.time() - t_start)
-        t_start = time.time();  RAold1 = nn.lrp(yold, 'alphabeta_slow', 1.);          lrp_times_old4.append(time.time() - t_start)
-        t_start = time.time();  RAold0 = nn.lrp(yold, 'alphabeta_slow', 0.);          lrp_times_old5.append(time.time() - t_start)
-        # newer lrp code
-        t_start = time.time();  ynew = nn.forward(x);                               forward_times_new.append(time.time() - t_start)
-        t_start = time.time();  Rnew = nn.lrp(ynew, 'simple');                      lrp_times_new.append(time.time() - t_start)
-        t_start = time.time();  REnew = nn.lrp(ynew, 'epsilon', 0.01);              lrp_times_new2.append(time.time() - t_start)
-        t_start = time.time();  RAnew2 = nn.lrp(ynew, 'alphabeta', 2.);              lrp_times_new3.append(time.time() - t_start)
-        t_start = time.time();  RAnew1 = nn.lrp(ynew, 'alphabeta', 1.);              lrp_times_new4.append(time.time() - t_start)
-        t_start = time.time();  RAnew0 = nn.lrp(ynew, 'alphabeta', 0.);              lrp_times_new5.append(time.time() - t_start)
+        print('#####################################')
+        print('Measuring Speed Gain for batch of {} on FCNN'.format(B))
+        print('#####################################')
+        for i in range(10):
+            x = X[:B,:]
+            # old code
+            t_start = time.time();  yold = nn.forward(x);                               forward_times_old.append(time.time() - t_start)
+            t_start = time.time();  Rold = nn.lrp(yold, 'simple_slow');                 lrp_times_old.append(time.time() - t_start)
+            t_start = time.time();  REold = nn.lrp(yold, 'epsilon_slow', 0.01);         lrp_times_old2.append(time.time() - t_start)
+            t_start = time.time();  RAold2 = nn.lrp(yold, 'alphabeta_slow', 2.);          lrp_times_old3.append(time.time() - t_start)
+            t_start = time.time();  RAold1 = nn.lrp(yold, 'alphabeta_slow', 1.);          lrp_times_old4.append(time.time() - t_start)
+            t_start = time.time();  RAold0 = nn.lrp(yold, 'alphabeta_slow', 0.);          lrp_times_old5.append(time.time() - t_start)
+            # newer lrp code
+            t_start = time.time();  ynew = nn.forward(x);                               forward_times_new.append(time.time() - t_start)
+            t_start = time.time();  Rnew = nn.lrp(ynew, 'simple');                      lrp_times_new.append(time.time() - t_start)
+            t_start = time.time();  REnew = nn.lrp(ynew, 'epsilon', 0.01);              lrp_times_new2.append(time.time() - t_start)
+            t_start = time.time();  RAnew2 = nn.lrp(ynew, 'alphabeta', 2.);              lrp_times_new3.append(time.time() - t_start)
+            t_start = time.time();  RAnew1 = nn.lrp(ynew, 'alphabeta', 1.);              lrp_times_new4.append(time.time() - t_start)
+            t_start = time.time();  RAnew0 = nn.lrp(ynew, 'alphabeta', 0.);              lrp_times_new5.append(time.time() - t_start)
 
-        # lrp aware code and forward pass
-        t_start = time.time();  yaw = nn.forward(x, lrp_aware=True);                forward_times_aware.append(time.time() - t_start)
-        t_start = time.time();  Raw = nn.lrp(yaw, 'simple');                        lrp_times_aware.append(time.time() - t_start)
-        t_start = time.time();  REaw= nn.lrp(yaw, 'epsilon', 0.01);                 lrp_times_aware2.append(time.time() - t_start)
-        t_start = time.time();  RAaw2= nn.lrp(yaw, 'alphabeta', 2.);                 lrp_times_aware3.append(time.time() - t_start)
-        t_start = time.time();  RAaw1= nn.lrp(yaw, 'alphabeta', 1.);                 lrp_times_aware4.append(time.time() - t_start)
-        t_start = time.time();  RAaw0= nn.lrp(yaw, 'alphabeta', 0.);                 lrp_times_aware5.append(time.time() - t_start)
+            # lrp aware code and forward pass
+            t_start = time.time();  yaw = nn.forward(x, lrp_aware=True);                forward_times_aware.append(time.time() - t_start)
+            t_start = time.time();  Raw = nn.lrp(yaw, 'simple');                        lrp_times_aware.append(time.time() - t_start)
+            t_start = time.time();  REaw= nn.lrp(yaw, 'epsilon', 0.01);                 lrp_times_aware2.append(time.time() - t_start)
+            t_start = time.time();  RAaw2= nn.lrp(yaw, 'alphabeta', 2.);                 lrp_times_aware3.append(time.time() - t_start)
+            t_start = time.time();  RAaw1= nn.lrp(yaw, 'alphabeta', 1.);                 lrp_times_aware4.append(time.time() - t_start)
+            t_start = time.time();  RAaw0= nn.lrp(yaw, 'alphabeta', 0.);                 lrp_times_aware5.append(time.time() - t_start)
 
-        tolerance = 1e-8
-        np.testing.assert_allclose(yold, ynew, rtol=tolerance) # predictions
-        np.testing.assert_allclose(yold, yaw, rtol=tolerance)
+            tolerance = 1e-8
+            np.testing.assert_allclose(yold, ynew, rtol=tolerance) # predictions
+            np.testing.assert_allclose(yold, yaw, rtol=tolerance)
 
-        np.testing.assert_allclose(Rold, Rnew, rtol=tolerance) # simple lrp maps
-        np.testing.assert_allclose(Rold, Raw, rtol=tolerance)
+            np.testing.assert_allclose(Rold, Rnew, rtol=tolerance) # simple lrp maps
+            np.testing.assert_allclose(Rold, Raw, rtol=tolerance)
 
-        np.testing.assert_allclose(REold, REnew, rtol=tolerance) # eps lrp maps
-        np.testing.assert_allclose(REold, REaw, rtol=tolerance)
+            np.testing.assert_allclose(REold, REnew, rtol=tolerance) # eps lrp maps
+            np.testing.assert_allclose(REold, REaw, rtol=tolerance)
 
-        np.testing.assert_allclose(RAold2, RAnew2, rtol=tolerance) # alpha2 lrp maps
-        np.testing.assert_allclose(RAold2, RAaw2, rtol=tolerance)
+            np.testing.assert_allclose(RAold2, RAnew2, rtol=tolerance) # alpha2 lrp maps
+            np.testing.assert_allclose(RAold2, RAaw2, rtol=tolerance)
 
-        np.testing.assert_allclose(RAold1, RAnew1, rtol=tolerance) # alpha1 lrp maps
-        np.testing.assert_allclose(RAold1, RAaw1, rtol=tolerance)
+            np.testing.assert_allclose(RAold1, RAnew1, rtol=tolerance) # alpha1 lrp maps
+            np.testing.assert_allclose(RAold1, RAaw1, rtol=tolerance)
 
-        np.testing.assert_allclose(RAold0, RAnew0, rtol=tolerance) # alpha0 lrp maps
-        np.testing.assert_allclose(RAold0, RAaw0, rtol=tolerance)
+            np.testing.assert_allclose(RAold0, RAnew0, rtol=tolerance) # alpha0 lrp maps
+            np.testing.assert_allclose(RAold0, RAaw0, rtol=tolerance)
 
-        print('.')
+            print('.')
 
-    print('    Mean Forward pass times:')
-    print('      old:  ', np.mean(forward_times_old), '({}% speedup vs old)'.format(int(100*(1 - np.mean(forward_times_old)/np.mean(forward_times_old)))))
-    print('      new:  ', np.mean(forward_times_new), '({}% speedup vs old)'.format(int(100*(1 - np.mean(forward_times_new)/np.mean(forward_times_old)))))
-    print('      aware:', np.mean(forward_times_aware), '({}% speedup vs old)'.format(int(100*(1 - np.mean(forward_times_aware)/np.mean(forward_times_old)))))
-    print('    Mean LRP times 1 (simple lrp):')
-    print('      old:  ', np.mean(lrp_times_old), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old)/np.mean(lrp_times_old)))))
-    print('      new:  ', np.mean(lrp_times_new), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new)/np.mean(lrp_times_old)))))
-    print('      aware:', np.mean(lrp_times_aware), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware)/np.mean(lrp_times_old)))))
-    print('    Mean LRP times 2 (epsilon lrp):')
-    print('      old:  ', np.mean(lrp_times_old2), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old2)/np.mean(lrp_times_old2)))))
-    print('      new:  ', np.mean(lrp_times_new2), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new2)/np.mean(lrp_times_old2)))))
-    print('      aware:', np.mean(lrp_times_aware2), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware2)/np.mean(lrp_times_old2)))))
-    print('    Mean LRP times 3 (alpha=2 lrp):')
-    print('      old:  ', np.mean(lrp_times_old3), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old3)/np.mean(lrp_times_old3)))))
-    print('      new:  ', np.mean(lrp_times_new3), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new3)/np.mean(lrp_times_old3)))))
-    print('      aware:', np.mean(lrp_times_aware3), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware3)/np.mean(lrp_times_old3)))))
-    print('    Mean LRP times 4 (alpha=1 lrp):')
-    print('      old:  ', np.mean(lrp_times_old4), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old4)/np.mean(lrp_times_old4)))))
-    print('      new:  ', np.mean(lrp_times_new4), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new4)/np.mean(lrp_times_old4)))))
-    print('      aware:', np.mean(lrp_times_aware4), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware4)/np.mean(lrp_times_old4)))))
-    print('    Mean LRP times 5 (alpha=0 lrp):')
-    print('      old:  ', np.mean(lrp_times_old5), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old5)/np.mean(lrp_times_old5)))))
-    print('      new:  ', np.mean(lrp_times_new5), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new5)/np.mean(lrp_times_old5)))))
-    print('      aware:', np.mean(lrp_times_aware5), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware5)/np.mean(lrp_times_old5)))))
-    print('    Mean Total times with LRP once:')
-    oldtotal = np.mean(np.array(lrp_times_old) + np.array(forward_times_old))
-    newtotal = np.mean(np.array(lrp_times_new) + np.array(forward_times_new))
-    awaretotal = np.mean(np.array(lrp_times_aware) + np.array(forward_times_aware))
-    print('      old:  ', oldtotal, '({}% speedup vs old)'.format(int(100*(1 - oldtotal/oldtotal))))
-    print('      new:  ', newtotal, '({}% speedup vs old)'.format(int(100*(1 - newtotal/oldtotal))))
-    print('      aware:', awaretotal, '({}% speedup vs old)'.format(int(100*(1 - awaretotal/oldtotal))))
-    print('    Mean Total times with LRP twice (simple+epsilon):')
-    oldtotaltwice = np.mean(np.array(lrp_times_old) + np.array(lrp_times_old2) + np.array(forward_times_old))
-    newtotaltwice = np.mean(np.array(lrp_times_new) + np.array(lrp_times_new2) + np.array(forward_times_new))
-    awaretotaltwice = np.mean(np.array(lrp_times_aware) + np.array(lrp_times_aware2) + np.array(forward_times_aware))
-    print('      old:  ', oldtotaltwice, '({}% speedup vs old)'.format(int(100*(1 - oldtotaltwice/oldtotaltwice))))
-    print('      new:  ', newtotaltwice, '({}% speedup vs old)'.format(int(100*(1 - newtotaltwice/oldtotaltwice))))
-    print('      aware:', awaretotaltwice, '({}% speedup vs old)'.format(int(100*(1 - awaretotaltwice/oldtotaltwice))))
-    print('    Mean Total times with LRP five times(simple,epsilon,alpha=2,alpha=1,alpha=0):')
-    oldtotalfive = oldtotaltwice + np.mean(np.array(lrp_times_old3) + np.array(lrp_times_old4) + np.array(lrp_times_old5))
-    newtotalfive = newtotaltwice +  np.mean(np.array(lrp_times_new3) + np.array(lrp_times_new4) + np.array(lrp_times_new5))
-    awaretotalfive = awaretotaltwice +  np.mean(np.array(lrp_times_aware3) + np.array(lrp_times_aware4) + np.array(lrp_times_aware5))
-    print('      old:  ', oldtotalfive, '({}% speedup vs old)'.format(int(100*(1 - oldtotalfive/oldtotalfive))))
-    print('      new:  ', newtotalfive, '({}% speedup vs old)'.format(int(100*(1 - newtotalfive/oldtotalfive))))
-    print('      aware:', awaretotalfive, '({}% speedup vs old)'.format(int(100*(1 - awaretotalfive/oldtotalfive))))
-    print('')
-    print('')
+        print('    Mean Forward pass times:')
+        print('      old:  ', np.mean(forward_times_old), '({}% speedup vs old)'.format(int(100*(1 - np.mean(forward_times_old)/np.mean(forward_times_old)))))
+        print('      new:  ', np.mean(forward_times_new), '({}% speedup vs old)'.format(int(100*(1 - np.mean(forward_times_new)/np.mean(forward_times_old)))))
+        print('      aware:', np.mean(forward_times_aware), '({}% speedup vs old)'.format(int(100*(1 - np.mean(forward_times_aware)/np.mean(forward_times_old)))))
+        print('    Mean LRP times 1 (simple lrp):')
+        print('      old:  ', np.mean(lrp_times_old), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old)/np.mean(lrp_times_old)))))
+        print('      new:  ', np.mean(lrp_times_new), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new)/np.mean(lrp_times_old)))))
+        print('      aware:', np.mean(lrp_times_aware), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware)/np.mean(lrp_times_old)))))
+        print('    Mean LRP times 2 (epsilon lrp):')
+        print('      old:  ', np.mean(lrp_times_old2), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old2)/np.mean(lrp_times_old2)))))
+        print('      new:  ', np.mean(lrp_times_new2), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new2)/np.mean(lrp_times_old2)))))
+        print('      aware:', np.mean(lrp_times_aware2), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware2)/np.mean(lrp_times_old2)))))
+        print('    Mean LRP times 3 (alpha=2 lrp):')
+        print('      old:  ', np.mean(lrp_times_old3), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old3)/np.mean(lrp_times_old3)))))
+        print('      new:  ', np.mean(lrp_times_new3), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new3)/np.mean(lrp_times_old3)))))
+        print('      aware:', np.mean(lrp_times_aware3), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware3)/np.mean(lrp_times_old3)))))
+        print('    Mean LRP times 4 (alpha=1 lrp):')
+        print('      old:  ', np.mean(lrp_times_old4), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old4)/np.mean(lrp_times_old4)))))
+        print('      new:  ', np.mean(lrp_times_new4), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new4)/np.mean(lrp_times_old4)))))
+        print('      aware:', np.mean(lrp_times_aware4), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware4)/np.mean(lrp_times_old4)))))
+        print('    Mean LRP times 5 (alpha=0 lrp):')
+        print('      old:  ', np.mean(lrp_times_old5), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_old5)/np.mean(lrp_times_old5)))))
+        print('      new:  ', np.mean(lrp_times_new5), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_new5)/np.mean(lrp_times_old5)))))
+        print('      aware:', np.mean(lrp_times_aware5), '({}% speedup vs old)'.format(int(100*(1 - np.mean(lrp_times_aware5)/np.mean(lrp_times_old5)))))
+        print('    Mean Total times with LRP once:')
+        oldtotal = np.mean(np.array(lrp_times_old) + np.array(forward_times_old))
+        newtotal = np.mean(np.array(lrp_times_new) + np.array(forward_times_new))
+        awaretotal = np.mean(np.array(lrp_times_aware) + np.array(forward_times_aware))
+        print('      old:  ', oldtotal, '({}% speedup vs old)'.format(int(100*(1 - oldtotal/oldtotal))))
+        print('      new:  ', newtotal, '({}% speedup vs old)'.format(int(100*(1 - newtotal/oldtotal))))
+        print('      aware:', awaretotal, '({}% speedup vs old)'.format(int(100*(1 - awaretotal/oldtotal))))
+        print('    Mean Total times with LRP twice (simple+epsilon):')
+        oldtotaltwice = np.mean(np.array(lrp_times_old) + np.array(lrp_times_old2) + np.array(forward_times_old))
+        newtotaltwice = np.mean(np.array(lrp_times_new) + np.array(lrp_times_new2) + np.array(forward_times_new))
+        awaretotaltwice = np.mean(np.array(lrp_times_aware) + np.array(lrp_times_aware2) + np.array(forward_times_aware))
+        print('      old:  ', oldtotaltwice, '({}% speedup vs old)'.format(int(100*(1 - oldtotaltwice/oldtotaltwice))))
+        print('      new:  ', newtotaltwice, '({}% speedup vs old)'.format(int(100*(1 - newtotaltwice/oldtotaltwice))))
+        print('      aware:', awaretotaltwice, '({}% speedup vs old)'.format(int(100*(1 - awaretotaltwice/oldtotaltwice))))
+        print('    Mean Total times with LRP five times(simple,epsilon,alpha=2,alpha=1,alpha=0):')
+        oldtotalfive = oldtotaltwice + np.mean(np.array(lrp_times_old3) + np.array(lrp_times_old4) + np.array(lrp_times_old5))
+        newtotalfive = newtotaltwice +  np.mean(np.array(lrp_times_new3) + np.array(lrp_times_new4) + np.array(lrp_times_new5))
+        awaretotalfive = awaretotaltwice +  np.mean(np.array(lrp_times_aware3) + np.array(lrp_times_aware4) + np.array(lrp_times_aware5))
+        print('      old:  ', oldtotalfive, '({}% speedup vs old)'.format(int(100*(1 - oldtotalfive/oldtotalfive))))
+        print('      new:  ', newtotalfive, '({}% speedup vs old)'.format(int(100*(1 - newtotalfive/oldtotalfive))))
+        print('      aware:', awaretotalfive, '({}% speedup vs old)'.format(int(100*(1 - awaretotalfive/oldtotalfive))))
+        print('')
+        print('')
 
+#run benchmark
+benchmark()
