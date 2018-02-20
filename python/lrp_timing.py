@@ -37,8 +37,6 @@ I = np.arange(X.shape[0])
 
 
 # do some benchmarking.
-from memory_profiler import profile
-@profile
 def benchmark():
     for B in [1 ,16, 64]: #batch sizes for work laptop with only 8GB RAM
     #for B in [1, 16, 64, 256]:
