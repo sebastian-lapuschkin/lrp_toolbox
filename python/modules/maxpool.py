@@ -61,8 +61,8 @@ class MaxPool(Module):
         hstride, wstride = self.stride
 
         #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hpool) / hstride + 1
-        Wout = (W - wpool) / wstride + 1
+        Hout = (H - hpool) // hstride + 1
+        Wout = (W - wpool) // wstride + 1
 
         #initialize pooled output
         self.Y = np.zeros((N,Hout,Wout,D))
@@ -102,8 +102,8 @@ class MaxPool(Module):
         hstride, wstride = self.stride
 
         #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hpool) / hstride + 1
-        Wout = (W - wpool) / wstride + 1
+        Hout = (H - hpool) // hstride + 1
+        Wout = (W - wpool) // wstride + 1
 
         #distribute the gradient towards the max activation(s)
         #the max activation value is already known via self.Y
@@ -128,8 +128,8 @@ class MaxPool(Module):
         hstride, wstride = self.stride
 
         #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hpool) / hstride + 1
-        Wout = (W - wpool) / wstride + 1
+        Hout = (H - hpool) // hstride + 1
+        Wout = (W - wpool) // wstride + 1
 
         Rx = np.zeros_like(self.X,dtype=np.float)
 
@@ -142,9 +142,7 @@ class MaxPool(Module):
 
 
     def _simple_lrp(self,R):
-        return _simple_lrp_slow(R)
-
-
+        return self._simple_lrp_slow(R)
 
     def _flat_lrp(self,R):
         '''
@@ -156,8 +154,8 @@ class MaxPool(Module):
         hstride, wstride = self.stride
 
         #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hpool) / hstride + 1
-        Wout = (W - wpool) / wstride + 1
+        Hout = (H - hpool) // hstride + 1
+        Wout = (W - wpool) // wstride + 1
 
         Rx = np.zeros_like(self.X,dtype=np.float)
 
