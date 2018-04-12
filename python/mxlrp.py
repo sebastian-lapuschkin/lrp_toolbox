@@ -417,27 +417,14 @@ class MaxPoolLRP(mx.operator.CustomOp):
     def __init__(self, kernel, stride, lrp_type, lrp_param):
         self.kernel    = kernel
         self.stride    = stride
+        self.pad       = [0,0]
 
         self.lrp_type = lrp_type
         self.lrp_param = lrp_param
 
     def forward(self, is_train, req, in_data, out_data, aux):
         x      = in_data[0]
-        N,D,H,W = x.shape
-
-        hpool,   wpool   = self.kernel
-        hstride, wstride = self.stride
-
-        #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hpool) // hstride + 1
-        Wout = (W - wpool) // wstride + 1
-
-        #initialize pooled output
-        y = nd.zeros((N,D,Hout,Wout))
-
-        for i in range(Hout):
-            for j in range(Wout):
-                y[:,:,i,j] = x[:,:, i*hstride:i*hstride+hpool: , j*wstride:j*wstride+wpool:].max(axis=(2,3))
+        y = nd.Pooling(x, kernel=self.kernel, stride=self.stride, pool_type = 'max', pad=self.pad)
 
         self.assign(out_data[0], req[0], y)
 
@@ -462,6 +449,8 @@ class MaxPoolLRP(mx.operator.CustomOp):
                 Z = y[:,:,i:i+1,j:j+1] == x[:,:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool]
                 Zs = Z.sum(axis=(2,3),keepdims=True) #thanks user wodtko for reporting this bug/fix
                 rx[:,:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool] += (Z / Zs) * ry[:,:,i:i+1,j:j+1]
+
+        # print(rx)
 
         self.assign(in_grad[0], req[0], rx)
 
