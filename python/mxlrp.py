@@ -1,5 +1,5 @@
 import mxnet as mx
-from mxnet import nd
+from mxnet import nd, autograd
 
 import types
 
@@ -128,33 +128,59 @@ def translate_to_gluon(nn_sta, ctx=mx.cpu(), dtype='float32'):
 
     return nn_gluon
 
-def patch_lrp_gradient(net):
-    for layer in net._children:
-        if layer.__class__.__name__ == 'Dense':
-            layer.hybrid_forward = types.MethodType(dense_hybrid_forward_lrp, layer)
-            print('...updated dense layer')
-        elif layer.__class__.__name__ == 'Conv2D':
-            layer.hybrid_forward = types.MethodType(convolution_hybrid_forward_lrp, layer)
-            print('...updated conv layer')
-        elif layer.__class__.__name__ == 'AvgPool2D':
+def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., debug_output=False):
 
+    inefficient_maxpool = False
+
+    for layer in net._children:
+
+        if layer.__class__.__name__ == 'HybridSequential':
+            patch_lrp_gradient(layer, lrp_type, lrp_param)
+
+        if layer.__class__.__name__ == 'Dense':
+            hybrid_forward_lrp = lambda self, F, x, weight, bias: dense_hybrid_forward_lrp(self, F, x, weight, bias, lrp_type=lrp_type, lrp_param=lrp_param)
+            layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
+
+            if debug_output:
+                print('...updated dense layer')
+                print('lrp_type: {} | param: {}'.format(lrp_type, lrp_param))
+
+        elif layer.__class__.__name__ == 'Conv2D':
+            hybrid_forward_lrp = lambda self, F, x, weight, bias: convolution_hybrid_forward_lrp(self, F, x, weight, bias, lrp_type=lrp_type, lrp_param=lrp_param)
+            layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
+
+            if debug_output:
+                print('...updated conv layer')
+                print('lrp_type: {} | param: {}'.format(lrp_type, lrp_param))
+
+        elif layer.__class__.__name__ == 'AvgPool2D':
             if hasattr(layer, 'is_sumpool'):
-                layer.hybrid_forward = types.MethodType(sumpool_hybrid_forward_lrp, layer)
-                print('updated AvgPool2D (that is sumpool)')
+                hybrid_forward_lrp = lambda self, F, x: sumpool_hybrid_forward_lrp(self, F, x, lrp_type=lrp_type, lrp_param=lrp_param)
+                layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
+
+                if debug_output:
+                    print('updated AvgPool2D (that is sumpool)')
             else:
                 # TODO: add regular sumpool treatment (manage the pooling flag, rest should be the same)
                 print('regular sumpool not yet implemented, add that')
 
         elif layer.__class__.__name__ == 'MaxPool2D':
-                layer.hybrid_forward = types.MethodType(maxpool_hybrid_forward_lrp, layer)
-                print('updated MaxPool2D (VERY INEFFICIENT!!!)')
+                hybrid_forward_lrp = lambda self, F, x: maxpool_hybrid_forward_lrp(self, F, x, lrp_type=lrp_type, lrp_param=lrp_param)
+                layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
+                inefficient_maxpool = True
+
+                if debug_output:
+                    print('updated MaxPool2D (VERY INEFFICIENT!!!)')
+
+    if inefficient_maxpool:
+        print('WARNING: using inefficient maxpool implementation (LOOPS)!!!')
 
 ## ######################### ##
 # LRP-PATCHED HYBRID_FORWARDS #
 ## ######################### ##
 
 
-def dense_hybrid_forward_lrp(self, F, x, weight, bias=None, lrp_type=None, lrp_param=0.):
+def dense_hybrid_forward_lrp(self, F, x, weight, bias=None, lrp_type='simple', lrp_param=0.):
         act = F.Custom(x, weight, bias, lrp_type=lrp_type, lrp_param=lrp_param, op_type='dense_lrp')
 
         if self.act is not None:
@@ -162,7 +188,7 @@ def dense_hybrid_forward_lrp(self, F, x, weight, bias=None, lrp_type=None, lrp_p
         return act
 
 
-def convolution_hybrid_forward_lrp(self, F, x, weight, bias=None, lrp_type=None, lrp_param=0.):
+def convolution_hybrid_forward_lrp(self, F, x, weight, bias=None, lrp_type='simple', lrp_param=0.):
 
         kernel, stride, dilate, pad, num_filter, num_group, no_bias, layout = map(self._kwargs.get, ['kernel', 'stride', 'dilate', 'pad', 'num_filter', 'num_group', 'no_bias', 'layout'])
 
@@ -172,13 +198,13 @@ def convolution_hybrid_forward_lrp(self, F, x, weight, bias=None, lrp_type=None,
             act = F.BlockGrad(self.act(act) - act) + act
         return act
 
-def sumpool_hybrid_forward_lrp(self, F, x, lrp_type=None, lrp_param=0.):
+def sumpool_hybrid_forward_lrp(self, F, x, lrp_type='simple', lrp_param=0.):
 
         kernel, stride, pad = map(self._kwargs.get, ['kernel', 'stride', 'pad'])
 
         return F.Custom(x, kernel=kernel, stride=stride, pad=pad, lrp_type=lrp_type, lrp_param=lrp_param, op_type='sumpool_lrp')
 
-def maxpool_hybrid_forward_lrp(self, F, x, lrp_type=None, lrp_param=0.):
+def maxpool_hybrid_forward_lrp(self, F, x, lrp_type='simple', lrp_param=0.):
 
         kernel, stride, pad = map(self._kwargs.get, ['kernel', 'stride', 'pad'])
 
@@ -220,11 +246,54 @@ class ConvLRP(mx.operator.CustomOp):
         y      = out_data[0]
         ry     = out_grad[0]
 
-        # simple-LRP
-        zs = y + 1e-16*((y >= 0)*2 - 1.)
-        F = ry/zs
+        # print('conv: {}|{}'.format(self.lrp_type, self.lrp_param))
 
-        rx = x * nd.Deconvolution(F, weight, bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+        if self.lrp_type == 'simple':
+            zs = y + 1e-16*((y >= 0)*2 - 1.)
+            F = ry/zs
+            rx = x * nd.Deconvolution(F, weight, bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+
+        elif self.lrp_type == 'epsilon' or self.lrp_type == 'eps':
+            zs = y + self.lrp_param*((y >= 0)*2 - 1.)
+            F = ry/zs
+            rx = x * nd.Deconvolution(F, weight, bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+
+        # elif self.lrp_type == 'alphabeta' or self.lrp_type == 'alpha':
+        #
+        #     alpha = self.lrp_param
+        #     beta  = 1 - alpha
+        #     default_stabilizer = 1e-16
+        #
+        #     z = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
+        #
+        #     #index mask of positive forward predictions
+        #     zplus = z > 0
+        #     if alpha * beta != 0: #the general case: both parameters are not 0
+        #         zp = z * zplus
+        #         zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
+        #
+        #         zn = z - zp
+        #         zsn = y - zps - default_stabilizer
+        #
+        #
+        #
+        #         r_pos = x * nd.Deconvolution(F, weight, bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+        #
+        #         return alpha * nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2) + beta * nd.sum(zn * nd.expand_dims(ry/zsn, axis=1), axis=2)
+        #
+        #     elif alpha: #only alpha is not 0 -> alpha = 1, beta = 0
+        #         zp = z * zplus
+        #         zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
+        #         return nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2)
+        #
+        #     elif beta: # only beta is not 0 -> alpha = 0, beta = 1
+        #         zn = z - zp
+        #         zsn = y - zps - default_stabilizer
+        #         return nd.sum(Zn * nd.expand_dims(R/Zsn, axis=1), axis=2)
+
+        else:
+            print('Error in Conv layer: unknown LRP type {}'.format(self.lrp_type))
+
         self.assign(in_grad[0], req[0], rx)
 
 @mx.operator.register("conv_lrp")
@@ -255,8 +324,8 @@ class ConvLRPProp(mx.operator.CustomOpProp):
         weight_shape = in_shapes[1]
         bias_shape   = in_shapes[2]
 
-        h = (data_shape[2] + self.pad[0] - weight_shape[2]) // self.stride[0] + 1
-        w = (data_shape[3] + self.pad[1] - weight_shape[3]) // self.stride[1] + 1
+        h = (data_shape[2] + 2 * self.pad[0] - weight_shape[2]) // self.stride[0] + 1
+        w = (data_shape[3] + 2 * self.pad[1] - weight_shape[3]) // self.stride[1] + 1
 
         output_shape = (data_shape[0], weight_shape[0], h, w)
         # return 3 lists representing inputs shapes, outputs shapes, and aux data shapes.
@@ -287,13 +356,53 @@ class DenseLRP(mx.operator.CustomOp):
     def backward(self, req, out_grad, in_data, out_data, in_grad, aux):
         x      = in_data[0]
         weight = in_data[1]
+        bias   = in_data[2]
         y      = out_data[0]
         ry     = out_grad[0]
 
-        # simple-LRP
-        zs = y + 1e-16*( (y >= 0) * 2 - 1.) #add weakdefault stabilizer to denominator
-        z  = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
-        rx = nd.sum(z * nd.expand_dims(ry/zs, 1), axis=2)
+        # print('dense: {}|{}'.format(self.lrp_type, self.lrp_param))
+
+        if self.lrp_type == 'simple':
+            zs = y + 1e-16*( (y >= 0) * 2 - 1.) #add weakdefault stabilizer to denominator
+            z  = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
+            rx = nd.sum(z * nd.expand_dims(ry/zs, 1), axis=2)
+
+        elif self.lrp_type == 'epsilon' or self.lrp_type == 'eps':
+            zs = y + self.lrp_param*( (y >= 0) * 2 - 1.) #add epsilon stabilizer
+            z  = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
+            rx = nd.sum(z * nd.expand_dims(ry/zs, 1), axis=2)
+
+        elif self.lrp_type == 'alphabeta' or self.lrp_type == 'alpha':
+
+            alpha = self.lrp_param
+            beta  = 1 - alpha
+            default_stabilizer = 1e-16
+
+            z = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
+
+            #index mask of positive forward predictions
+            zplus = z > 0
+            if alpha * beta != 0: #the general case: both parameters are not 0
+                zp = z * zplus
+                zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
+
+                zn = z - zp
+                zsn = y - zps - default_stabilizer
+
+                return alpha * nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2) + beta * nd.sum(zn * nd.expand_dims(ry/zsn, axis=1), axis=2)
+
+            elif alpha: #only alpha is not 0 -> alpha = 1, beta = 0
+                zp = z * zplus
+                zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
+                return nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2)
+
+            elif beta: # only beta is not 0 -> alpha = 0, beta = 1
+                zn = z - zp
+                zsn = y - zps - default_stabilizer
+                return nd.sum(Zn * nd.expand_dims(R/Zsn, axis=1), axis=2)
+
+        else:
+            print('Error in Dense layer: unknown LRP type {}'.format(self.lrp_type))
 
         self.assign(in_grad[0], req[0], rx)
 
@@ -369,10 +478,20 @@ class SumPoolLRP(mx.operator.CustomOp):
         y      = out_data[0]
         ry     = out_grad[0]
 
-        # simple-LRP
-        zs = y / self.normalizer_value + 1e-16*((y >= 0)*2 - 1.)
-        F = ry/zs
-        rx = x * nd.Deconvolution(F, self.weight, bias=None, kernel=self.kernel, stride=self.stride, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], no_bias=True)
+        if self.lrp_type == 'simple':
+            # simple-LRP
+            zs = y / self.normalizer_value + 1e-16*((y >= 0)*2 - 1.)
+            F = ry/zs
+            rx = x * nd.Deconvolution(F, self.weight, bias=None, kernel=self.kernel, stride=self.stride, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], no_bias=True)
+
+        elif self.lrp_type == 'epsilon' or self.lrp_type == 'eps':
+            # simple-LRP
+            zs = y / self.normalizer_value + self.lrp_param*((y >= 0)*2 - 1.)
+            F = ry/zs
+            rx = x * nd.Deconvolution(F, self.weight, bias=None, kernel=self.kernel, stride=self.stride, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], no_bias=True)
+
+        else:
+            print('Error in SumPool layer: unknown LRP type {}'.format(self.lrp_type))
 
         self.assign(in_grad[0], req[0], rx)
 
@@ -414,13 +533,15 @@ class SumPoolLRPProp(mx.operator.CustomOpProp):
 
 class MaxPoolLRP(mx.operator.CustomOp):
 
-    def __init__(self, kernel, stride, lrp_type, lrp_param):
+    def __init__(self, kernel, stride, lrp_type, lrp_param, method='loops:('):
         self.kernel    = kernel
         self.stride    = stride
         self.pad       = [0,0]
 
         self.lrp_type = lrp_type
         self.lrp_param = lrp_param
+
+        self.method = method
 
     def forward(self, is_train, req, in_data, out_data, aux):
         x      = in_data[0]
@@ -442,15 +563,34 @@ class MaxPoolLRP(mx.operator.CustomOp):
         Hout = (H - hpool) // hstride + 1
         Wout = (W - wpool) // wstride + 1
 
-        rx = nd.zeros_like(x,dtype=x.dtype)
+        if self.method == 'loops:(':
 
-        for i in range(Hout):
-            for j in range(Wout):
-                Z = y[:,:,i:i+1,j:j+1] == x[:,:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool]
-                Zs = Z.sum(axis=(2,3),keepdims=True) #thanks user wodtko for reporting this bug/fix
-                rx[:,:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool] += (Z / Zs) * ry[:,:,i:i+1,j:j+1]
+            if self.lrp_type == 'simple' or self.lrp_type == 'epsilon' or self.lrp_type == 'eps': # since maxpool only has equal dominant activations
+                rx = nd.zeros_like(x,dtype=x.dtype)
+                for i in range(Hout):
+                    for j in range(Wout):
+                        Z = y[:,:,i:i+1,j:j+1] == x[:,:, i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool]
+                        Zs = Z.sum(axis=(2,3),keepdims=True) #thanks user wodtko for reporting this bug/fix
+                        rx[:,:,i*hstride:i*hstride+hpool , j*wstride:j*wstride+wpool] += (Z / Zs) * ry[:,:,i:i+1,j:j+1]
 
-        # print(rx)
+            else:
+                print('Error in MaxPool layer: unsupported LRP type {}'.format(self.lrp_type))
+
+        elif self.method == 'grad_n_sum':
+            # approach: detect which inputs are maximal, set the rest to zero and then treat it as if it was a sumpool layer
+            # in the case of one max value, their behaviour is the same, if there are multiple, redistribute to all of them.
+
+
+            if self.lrp_type == 'simple' or self.lrp_type == 'epsilon' or self.lrp_type == 'eps': # since maxpool only has equal dominant activations
+                rx = nd.zeros_like(x,dtype=x.dtype)
+
+                # TODO: finish this
+
+            else:
+                print('Error in MaxPool layer: unsupported LRP type {}'.format(self.lrp_type))
+
+        else:
+            print('Error in MaxPool layer: backward method -{}- unknown!'.format(self.method))
 
         self.assign(in_grad[0], req[0], rx)
 
@@ -458,8 +598,6 @@ class MaxPoolLRP(mx.operator.CustomOp):
 class MaxPoolLRPProp(mx.operator.CustomOpProp):
     def __init__(self, kernel, stride, lrp_type, lrp_param):
         super(MaxPoolLRPProp, self).__init__(True)
-
-        self.normalizer= 'dimsqrt'
         self.kernel    = eval(kernel)
         self.stride    = eval(stride)
         self.pad       = [0,0]
