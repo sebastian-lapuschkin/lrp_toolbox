@@ -128,14 +128,25 @@ def translate_to_gluon(nn_sta, ctx=mx.cpu(), dtype='float32'):
 
     return nn_gluon
 
-def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., debug_output=False):
+def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1, debug_output=False, init_idx = 0, outer_call=True):
+
+    # important: current implementation uses layer indices that assume that we onle use a tree structure of HybridSequential modules.
+    # as soon as we add hybridconcurrents, the layer numbering might get trickier.
+
+    if debug_output:
+        print('switch_layer = {}'.format(switch_layer))
 
     inefficient_maxpool = False
 
-    for layer in net._children:
+    for layer_idx, layer in enumerate(net._children):
+
+        layer_idx += init_idx
+
+        if debug_output:
+            print(layer_idx, layer.__class__.__name__)
 
         if layer.__class__.__name__ == 'HybridSequential':
-            patch_lrp_gradient(layer, lrp_type, lrp_param)
+            init_idx = patch_lrp_gradient(layer, lrp_type, lrp_param, switch_layer, init_idx = layer_idx + 1, outer_call=False)
 
         if layer.__class__.__name__ == 'Dense':
             hybrid_forward_lrp = lambda self, F, x, weight, bias: dense_hybrid_forward_lrp(self, F, x, weight, bias, lrp_type=lrp_type, lrp_param=lrp_param)
@@ -146,12 +157,24 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., debug_output=Fals
                 print('lrp_type: {} | param: {}'.format(lrp_type, lrp_param))
 
         elif layer.__class__.__name__ == 'Conv2D':
-            hybrid_forward_lrp = lambda self, F, x, weight, bias: convolution_hybrid_forward_lrp(self, F, x, weight, bias, lrp_type=lrp_type, lrp_param=lrp_param)
+            if layer_idx <= switch_layer:
+                lrp_type_sw = 'alphabeta'
+                lrp_param_sw = 1.
+
+                if debug_output:
+                    print('Conv layer (layer_idx {}): switched to alpha'.format(layer_idx))
+            else:
+                lrp_type_sw = lrp_type
+                lrp_param_sw = lrp_param
+
+            hybrid_forward_lrp = lambda self, F, x, weight, bias: convolution_hybrid_forward_lrp(self, F, x, weight, bias, lrp_type=lrp_type_sw, lrp_param=lrp_param_sw)
             layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
 
             if debug_output:
                 print('...updated conv layer')
-                print('lrp_type: {} | param: {}'.format(lrp_type, lrp_param))
+                print('layer_idx={}, sw_layer={}'.format(layer_idx, switch_layer))
+
+                print('lrp_type: {} | param: {}'.format(lrp_type_sw, lrp_param_sw))
 
         elif layer.__class__.__name__ == 'AvgPool2D':
             if hasattr(layer, 'is_sumpool'):
@@ -174,6 +197,9 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., debug_output=Fals
 
     if inefficient_maxpool:
         print('WARNING: using inefficient maxpool implementation (LOOPS)!!!')
+
+    if not outer_call:
+        return layer_idx + 1
 
 ## ######################### ##
 # LRP-PATCHED HYBRID_FORWARDS #
