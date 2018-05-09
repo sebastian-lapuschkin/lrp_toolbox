@@ -243,6 +243,7 @@ class ConvLRP(mx.operator.CustomOp):
     def backward(self, req, out_grad, in_data, out_data, in_grad, aux):
         x      = in_data[0]
         weight = in_data[1]
+        bias   = in_data[2]
         y      = out_data[0]
         ry     = out_grad[0]
 
@@ -258,39 +259,82 @@ class ConvLRP(mx.operator.CustomOp):
             F = ry/zs
             rx = x * nd.Deconvolution(F, weight, bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
 
-        # elif self.lrp_type == 'alphabeta' or self.lrp_type == 'alpha':
-        #
-        #     alpha = self.lrp_param
-        #     beta  = 1 - alpha
-        #     default_stabilizer = 1e-16
-        #
-        #     z = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
-        #
-        #     #index mask of positive forward predictions
-        #     zplus = z > 0
-        #     if alpha * beta != 0: #the general case: both parameters are not 0
-        #         zp = z * zplus
-        #         zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
-        #
-        #         zn = z - zp
-        #         zsn = y - zps - default_stabilizer
-        #
-        #
-        #
-        #         r_pos = x * nd.Deconvolution(F, weight, bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
-        #
-        #         return alpha * nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2) + beta * nd.sum(zn * nd.expand_dims(ry/zsn, axis=1), axis=2)
-        #
-        #     elif alpha: #only alpha is not 0 -> alpha = 1, beta = 0
-        #         zp = z * zplus
-        #         zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
-        #         return nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2)
-        #
-        #     elif beta: # only beta is not 0 -> alpha = 0, beta = 1
-        #         zn = z - zp
-        #         zsn = y - zps - default_stabilizer
-        #         return nd.sum(Zn * nd.expand_dims(R/Zsn, axis=1), axis=2)
+        elif self.lrp_type == 'alphabeta' or self.lrp_type == 'alpha':
 
+            alpha = self.lrp_param
+            beta  = 1 - alpha
+            default_stabilizer = 1e-16
+
+
+            weight_pos_idxs = weight >= 0
+            weight_p = weight * weight_pos_idxs
+            weight_n = weight * (1-weight_pos_idxs)
+
+            x_pos_idxs = x >=0
+            xp = x * x_pos_idxs
+            xn = x * (1-x_pos_idxs)
+
+            bias_pos_idxs = bias >= 0
+            bias_p = bias * bias_pos_idxs
+            bias_n = bias * (1-bias_pos_idxs)
+
+
+            #index mask of positive forward predictions
+            if alpha * beta != 0: #the general case: both parameters are not 0
+
+                # TODO: wrong???
+                # pos_idxs = y >= 0
+                # zsp = y * pos_idxs + default_stabilizer * (pos_idxs*2 - 1.)
+                #
+                # neg_idxs = 1 - pos_idxs
+                # zsn = y * neg_idxs + default_stabilizer * (neg_idxs*2 - 1.)
+                no_bias_here=True
+                Tp_nb = nd.Convolution(xp, weight_p, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout) + \
+                        nd.Convolution(xn, weight_n, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout)
+                Tn_nb = nd.Convolution(xn, weight_p, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout) + \
+                        nd.Convolution(xp, weight_n, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout)
+
+                # add the respective parts of the bias
+                Tp = Tp_nb + nd.expand_dims(nd.expand_dims(nd.expand_dims(bias_p,0), 2), 3)
+                Tn = Tn_nb + nd.expand_dims(nd.expand_dims(nd.expand_dims(bias_n,0), 2), 3)
+
+                Fp = ry / Tp
+                Fn = ry / Tn
+
+                rp = xp * nd.Deconvolution(Fp, weight_p , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout) + \
+                     xn * nd.Deconvolution(Fp, weight_n , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+
+                rn = xn * nd.Deconvolution(Fn, weight_p , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout) + \
+                     xp * nd.Deconvolution(Fn, weight_n , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+
+                rx = alpha * rp + beta * rn
+
+            elif alpha: #only alpha is not 0 -> alpha = 1, beta = 0
+                no_bias_here=True
+                Tp_nb = nd.Convolution(xp, weight_p, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout) + \
+                        nd.Convolution(xn, weight_n, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout)
+
+                Tp = Tp_nb + nd.expand_dims(nd.expand_dims(nd.expand_dims(bias_p,0), 2), 3)
+
+                Fp = ry / Tp
+                rp = xp * nd.Deconvolution(Fp, weight_p , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout) + \
+                     xn * nd.Deconvolution(Fp, weight_n , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+
+                rx = alpha * rp
+
+            elif beta: # only beta is not 0 -> alpha = 0, beta = 1
+
+                no_bias_here=True
+                Tn_nb = nd.Convolution(xn, weight_p, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout) + \
+                        nd.Convolution(xp, weight_n, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, num_filter=self.num_filter, num_group=self.num_group, no_bias=no_bias_here, layout=self.layout)
+
+                Tn = Tn_nb + nd.expand_dims(nd.expand_dims(nd.expand_dims(bias_n,0), 2), 3)
+
+                Fn = ry / Tn
+                rn = xn * nd.Deconvolution(Fn, weight_p , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout) + \
+                     xp * nd.Deconvolution(Fn, weight_n , bias=None, kernel=self.kernel, stride=self.stride, dilate=self.dilate, pad=self.pad, target_shape= (x.shape[2], x.shape[3]), num_filter=x.shape[1], num_group=self.num_group, no_bias=True, layout=self.layout)
+
+                rx = beta * rn
         else:
             print('Error in Conv layer: unknown LRP type {}'.format(self.lrp_type))
 
@@ -360,7 +404,7 @@ class DenseLRP(mx.operator.CustomOp):
         y      = out_data[0]
         ry     = out_grad[0]
 
-        # print('dense: {}|{}'.format(self.lrp_type, self.lrp_param))
+        # print('Dense: {}|{}'.format(self.lrp_type, self.lrp_param))
 
         if self.lrp_type == 'simple':
             zs = y + 1e-16*( (y >= 0) * 2 - 1.) #add weakdefault stabilizer to denominator
@@ -387,19 +431,21 @@ class DenseLRP(mx.operator.CustomOp):
                 zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
 
                 zn = z - zp
-                zsn = y - zps - default_stabilizer
+                zsn = y - zsp - default_stabilizer
 
-                return alpha * nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2) + beta * nd.sum(zn * nd.expand_dims(ry/zsn, axis=1), axis=2)
+                rxp = alpha * nd.sum(zp * nd.expand_dims(ry/zsp, axis=1), axis=2)
+                rxn = beta * nd.sum(zn * nd.expand_dims(ry/zsn, axis=1), axis=2)
+                rx = rxp + rxn
 
             elif alpha: #only alpha is not 0 -> alpha = 1, beta = 0
                 zp = z * zplus
                 zsp = nd.sum(zp, axis=1) + nd.expand_dims(bias * (bias > 0), axis=0) + default_stabilizer
-                return nd.sum(zp * nd.expand_dims(ry/zyp, axis=1), axis=2)
+                rx = nd.sum(zp * nd.expand_dims(ry/zsp, axis=1), axis=2)
 
             elif beta: # only beta is not 0 -> alpha = 0, beta = 1
-                zn = z - zp
-                zsn = y - zps - default_stabilizer
-                return nd.sum(Zn * nd.expand_dims(R/Zsn, axis=1), axis=2)
+                zn  = z * (1-zplus)
+                zsn = nd.sum(zn, axis=1) + nd.expand_dims(bias * (bias < 0), axis=0) - default_stabilizer
+                rx = nd.sum(zn * nd.expand_dims(ry/zsn, axis=1), axis=2)
 
         else:
             print('Error in Dense layer: unknown LRP type {}'.format(self.lrp_type))
@@ -565,7 +611,7 @@ class MaxPoolLRP(mx.operator.CustomOp):
 
         if self.method == 'loops:(':
 
-            if self.lrp_type == 'simple' or self.lrp_type == 'epsilon' or self.lrp_type == 'eps': # since maxpool only has equal dominant activations
+            if self.lrp_type == 'simple' or self.lrp_type == 'epsilon' or self.lrp_type == 'eps' or self.lrp_type == 'alphabeta': # since maxpool only has equal dominant activations
                 rx = nd.zeros_like(x,dtype=x.dtype)
                 for i in range(Hout):
                     for j in range(Wout):
