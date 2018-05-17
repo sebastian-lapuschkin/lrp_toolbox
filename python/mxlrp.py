@@ -1,6 +1,8 @@
 import mxnet as mx
 from mxnet import nd, autograd
 
+from mxnet import autograd
+
 import types
 
 import numpy as np # TODO: remove numpy, update to latest mxnet version
@@ -128,8 +130,7 @@ def translate_to_gluon(nn_sta, ctx=mx.cpu(), dtype='float32'):
 
     return nn_gluon
 
-def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1, debug_output=False, init_idx = 0, outer_call=True):
-
+def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1, debug_output=False, init_idx = 0, outer_call=True, maxpool_treatment='grad_n_sum'):
     # important: current implementation uses layer indices that assume that we onle use a tree structure of HybridSequential modules.
     # as soon as we add hybridconcurrents, the layer numbering might get trickier.
 
@@ -137,6 +138,7 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1
         print('switch_layer = {}'.format(switch_layer))
 
     inefficient_maxpool = False
+    wta_mpool = False
 
     for layer_idx, layer in enumerate(net._children):
 
@@ -146,10 +148,18 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1
             print(layer_idx, layer.__class__.__name__)
 
         if layer.__class__.__name__ == 'HybridSequential':
-            init_idx = patch_lrp_gradient(layer, lrp_type, lrp_param, switch_layer, init_idx = layer_idx + 1, outer_call=False)
+            print('... entering HybridSequential')
+            init_idx = patch_lrp_gradient(layer, lrp_type, lrp_param, switch_layer, init_idx = layer_idx + 1, outer_call=False, maxpool_treatment=maxpool_treatment, debug_output=debug_output)
 
         if layer.__class__.__name__ == 'Dense':
-            hybrid_forward_lrp = lambda self, F, x, weight, bias: dense_hybrid_forward_lrp(self, F, x, weight, bias, lrp_type=lrp_type, lrp_param=lrp_param)
+
+
+            if layer._flatten:
+                flatter = lambda x: x.reshape((0,-1))
+            else:
+                flatter = lambda x: x
+
+            hybrid_forward_lrp = lambda self, F, x, weight, bias: dense_hybrid_forward_lrp(self, F, flatter(x), weight, bias, lrp_type=lrp_type, lrp_param=lrp_param)
             layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
 
             if debug_output:
@@ -188,15 +198,23 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1
                 print('regular sumpool not yet implemented, add that')
 
         elif layer.__class__.__name__ == 'MaxPool2D':
-                hybrid_forward_lrp = lambda self, F, x: maxpool_hybrid_forward_lrp(self, F, x, lrp_type=lrp_type, lrp_param=lrp_param)
-                layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
-                inefficient_maxpool = True
 
-                if debug_output:
-                    print('updated MaxPool2D (VERY INEFFICIENT!!!)')
+            if maxpool_treatment == 'loops':
+                inefficient_maxpool = True
+            elif maxpool_treatment == 'grad_n_sum':
+                wta_mpool = True
+            else:
+                print('Warning: unknown maxpool treatment -{}-, using grad_n_sum (faster)'.format(maxpool_treatment))
+                maxpool_treatment='grad_n_sum'
+
+            hybrid_forward_lrp = lambda self, F, x: maxpool_hybrid_forward_lrp(self, F, x, lrp_type=lrp_type, lrp_param=lrp_param, maxpool_method=maxpool_treatment)
+            layer.hybrid_forward = types.MethodType(hybrid_forward_lrp, layer)
+
 
     if inefficient_maxpool:
         print('WARNING: using inefficient maxpool implementation (LOOPS)!!!')
+    elif wta_mpool:
+        print('WARNING: maxpool implementation uses mxnet gradient, relevance is not redistributed if several inputs in the window are equal and maximal. First max activation gets all the relevance.')
 
     if not outer_call:
         return layer_idx + 1
@@ -230,7 +248,7 @@ def sumpool_hybrid_forward_lrp(self, F, x, lrp_type='simple', lrp_param=0.):
 
         return F.Custom(x, kernel=kernel, stride=stride, pad=pad, lrp_type=lrp_type, lrp_param=lrp_param, op_type='sumpool_lrp')
 
-def maxpool_hybrid_forward_lrp(self, F, x, lrp_type='simple', lrp_param=0.):
+def maxpool_hybrid_forward_lrp(self, F, x, lrp_type='simple', lrp_param=0., maxpool_method='grad_n_sum'):
 
         kernel, stride, pad = map(self._kwargs.get, ['kernel', 'stride', 'pad'])
 
@@ -238,7 +256,7 @@ def maxpool_hybrid_forward_lrp(self, F, x, lrp_type='simple', lrp_param=0.):
             print('error: padded max pooling lrp not yet implemented')
             exit()
 
-        return F.Custom(x, kernel=kernel, stride=stride, lrp_type=lrp_type, lrp_param=lrp_param, op_type='maxpool_lrp')
+        return F.Custom(x, kernel=kernel, stride=stride, lrp_type=lrp_type, lrp_param=lrp_param, op_type='maxpool_lrp', maxpool_method=maxpool_method)
 
 ## ############### ##
 # CONVOLUTION LAYER #
@@ -420,6 +438,10 @@ class DenseLRP(mx.operator.CustomOp):
         bias   = in_data[2]
 
         y = nd.dot(x, weight.T) + bias # attention: Weight seems the other way around than in toolbox
+
+        # TODO: enable flatten support by using F.FullyConnected
+        # act = F.FullyConnected(x, weight, bias, no_bias=bias is None, num_hidden=self._units,
+        #                        flatten=self._flatten, name='fwd')
 
         self.assign(out_data[0], req[0], y)
 
@@ -605,7 +627,7 @@ class SumPoolLRPProp(mx.operator.CustomOpProp):
 
 class MaxPoolLRP(mx.operator.CustomOp):
 
-    def __init__(self, kernel, stride, lrp_type, lrp_param, method='loops:('):
+    def __init__(self, kernel, stride, lrp_type, lrp_param, method='grad_n_sum'):
         self.kernel    = kernel
         self.stride    = stride
         self.pad       = [0,0]
@@ -635,7 +657,8 @@ class MaxPoolLRP(mx.operator.CustomOp):
         Hout = (H - hpool) // hstride + 1
         Wout = (W - wpool) // wstride + 1
 
-        if self.method == 'loops:(':
+        if self.method == 'loops':
+            # get input flags
 
             if self.lrp_type == 'simple' or self.lrp_type == 'epsilon' or self.lrp_type == 'eps' or self.lrp_type == 'alphabeta': # since maxpool only has equal dominant activations
                 rx = nd.zeros_like(x,dtype=x.dtype)
@@ -654,9 +677,29 @@ class MaxPoolLRP(mx.operator.CustomOp):
 
 
             if self.lrp_type == 'simple' or self.lrp_type == 'epsilon' or self.lrp_type == 'eps': # since maxpool only has equal dominant activations
-                rx = nd.zeros_like(x,dtype=x.dtype)
 
-                # TODO: finish this
+                # get flags whether the input contributed to the output via the gradient
+                x.attach_grad()
+                with autograd.record():
+                    layer_output = nd.Pooling(x, kernel=self.kernel, stride=self.stride, pool_type = 'max', pad=self.pad)
+                input_gradient = autograd.grad(layer_output, x, head_grads=None, retain_graph=None, create_graph=False, train_mode=False)[0]
+
+                # get sums in output as conv of input flags
+                out_sums = nd.Pooling(input_gradient, kernel=self.kernel, stride=self.stride, pool_type = 'sum', pad=self.pad)
+                # divide relevance by output sums
+
+                # print(out_sums)
+
+                init_rel = ry / out_sums
+
+                # print(ry)
+
+                # get lrp as backprop to input
+                with autograd.record():
+                    layer_output = nd.Pooling(x, kernel=self.kernel, stride=self.stride, pool_type = 'max', pad=self.pad)
+                rx = autograd.grad(layer_output, x, head_grads=init_rel, retain_graph=None, create_graph=False, train_mode=False)[0]
+
+                # print(rx)
 
             else:
                 print('Error in MaxPool layer: unsupported LRP type {}'.format(self.lrp_type))
@@ -668,13 +711,14 @@ class MaxPoolLRP(mx.operator.CustomOp):
 
 @mx.operator.register("maxpool_lrp")  # register with name "maxpool_lrp"
 class MaxPoolLRPProp(mx.operator.CustomOpProp):
-    def __init__(self, kernel, stride, lrp_type, lrp_param):
+    def __init__(self, kernel, stride, lrp_type, lrp_param, maxpool_method='grad_n_sum'):
         super(MaxPoolLRPProp, self).__init__(True)
         self.kernel    = eval(kernel)
         self.stride    = eval(stride)
         self.pad       = [0,0]
         self.lrp_type  = lrp_type
         self.lrp_param = eval(lrp_param)
+        self.maxpool_method = maxpool_method
 
     def list_arguments(self):
         return ['data']
@@ -695,4 +739,4 @@ class MaxPoolLRPProp(mx.operator.CustomOpProp):
 
     def create_operator(self, ctx, in_shapes, in_dtypes):
         #  create and return the CustomOp class.
-        return MaxPoolLRP(self.kernel, self.stride, self.lrp_type, self.lrp_param)
+        return MaxPoolLRP(self.kernel, self.stride, self.lrp_type, self.lrp_param, method=self.maxpool_method)
