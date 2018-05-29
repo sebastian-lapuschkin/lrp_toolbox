@@ -256,6 +256,7 @@ class Convolution(Module):
                     Bp = (self.B * (self.B > 0))[na,na,na,na,...]
                     Zsp = Zp.sum(axis=(1,2,3),keepdims=True) + Bp
                     Ralpha = alpha * ((Zp/Zsp) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+                    Ralpha[np.isnan(Ralpha)] = 0
                 else:
                     Ralpha = 0
 
@@ -264,6 +265,7 @@ class Convolution(Module):
                     Bn = (self.B * (self.B < 0))[na,na,na,na,...]
                     Zsn = Zn.sum(axis=(1,2,3),keepdims=True) + Bn
                     Rbeta = beta * ((Zn/Zsn) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+                    Rbeta[np.isnan(Rbeta)] = 0
                 else:
                     Rbeta = 0
 
