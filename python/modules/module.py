@@ -12,7 +12,7 @@
 # -------------------------------
 # Modules for the neural network
 # -------------------------------
-class Module:
+class Module(object):
     '''
     Superclass for all computation layer implementations
     '''

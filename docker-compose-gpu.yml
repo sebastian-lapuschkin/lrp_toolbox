@@ -1,0 +1,15 @@
+version: '2.4'
+services:
+  gpu:
+    runtime: "nvidia"
+    build: 
+      context: ./docker/gpu
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+      - "6006:6006"
+    working_dir: /workdir
+    volumes:
+      - ./:/workdir
+    environment:
+        HASHED_PASSWORD: ${HASHED_PASSWORD}

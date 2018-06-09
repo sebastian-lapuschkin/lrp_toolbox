@@ -5,6 +5,7 @@ from rect import Rect
 from softmax import SoftMax
 from maxpool import MaxPool
 from sumpool import SumPool
+from avgpool import AveragePool
 from flatten import Flatten
 from convolution import Convolution
 from sequential import Sequential
