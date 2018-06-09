@@ -1,64 +1,37 @@
-# The LRP Toolbox for Artificial Neural Networks (1.2.0)
+# The LRP Toolbox for Keras
 
-The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
-specific  to  a  given  data  point  by  attributing
-relevance scores to  important  components
-of  the  input  by  using  the  topology  of  the  learned  model  itself.
+This is forked repository from [sebastian-lapuschkin/lrp_toolbox](https://github.com/sebastian-lapuschkin/lrp_toolbox).
 
-The LRP Toolbox provides simple and accessible stand-alone implementations of LRP for artificial neural networks supporting Matlab and python. The Toolbox realizes LRP functionality for the Caffe Deep Learning Framework as an extension of Caffe source code published in 10/2015.
+## Train network models
 
-The  implementations  for  Matlab  and  python  are intended as a sandbox or playground to familiarize the user to the LRP algorithm and  thus are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
+### With CPUs
 
-<img src="doc/images/1.png" width="280">
-<img src="doc/images/2.png" width="280">
-<img src="doc/images/7.png" width="280">
+```sh
+docker-compose run cpu python python/train_mnist.py
+```
 
-<img src="doc/images/volcano2.jpg" width="210"><img src="doc/images/volcano2_hm.jpg" width="210">
-<img src="doc/images/scooter10.jpg" width="210"><img src="doc/images/scooter_10_hm.jpg" width="210">
+### With GPUs
 
+```sh
+docker-compose -f docker-compose-gpu.yml run gpu python python/train_mnist.py
+```
 
-### See the LRP Toolbox in Action
-To try out either the python-based MNIST demo, or the Caffe based ImageNet demo in your browser, click on the respective panels:
+### Visualize the model by the LRP
 
-[<img src="http://heatmapping.org/images/mnist.png" width=210>](http://heatmapping.org/mnist.html)
-[<img src="http://heatmapping.org/images/caffe.png" width=210>](http://heatmapping.org/caffe.html)
+```sh
+docker-compose up
+# then, access to localhost:8888 through the browser
+```
 
+# LICENSE
 
+This project includes python modules from [sebastian-lapuschkin/lrp_toolbox](https://github.com/sebastian-lapuschkin/lrp_toolbox).
 
-### New in version 1.2.0
-#### The standalone implementations for python and Matlab:
-* Convnets with Sum- and Maxpooling are now supported, including demo code.
-* LRP-parameters can now be set for each layer individually
-* w² and flat weight decomposition implemented.
-
-
-
-#### Caffe:
-* Minimal output versions implemented.
-* Matthew Zeiler et al.'s  Deconvolution, Karen Simonyan et al.'s Sensitivity Maps, and aspects of Grégoire Montavon et al.'s Deep Taylor Decomposition are implemented, alongside the flat weight decomposition for uniformly projecting relevance scores to a neuron's receptive field have been implemented.
-
-#### Also:
-* Various optimizations, refactoring, bits and pieces here and there.
-
-
-
-### Obtaining the LRP Toolbox:
-You can directly download the latest full release / current verson from github. However, if you prefer to only download what is necessary for your project/language/purpose, make use of the pre-packaged downloads available at [heatmapping.org](http://www.heatmapping.org/)
-
-
-### Installing the Toolbox:
-
-After having obtained the toolbox code, data and models of choice, simply move into the subpackage folder of you choice -- matlab, python or caffe-master-lrp -- and execute the installation script (written for Ubuntu 14.04 or newer). 
-
-    <obtain the toolbox>
-    cd lrp_toolbox/$yourChoice
-    bash install.sh
-
-Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/doc/manual/manual.pdf).
+It's required to follow both licenses for [this project](https://github.com/yakigac/lrp_toolbox_keras/blob/master/LICENSE) and [the license](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/python/LICENSE) of the original project.
 
 ### The LRP Toolbox Paper
 
-When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/papers/volume17/15-618/15-618.pdf)
+When using any part of this toolbox, please cite [the original paper](http://jmlr.org/papers/volume17/15-618/15-618.pdf) to follow the original license.
 
     @article{JMLR:v17:15-618,
         author  = {Sebastian Lapuschkin and Alexander Binder and Gr{{\'e}}goire Montavon and Klaus-Robert M{{{\"u}}}ller and Wojciech Samek},
@@ -71,9 +44,6 @@ When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/p
         url     = {http://jmlr.org/papers/v17/15-618.html}
     }
 
-
-    
 ### Misc
 
-For further research and projects involving LRP, visit [heatmapping.org](http://heatmapping.org)
-
+For further research and projects involving LRP, visit [heatmapping.org](http://heatmapping.org).
