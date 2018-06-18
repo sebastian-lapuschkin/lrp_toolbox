@@ -9,9 +9,7 @@ The LRP Toolbox provides simple and accessible stand-alone implementations of LR
 
 The  implementations  for  Matlab  and  python  are intended as a sandbox or playground to familiarize the user to the LRP algorithm and  thus are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
 
-<img src="doc/images/1.png" width="280">
-<img src="doc/images/2.png" width="280">
-<img src="doc/images/7.png" width="280">
+<img src="doc/images/1.png" width="280"><img src="doc/images/2.png" width="280"><img src="doc/images/7.png" width="280">
 
 <img src="doc/images/volcano2.jpg" width="210"><img src="doc/images/volcano2_hm.jpg" width="210">
 <img src="doc/images/scooter10.jpg" width="210"><img src="doc/images/scooter_10_hm.jpg" width="210">
@@ -73,7 +71,9 @@ When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/p
 
 
     
-### Misc
+### Misc & Related
 
 For further research and projects involving LRP, visit [heatmapping.org](http://heatmapping.org)
+
+Also, consider paying https://github.com/albermax/innvestigate a visit! Next to LRP, iNNvestigate efficiently implements a hand full of additional DNN analysis methods and can boast with a >500-fold increase in computation speed when compared with our CPU-bound Caffe implementation! 
 
