@@ -43,7 +43,7 @@ class Sequential(Module):
         '''
         This function removes the softmax output layer from the model, if there is any.
         '''
-        from softmax import SoftMax
+        from .softmax import SoftMax
         if isinstance(self.modules[-1],  SoftMax):
             print('removing softmax output mapping')
             del self.modules[-1]
