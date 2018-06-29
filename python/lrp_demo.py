@@ -40,7 +40,7 @@ Y = np.zeros([X.shape[0],np.unique(Y).size])
 Y[np.arange(Y.shape[0]),I] = 1
 
 acc = np.mean(np.argmax(nn.forward(X), axis=1) == np.argmax(Y, axis=1))
-print 'model test accuracy is: {:0.4f}%'.format(acc)
+print 'model test accuracy is: {:0.4f}'.format(acc)
 
 #permute data order for demonstration. or not. your choice.
 I = np.arange(X.shape[0])
