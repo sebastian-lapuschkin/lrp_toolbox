@@ -39,6 +39,19 @@ class Sequential(Module):
         self.modules = modules
 
 
+    def drop_softmax_output_layer(self):
+        '''
+        This function removes the softmax output layer from the model, if there is any.
+        '''
+        from softmax import SoftMax
+        if isinstance(self.modules[-1],  SoftMax):
+            print 'removing softmax output mapping'
+            del self.modules[-1]
+        else:
+            print 'output layer is not softmax. nothing to do'
+
+
+
     def forward(self,X):
         '''
         Realizes the forward pass of an input through the net
