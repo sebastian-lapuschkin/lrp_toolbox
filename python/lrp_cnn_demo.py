@@ -27,6 +27,8 @@ import render
 
 #load a neural network, as well as the MNIST test data and some labels
 nn = model_io.read('../models/MNIST/LeNet-5.nn') # 99.23% prediction accuracy
+nn.drop_softmax_output_layer() #drop softnax output layer for analyses
+
 X = data_io.read('../data/MNIST/test_images.npy')
 Y = data_io.read('../data/MNIST/test_labels.npy')
 
@@ -43,6 +45,9 @@ I = Y[:,0].astype(int)
 Y = np.zeros([X.shape[0],np.unique(Y).size])
 Y[np.arange(Y.shape[0]),I] = 1
 
+acc = np.mean(np.argmax(nn.forward(X), axis=1) == np.argmax(Y, axis=1))
+print 'model test accuracy is: {:0.4f}'.format(acc)
+
 #permute data order for demonstration. or not. your choice.
 I = np.arange(X.shape[0])
 #I = np.random.permutation(I)
@@ -56,20 +61,25 @@ for i in I[:10]:
     print 'True Class:     ', np.argmax(Y[i])
     print 'Predicted Class:', np.argmax(ypred),'\n'
 
+    #prepare initial relevance to reflect the model's dominant prediction (ie depopulate non-dominant output neurons)
+    mask = np.zeros_like(ypred)
+    mask[:,np.argmax(ypred)] = 1
+    Rinit = ypred*mask
+
 
     #compute first layer relevance according to prediction
-    #R = nn.lrp(ypred)                   #as Eq(56) from DOI: 10.1371/journal.pone.0130140
-    R = nn.lrp(ypred,'epsilon',1.)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
-    #R = nn.lrp(ypred,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
+    #R = nn.lrp(Rinit)                   #as Eq(56) from DOI: 10.1371/journal.pone.0130140
+    R = nn.lrp(Rinit,'epsilon',1.)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
+    #R = nn.lrp(Rinit,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
-    #R = nn.lrp(Y[na,i],'epsilon',1.) #compute first layer relevance according to the true class label
+    #R = nn.lrp(ypred*Y[na,i],'epsilon',1.) #compute first layer relevance according to the true class label
 
 
     '''
     #compute first layer relvance for an arbitrarily selected class
     for yselect in range(10):
         yselect = (np.arange(Y.shape[1])[na,:] == yselect)*1.
-        R = nn.lrp(yselect,'epsilon',0.1)
+        R = nn.lrp(ypred*yselect,'epsilon',0.1)
     '''
 
     '''
@@ -87,7 +97,7 @@ for i in I[:10]:
     #
     nn.modules[0].set_lrp_parameters('ww') # also try 'flat'
     # compute the relevance map
-    R = nn.lrp(ypred)
+    R = nn.lrp(Rinit)
     '''
 
 
