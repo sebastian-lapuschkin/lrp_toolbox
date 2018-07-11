@@ -229,6 +229,7 @@ BOOST_PYTHON_MODULE(_caffe) {
     // adding LRP
     .def("_backward_relevance", &Net<Dtype>::Backward_Relevance)
     .def("_backward_gradient", &Net<Dtype>::Backward_Gradient)
+    .def("_backward_relevance_multi", &Net<Dtype>::Backward_Relevance_multi)
 
     // The cast is to select a particular overload.
     .def("copy_from", static_cast<void (Net<Dtype>::*)(const string)>(
@@ -338,7 +339,7 @@ BOOST_PYTHON_MODULE(_caffe) {
   // BEGIN: inserted for LRP python wrapper -------------------------------------------------------------------------------------
   // create wrapper for relpropopts for LRP TODO: See which ones are necessary to be exposed
   bp::class_<relpropopts>("RelPropOpts")
-    /* These options are available in the LRP version with ResNet support (caffe_09122016 in the SVN from Alex), 
+    /* These options are available in the LRP version with ResNet support (caffe_09122016 in the SVN from Alex),
        the caffe-wip version relpropopts does not support these functions or attributes
     .def("set_defaults", &relpropopts::setdefaults)
     .def_readwrite("classinds", &relpropopts::classinds)
@@ -377,6 +378,14 @@ BOOST_PYTHON_MODULE(_caffe) {
   // Wrap vector of vector for LRP's rawhm parameter
   bp::class_<vector<vector<double> > >("DoubleVecVec")
     .def(bp::vector_indexing_suite<vector<vector<double> > >());
+
+  // inserted for backward_relevance_multi:
+  bp::class_<vector<vector<vector<double> > > >("DoubleVecVecVec")
+    .def(bp::vector_indexing_suite<vector<vector<vector<double> > > >());
+  // Wrap vector of vector of Ints for the use in Backward_Relevance_multi
+  bp::class_<vector<vector<int> > >("IntVecVec")
+    .def(bp::vector_indexing_suite<vector<vector<int> > >());
+
   // END: inserted for LRP python wrapper ---------------------------------------------------------------------------------------
 
   // boost python expects a void (missing) return value, while import_array
