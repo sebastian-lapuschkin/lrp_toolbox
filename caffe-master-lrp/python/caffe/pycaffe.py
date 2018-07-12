@@ -227,7 +227,7 @@ def _Net_lrp(self, class_inds=None, lrp_opts=None):
     target_shape = self.blobs[self.blobs.keys()[layer_index]].data.shape
     Rx = np.reshape(Rx, target_shape)
     # for some reason the raw heatmap is saved as [batch x ch x w x h] so I flip the inner dims
-    Rx = np.transpose(Rx,(0,1,3,2))
+    Rx = np.transpose(Rx,(0,1,3,2))[:,::-1, :,:]
     return Rx
 
 
