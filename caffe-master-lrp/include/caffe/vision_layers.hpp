@@ -36,9 +36,9 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   virtual inline int MinTopBlobs() const { return 1; }
   virtual inline bool EqualNumBottomTopBlobs() const { return true; }
 
-  
 
-  
+
+
  protected:
   // Helper functions that abstract away the column buffer and gemm arguments.
   // The last argument in forward_cpu_gemm is so that we can skip the im2col if
@@ -51,11 +51,11 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void weight_cpu_gemm(const Dtype* input, const Dtype* output, Dtype*
       weights);
   void backward_cpu_bias(Dtype* bias, const Dtype* input);
-  
+
   void alphabeta(const Dtype* upperlayerrelevances, //ex output,
-		    const Dtype* weights, const Dtype* input, Dtype * new_lowerlayerrelevances, 
+		    const Dtype* weights, const Dtype* input, Dtype * new_lowerlayerrelevances,
 			const relpropopts & ro, bool skip_im2col = false);
-  
+
   void alphabeta_4cases(
   		const Dtype* upperlayerrelevances, //ex output,
   		const Dtype* weights, const Dtype* input,
@@ -74,6 +74,12 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   		const Dtype* weights, const Dtype* input,
   		Dtype * new_lowerlayerrelevances, const relpropopts & ro,
   		bool skip_im2col = false);
+
+  void wsquare2(
+      const Dtype* upperlayerrelevances, //ex output,
+      const Dtype* weights, //const Dtype* input,
+      Dtype * new_lowerlayerrelevances, const relpropopts & ro,
+      bool skip_im2col = false);
 
 
 #ifndef CPU_ONLY
@@ -249,11 +255,11 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
       : BaseConvolutionLayer<Dtype>(param) {}
 
   virtual inline const char* type() const { return "Convolution"; }
-  
+
   virtual void Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro, const std::vector<int> & classinds, const bool thenightstartshere );
-  
+
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -266,15 +272,15 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
   virtual inline bool reverse_dimensions() { return false; }
   virtual void compute_output_shape();
-  
+
   virtual void Backward_Relevance_cpu_epsstab_slowneasy(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro ) ;
   virtual void Backward_Relevance_cpu_alphabeta_slowneasy(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro ) ;
   virtual void Backward_Relevance_cpu_alphabeta_4cases(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro );
 
   virtual void Backward_Relevance_cpu_zbeta_gregoire2(const vector<Blob<Dtype>*>& top,
@@ -286,11 +292,11 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
   	  const int layerindex, const relpropopts & ro );
 
   virtual void Backward_Relevance_cpu_flatdist_slowneasy(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
 	  const int layerindex, const relpropopts & ro );
 
   virtual void Backward_Relevance_cpu_zeilerlike_slowneasy(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro ) ;
 
 
@@ -447,9 +453,9 @@ class LRNLayer : public Layer<Dtype> {
   virtual inline const char* type() const { return "LRN"; }
   virtual inline int ExactNumBottomBlobs() const { return 1; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
-  
+
   virtual void Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro , const std::vector<int> & classinds, const bool thenightstartshere);
 
  protected:
@@ -533,9 +539,9 @@ class PoolingLayer : public Layer<Dtype> {
     return (this->layer_param_.pooling_param().pool() ==
             PoolingParameter_PoolMethod_MAX) ? 2 : 1;
   }
-  
+
   virtual void Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
-        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+        const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
   	  const int layerindex, const relpropopts & ro, const std::vector<int> & classinds, const bool thenightstartshere );
 
  protected:
@@ -547,11 +553,11 @@ class PoolingLayer : public Layer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
-  
+
   virtual void Backward_Relevance_cpu_defaultpoolingtreatment_slowneasy(const vector<Blob<Dtype>*>& top,
-          const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+          const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
     	  const int layerindex, const relpropopts & ro );
-  
+
   virtual void Backward_Relevance_cpu_poolingtreatment_alwaysavg_sloweasy(const vector<Blob<Dtype>*>& top,
           const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
     	  const int layerindex, const relpropopts & ro );

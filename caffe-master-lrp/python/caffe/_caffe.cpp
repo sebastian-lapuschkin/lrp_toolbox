@@ -16,6 +16,7 @@
 
 #include "caffe/caffe.hpp"
 #include "caffe/python_layer.hpp"
+#include "caffe/relpropopts.hpp" // LRP options class
 
 // Temporary solution for numpy < 1.7 versions: old macro, no promises.
 // You're strongly advised to upgrade to >= 1.7.
@@ -224,6 +225,12 @@ BOOST_PYTHON_MODULE(_caffe) {
     .def("_forward", &Net<Dtype>::ForwardFromTo)
     .def("_backward", &Net<Dtype>::BackwardFromTo)
     .def("reshape", &Net<Dtype>::Reshape)
+
+    // adding LRP
+    .def("_backward_relevance", &Net<Dtype>::Backward_Relevance)
+    .def("_backward_gradient", &Net<Dtype>::Backward_Gradient)
+    .def("_backward_relevance_multi", &Net<Dtype>::Backward_Relevance_multi)
+
     // The cast is to select a particular overload.
     .def("copy_from", static_cast<void (Net<Dtype>::*)(const string)>(
         &Net<Dtype>::CopyTrainedLayersFrom))
@@ -328,6 +335,58 @@ BOOST_PYTHON_MODULE(_caffe) {
     .def(bp::vector_indexing_suite<vector<shared_ptr<Net<Dtype> > >, true>());
   bp::class_<vector<bool> >("BoolVec")
     .def(bp::vector_indexing_suite<vector<bool> >());
+
+  // BEGIN: inserted for LRP python wrapper -------------------------------------------------------------------------------------
+  // create wrapper for relpropopts for LRP TODO: See which ones are necessary to be exposed
+  bp::class_<relpropopts>("RelPropOpts")
+    /* These options are available in the LRP version with ResNet support (caffe_09122016 in the SVN from Alex),
+       the caffe-wip version relpropopts does not support these functions or attributes
+    .def("set_defaults", &relpropopts::setdefaults)
+    .def_readwrite("classinds", &relpropopts::classinds)
+    .def_readwrite("curlayerindex", &relpropopts::curlayerindex)
+    .def_readwrite("lrptype_batchnormscale", &relpropopts::lrptype_batchnormscale)
+    .def_readwrite("epsstab_batchnormscale", &relpropopts::epsstab_batchnormscale)
+    .def_readwrite("epscap_batchnormscale", &relpropopts::epscap_batchnormscale)
+    .def_readwrite("alphabeta_batchnormscale", &relpropopts::alphabeta_batchnormscale)
+    .def_readwrite("lrptype_pool", &relpropopts::lrptype_pool)
+    .def_readwrite("epsstab_pool", &relpropopts::epsstab_pool)
+    .def_readwrite("epscap_pool", &relpropopts::epscap_pool)
+    .def_readwrite("alphabeta_pool", &relpropopts::alphabeta_pool)
+    .def_readwrite("lrptype_eltwise", &relpropopts::lrptype_eltwise)
+    .def_readwrite("epsstab_eltwise", &relpropopts::epsstab_eltwise)
+    .def_readwrite("epscap_eltwise", &relpropopts::epscap_eltwise)
+    .def_readwrite("alphabeta_eltwise", &relpropopts::alphabeta_eltwise)
+    */
+
+    .def_readwrite("codeexectype", &relpropopts::codeexectype)
+    .def_readwrite("relpropformulatype", &relpropopts::relpropformulatype)
+    .def_readwrite("lrn_forward_type", &relpropopts::lrn_forward_type)
+    .def_readwrite("lrn_backward_type", &relpropopts::lrn_backward_type)
+    .def_readwrite("maxpoolingtoavgpoolinginbackwardpass", &relpropopts::maxpoolingtoavgpoolinginbackwardpass)
+    .def_readwrite("biastreatmenttype", &relpropopts::biastreatmenttype)
+    .def_readwrite("epsstab", &relpropopts::epsstab)
+    .def_readwrite("alphabeta_beta", &relpropopts::alphabeta_beta)
+    .def_readwrite("lastlayerindex", &relpropopts::lastlayerindex)
+    .def_readwrite("firstlayerindex", &relpropopts::firstlayerindex)
+    .def_readwrite("numclasses", &relpropopts::numclasses)
+    .def_readwrite("auxiliaryvariable_maxlayerindexforflatdistinconv", &relpropopts::auxiliaryvariable_maxlayerindexforflatdistinconv);
+
+  // Hack to convert nested vector from LRP (rawhm) to numpy arrray. See pycaffe.py
+  //typedef vector<vector<double> > > double_vec;
+  bp::class_<vector<double> >("DoubleVec")
+    .def(bp::vector_indexing_suite<vector<double> >());
+  // Wrap vector of vector for LRP's rawhm parameter
+  bp::class_<vector<vector<double> > >("DoubleVecVec")
+    .def(bp::vector_indexing_suite<vector<vector<double> > >());
+
+  // inserted for backward_relevance_multi:
+  bp::class_<vector<vector<vector<double> > > >("DoubleVecVecVec")
+    .def(bp::vector_indexing_suite<vector<vector<vector<double> > > >());
+  // Wrap vector of vector of Ints for the use in Backward_Relevance_multi
+  bp::class_<vector<vector<int> > >("IntVecVec")
+    .def(bp::vector_indexing_suite<vector<vector<int> > >());
+
+  // END: inserted for LRP python wrapper ---------------------------------------------------------------------------------------
 
   // boost python expects a void (missing) return value, while import_array
   // returns NULL for python3. import_array1() forces a void return value.
