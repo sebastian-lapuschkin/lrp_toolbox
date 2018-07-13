@@ -22,6 +22,20 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 [<img src="http://heatmapping.org/images/caffe.png" width=210>](http://heatmapping.org/caffe.html)
 
 
+### New in next-release:
+#### standalone python implementation:
+* update to python 3
+* update treatment of softmax and target class
+* lrp_aware option for efficient calculation of multiple backward passes
+* custom colormaps in render.py
+
+### caffe implementation
+* update the installation config
+* new formula types 100, 102, 104
+* new python wrapper to use lrp in pycaffe
+* pycaffe demo file
+* bugfixes
+
 
 ### New in version 1.2.0
 #### The standalone implementations for python and Matlab:
