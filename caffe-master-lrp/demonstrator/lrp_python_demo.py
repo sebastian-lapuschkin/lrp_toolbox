@@ -125,9 +125,6 @@ def simple_lrp_demo():
             heatmap *= 255
             heatmap *= (heatmap > 0)
 
-        print heatmap
-        print np.max(heatmap), np.min(heatmap)
-
         plt.imshow(heatmap, interpolation = 'none')
 
     plt.axis('off')
@@ -291,7 +288,6 @@ def transform_input(input_image, transpose_input_dimensions = False, channel_swa
     input_image = input_image.resize((in_hei, in_wid), Image.ANTIALIAS)
 
     input_image = np.array(input_image)
-    print 'shape:',  input_image.shape
 
     if transpose_input_dimensions:
         # suppose data in (H,W,D) format, change to (D,H,W) for caffe
@@ -362,7 +358,7 @@ def cropped_imagenet_mean(inhei, inwid):
 
     # mean file is shape (3, 256, 256), however both googlenet and caffenet have smaller inputs -> crop the mean file
     if ((256 < inhei) or (256 < inwid)):
-        print 'ERROR: Net Input size too large. Now using the pixel/colorchannel mean (scalar)'
+        print ('ERROR: Net Input size too large. Now using the pixel/colorchannel mean (scalar)')
         mean = np.mean(mean_from_file)
     else:
         w_offset = (256 - inwid) / 2
