@@ -102,9 +102,9 @@ cd ..
 
 # MAKE PYCAFFE AND SHOW DEMO USAGE
 # notes:
-#   - expects python 3 as your standard python command (otherwise change to python3)
+#   - the pycaffe interface only supports python 2, you might have to adapt the python command
 #   - only temporarily adds the caffe-master-lrp/python directory to your PYTHONPATH. If you want to use the lrp caffe python wrapper from outside this script, add it to your PYTHONPATH manually.
 
 make pycaffe
 cd demonstrator
-python lrp_python_demo.py
+python2 lrp_python_demo.py
