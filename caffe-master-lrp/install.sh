@@ -86,6 +86,7 @@ make all -j10
 
 
 # BUILD DEMONSTRATOR APPLICATION (requires and installs ImageMagick)
+cd demonstrator
 sudo apt-get install -y libmagick++-dev
 bash build.sh
 chmod +x lrp_demo
