@@ -1,10 +1,14 @@
-import caffe
 import os
 import numpy as np
 import Image
 import matplotlib           as mpl
 import matplotlib.pyplot    as plt
 import copy
+import sys
+
+# temporarily append the directory of the pycaffe wrapper (lrp_toolbox/caffe-master-lrp/python) to the PYTHONPATH
+sys.path.append('../python')
+import caffe
 
 # global variables to make this demo more convient to use
 IMAGENET_MEAN_LOCATION  = '../python/caffe/imagenet/ilsvrc_2012_mean.npy'
