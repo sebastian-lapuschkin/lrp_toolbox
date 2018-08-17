@@ -12,7 +12,7 @@ import caffe
 
 # global variables to make this demo more convient to use
 IMAGENET_MEAN_LOCATION  = '../python/caffe/imagenet/ilsvrc_2012_mean.npy'
-EXAMPLE_IMAGE_PATH      = 'someimages/cat18.jpg'
+EXAMPLE_IMAGE_FOLDER    = 'someimages'
 MODEL                   = 'caffenet'                                        # options: ('googlenet' | 'caffenet')
                                                                             # - for caffenet, execute download_model.sh prior to this script
                                                                             # - for googlenet, a pre-trained model can be downloaded from http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel
@@ -20,10 +20,10 @@ MODEL                   = 'caffenet'                                        # op
 def main():
     simple_lrp_demo()
 
-def simple_lrp_demo():
+def simple_lrp_demo(num_images = 3):
     """
     Simple example to demonstrate the LRP methods using the Caffe python interface.
-    Calculates the prediction and LRP heatmap for an example image.
+    Calculates the prediction and LRP heatmap for num_images of example imaages from the EXAMPLE_IMAGE_FOLDER
     """
 
 
@@ -42,13 +42,14 @@ def simple_lrp_demo():
     cropped_mean = cropped_imagenet_mean(in_hei, in_wid)
 
     # load example iamge
-    example_image = Image.open(EXAMPLE_IMAGE_PATH)
+    image_paths = [os.path.join(EXAMPLE_IMAGE_FOLDER, EXAMPLE_IMAGE_PATH) for EXAMPLE_IMAGE_PATH in os.listdir(EXAMPLE_IMAGE_FOLDER)[:num_images]]
+    example_images = [Image.open(img_pth) for img_pth in image_paths]
 
     # preprocess image to fit caffe input convention (subtract mean, swap input dimensions (input blob convention is NxCxHxW), transpose color channels to BGR)
-    transformed_input = transform_input(example_image, True, True, in_hei = in_hei, in_wid = in_wid, mean=cropped_mean)
+    transformed_input = np.array([transform_input(example_image, True, True, in_hei = in_hei, in_wid = in_wid, mean=cropped_mean)for example_image in example_images])
 
     # adapt caffe batchsize to avoid unnecessary computations
-    net.blobs['data'].reshape(1, *transformed_input.shape)
+    net.blobs['data'].reshape(*transformed_input.shape)
 
     # classification (forward pass)
     # the lrp_hm convenience method always performs a forward pass, this lines are not necessary
@@ -78,71 +79,71 @@ def simple_lrp_demo():
     # backward = net.lrp(classind, lrp_opts(lrp_type, lrp_param, switch_layer))
     backward = lrp_hm(net, transformed_input, lrp_method=lrp_type, lrp_param=lrp_param, target_class_inds=classind, switch_layer=switch_layer)
 
-    mean_over_channels = True
+    sum_over_channels  = True
     normalize_heatmap  = False
 
     if lrp_type == 'deconv':
-        mean_over_channels = False
+        sum_over_channels = False
         normalize_heatmap  = True
 
     # post-process the relevance values
-    heatmap = process_raw_heatmap(backward, normalize = normalize_heatmap, mean_over_channels=mean_over_channels)
+    heatmaps = process_raw_heatmaps(backward, normalize=normalize_heatmap, sum_over_channels=sum_over_channels)
 
-    # stretch input to input dimensions (only for visualization)
-    stretched_input = transform_input(example_image, False, False, in_hei = in_hei, in_wid = in_wid, mean=cropped_mean)
+    for im_idx in range(num_images):
 
-    # presentation
-    plt.subplot(1,2,1)
-    plt.title('Prediction: {}'.format(top_class))
-    plt.imshow(stretched_input)
-    plt.axis('off')
+        # stretch input to input dimensions (only for visualization)
+        stretched_input = transform_input(example_images[im_idx], False, False, in_hei = in_hei, in_wid = in_wid, mean=cropped_mean)
+        heatmap = heatmaps[im_idx]
 
-    # normalize heatmap for visualization
-    max_abs = np.max(np.absolute(heatmap))
-    norm = mpl.colors.Normalize(vmin = -max_abs, vmax = max_abs)
+        # presentation
+        plt.subplot(1,2,1)
+        plt.title('Prediction: {}'.format(top_class))
+        plt.imshow(stretched_input)
+        plt.axis('off')
 
-    plt.subplot(1,2,2)
+        # normalize heatmap for visualization
+        max_abs = np.max(np.absolute(heatmap))
+        norm = mpl.colors.Normalize(vmin = -max_abs, vmax = max_abs)
 
-    if lrp_type in ['epsilon', 'alphabeta', 'eps', 'ab']:
-        plt.title('{}-LRP heatmap for class {}'.format(lrp_type, classind))
+        plt.subplot(1,2,2)
 
-    if lrp_type in ['eps_n_flat', 'eps_n_square', 'std_n_ab']:
-        if lrp_type == 'eps_n_flat':
-            first_method    = 'epsilon'
-            second_method   = 'wflat'
+        if lrp_type in ['epsilon', 'alphabeta', 'eps', 'ab']:
+            plt.title('{}-LRP heatmap for class {}'.format(lrp_type, classind))
 
-        elif lrp_type == 'eps_n_square':
-            first_method    = 'epsilon'
-            second_method   = 'wsquare'
+        if lrp_type in ['eps_n_flat', 'eps_n_square', 'std_n_ab']:
+            if lrp_type == 'eps_n_flat':
+                first_method    = 'epsilon'
+                second_method   = 'wflat'
 
-        elif lrp_type == 'std_n_ab':
-            first_method    = 'epsilon'
-            second_method   = 'alphabeta'
+            elif lrp_type == 'eps_n_square':
+                first_method    = 'epsilon'
+                second_method   = 'wsquare'
 
-        plt.title('LRP heatmap for class {}\nstarting with {}\n {} from layer {} on.'.format(classind, first_method, second_method, switch_layer))
+            elif lrp_type == 'std_n_ab':
+                first_method    = 'epsilon'
+                second_method   = 'alphabeta'
 
-    if mean_over_channels:
-        # relevance values are averaged over the pixel channels, use a 1-channel colormap (seismic)
-        plt.imshow(heatmap, cmap='seismic', norm=norm, interpolation='none')
-    else:
-        # 1 relevance value per color channel
+            plt.title('LRP heatmap for class {}\nstarting with {}\n {} from layer {} on.'.format(classind, first_method, second_method, switch_layer))
 
-        if normalize_heatmap:
-            # heatmap in [-1,1], transform to [0,255] for visualization
-            # heatmap *= 127  # now in [-127, +127]
-            # heatmap += 127  # now in [0, 254]
-            heatmap *= 255
-            heatmap *= (heatmap > 0)
+        if sum_over_channels:
+            # relevance values are averaged over the pixel channels, use a 1-channel colormap (seismic)
+            plt.imshow(heatmap[...,0], cmap='seismic', norm=norm, interpolation='none')
+        else:
+            # 1 relevance value per color channel
+            heatmap = normalize_color_hm(heatmap)
+            plt.imshow(heatmap, interpolation = 'none')
 
-        plt.imshow(heatmap, interpolation = 'none')
-
-    plt.axis('off')
-    plt.show()
+        plt.axis('off')
+        plt.show()
 
 
 ## ############### ##
 # Helper Functions: #
 ## ############### ##
+
+def normalize_color_hm(hm):
+    norm_hm = hm /  np.max(np.absolute(hm))
+    return norm_hm / 2. + 0.5
 
 
 def split_into_batches(data, batch_size):
@@ -302,7 +303,7 @@ def lrp_hm(net, input_images, lrp_method = 'epsilon', lrp_param = 0.0000001, tar
 
     return output
 
-def process_raw_heatmap(rawhm, normalize=False, mean_over_channels=True):
+def process_raw_heatmaps(rawhm_batch, normalize=False, sum_over_channels=True):
     """
     Process raw heatmap as outputted by the caffe network.
     Inverts channel swap to RGB and brings the heatmap back to the (height, width, channels) format
@@ -310,34 +311,34 @@ def process_raw_heatmap(rawhm, normalize=False, mean_over_channels=True):
     Parameters
     ----------
     rawhm:      numpy.ndarray
-                raw heatmap as outputted by the lrp method
+                raw heatmap batch as outputted by the lrp_hm method
 
     normalize:  bool
                 flag indicating whether to normalize the heatmap to the [-1, 1] interval (divide each pixel value by the highest absolute value)
 
-    mean_over_channels: bool
-                flag indicating whether to mean the heatmap values over the last image dimension (color channels)
+    sum_over_channels: bool
+                flag indicating whether to sum the heatmap values over the last image dimension (color channels)
 
     Returns
     -------
     heatmap:    numpy.ndarray
-                processed heatmap
+                processed heatmap batch
     """
 
-    # h,w,c format
-    rawhm = rawhm[0].transpose(1,2,0)
+    # n,h,w,c format
+    rawhm_batch = rawhm_batch.transpose(0,2,3,1)
+    heatmap = rawhm_batch
 
-    heatmap = rawhm
-
-    if mean_over_channels:
+    if sum_over_channels:
         # color information not used, average over the channels dimension
-        heatmap = heatmap.mean(2)
+        heatmap = heatmap.sum(3, keepdims=True)
+
     else:
         # color information important, invert caffe BGR channels wap to RGB
-        heatmap = heatmap[:,:, [2,1,0]]
+        heatmap = heatmap[:,:,:, [2,1,0]]
 
     if normalize:
-        heatmap = heatmap / np.max(np.absolute(heatmap))
+        heatmap = heatmap / np.max(np.absolute(heatmap, axis=[1, 2, 3], keepdims=True), axis=[1, 2, 3], keepdims=True)
 
     return heatmap
 
