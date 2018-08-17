@@ -52,10 +52,10 @@ def simple_lrp_demo(num_images = 3):
     net.blobs['data'].reshape(*transformed_input.shape)
 
     # classification (forward pass)
-    # the lrp_hm convenience method always performs a forward pass, this lines are not necessary
-    net.blobs['data'].data[...] = transformed_input[None, :]
+    # the lrp_hm convenience method always performs a forward pass anyways, the output here is only used to output the top predictions later
+    net.blobs['data'].data[...] = transformed_input
     out = net.forward()
-    top_class = np.argmax(out['prob'])
+    top_predictions = np.argmax(out['prob'], axis=1)
 
 
     ## ############# ##
@@ -76,7 +76,6 @@ def simple_lrp_demo(num_images = 3):
     ## ################################## ##
 
     # LRP
-    # backward = net.lrp(classind, lrp_opts(lrp_type, lrp_param, switch_layer))
     backward = lrp_hm(net, transformed_input, lrp_method=lrp_type, lrp_param=lrp_param, target_class_inds=classind, switch_layer=switch_layer)
 
     sum_over_channels  = True
@@ -90,6 +89,12 @@ def simple_lrp_demo(num_images = 3):
     heatmaps = process_raw_heatmaps(backward, normalize=normalize_heatmap, sum_over_channels=sum_over_channels)
 
     for im_idx in range(num_images):
+        
+        if classind == -1:
+            print('top class!')
+            target_index = top_predictions[im_idx]
+        else:
+            target_index = classind
 
         # stretch input to input dimensions (only for visualization)
         stretched_input = transform_input(example_images[im_idx], False, False, in_hei = in_hei, in_wid = in_wid, mean=cropped_mean)
@@ -97,7 +102,7 @@ def simple_lrp_demo(num_images = 3):
 
         # presentation
         plt.subplot(1,2,1)
-        plt.title('Prediction: {}'.format(top_class))
+        plt.title('Prediction: {}'.format(top_predictions[im_idx]))
         plt.imshow(stretched_input)
         plt.axis('off')
 
@@ -108,7 +113,7 @@ def simple_lrp_demo(num_images = 3):
         plt.subplot(1,2,2)
 
         if lrp_type in ['epsilon', 'alphabeta', 'eps', 'ab']:
-            plt.title('{}-LRP heatmap for class {}'.format(lrp_type, classind))
+            plt.title('{}-LRP heatmap for class {}'.format(lrp_type, target_index))
 
         if lrp_type in ['eps_n_flat', 'eps_n_square', 'std_n_ab']:
             if lrp_type == 'eps_n_flat':
@@ -123,7 +128,7 @@ def simple_lrp_demo(num_images = 3):
                 first_method    = 'epsilon'
                 second_method   = 'alphabeta'
 
-            plt.title('LRP heatmap for class {}\nstarting with {}\n {} from layer {} on.'.format(classind, first_method, second_method, switch_layer))
+            plt.title('LRP heatmap for class {}\nstarting with {}\n {} from layer {} on.'.format(target_index, first_method, second_method, switch_layer))
 
         if sum_over_channels:
             # relevance values are averaged over the pixel channels, use a 1-channel colormap (seismic)
