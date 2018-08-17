@@ -47,7 +47,11 @@ def simple_lrp_demo():
     # preprocess image to fit caffe input convention (subtract mean, swap input dimensions (input blob convention is NxCxHxW), transpose color channels to BGR)
     transformed_input = transform_input(example_image, True, True, in_hei = in_hei, in_wid = in_wid, mean=cropped_mean)
 
+    # adapt caffe batchsize to avoid unnecessary computations
+    net.blobs['data'].reshape(1, *transformed_input.shape)
+
     # classification (forward pass)
+    # the lrp_hm convenience method always performs a forward pass, this lines are not necessary
     net.blobs['data'].data[...] = transformed_input[None, :]
     out = net.forward()
     top_class = np.argmax(out['prob'])
@@ -58,7 +62,7 @@ def simple_lrp_demo():
     ## ############# ##
     lrp_type    = 'epsilon'         # (epsilon | alphabeta | eps_n_flat | eps_n_square | std_n_ab)
     lrp_param   =  0.000001         # (epsilon | beta      | epsilon    | epsilon      | beta    )
-    classind    =  282              # (class index  | top_class)
+    classind    =  -1              # (class index  | -1 for top_class)
 
     # switch_layer param only needed for the composite methods:            eps_n_flat(relpropformulatype 54), eps_n_square (relpropformulatype 56), ab_n_flat (relpropformulatype 58), ab_n_square (relpropformulatype 60), std_n_ab (relpropformulatype 114)
     # the parameter depicts the first layer for which the second formula type is used.
@@ -71,12 +75,13 @@ def simple_lrp_demo():
     ## ################################## ##
 
     # LRP
-    backward = net.lrp(classind, lrp_opts(lrp_type, lrp_param, switch_layer))
+    # backward = net.lrp(classind, lrp_opts(lrp_type, lrp_param, switch_layer))
+    backward = lrp_hm(net, transformed_input, lrp_method=lrp_type, lrp_param=lrp_param, target_class_inds=classind, switch_layer=switch_layer)
 
     mean_over_channels = True
     normalize_heatmap  = False
 
-    if lrp_type == 'deconv':# or lrp_type == 'std_n_deconv':
+    if lrp_type == 'deconv':
         mean_over_channels = False
         normalize_heatmap  = True
 
@@ -138,6 +143,164 @@ def simple_lrp_demo():
 ## ############### ##
 # Helper Functions: #
 ## ############### ##
+
+
+def split_into_batches(data, batch_size):
+
+    """
+    Split given batch of data into smaller batches of max batch_size data.
+
+    Parameters
+    ----------
+    data:   numpy.ndarray of shape (N, ...)
+            large batch of data
+            first dimension needs to be the samples (data[i] gives i-th data point), a possible shape is (N, H, W, D) for image data
+
+    batchs_size:
+            int
+            batch size needed
+
+    Returns
+    -------
+    batches:    list[numpy.ndarray]
+                a list of all batches of maximum batch size batch_size
+    """
+
+
+    N = data.shape[0]
+
+    num_batches     = N / batch_size + int(N % batch_size != 0)
+
+    batches = []
+
+    for batch_idx in range(num_batches):
+        batches.append(data[batch_idx * batch_size: np.min([N, (batch_idx + 1) * batch_size])])
+
+    return batches
+
+def get_target_indices(target_indices, predictions):
+    '''
+    check the format of the target_indices and translate negative indices to top prediction indices (-x is top x prediction)
+    '''
+
+    batch_size = predictions.shape[0]
+    target_indices = np.array(target_indices, dtype='int32')
+
+    # assure that target_indices is either a single value (used for all images) or a vector of length batch_size
+    target_indices_vector_length = len(target_indices.shape)
+
+    if target_indices_vector_length > 1:
+        print('Error: target_indices vector needs to be either a single value or a 1d numpy array')
+
+    elif target_indices_vector_length == 0:
+        target_indices = target_indices[None]
+
+    target_vec_dim = target_indices.shape[0]
+
+    if  target_vec_dim == 1:
+        target_indices = target_indices[0]
+        target_indices = np.ones(batch_size, dtype='int32') * target_indices
+        # print('single target class given -> use the same target class for all images in the batch')
+
+    elif target_vec_dim == batch_size:
+        # print('individual target class given for each image')
+        pass
+
+    else:
+        print('ERROR: several target classes given but shape does not match the batch size.')
+        return None
+
+    pos_inds = target_indices >= 0
+    neg_inds = target_indices <  0
+
+
+    if np.any(neg_inds):
+        top_preds  = np.argsort(predictions)
+
+        target_vec = np.zeros(batch_size, dtype='int32')
+        target_vec[pos_inds] = target_indices[pos_inds]
+        target_vec[neg_inds] = top_preds[neg_inds, target_indices[neg_inds]]
+        target_indices = target_vec
+
+    return target_indices
+
+def lrp_hm(net, input_images, lrp_method = 'epsilon', lrp_param = 0.0000001, target_class_inds = -1, switch_layer = -1, single_mode=False, verbose_output= False):
+
+    input_shape = input_images.shape
+    network_batch_shape = net.blobs['data'].data.shape
+
+    if isinstance( target_class_inds, ( int, long ) ):
+        print('Using the same target class {} for all inputs in the batch.'.format(target_class_inds))
+    else:
+        assert(target_class_inds.shape[0] == input_images.shape[0])
+        print('Individual classind given for each input')
+
+    if single_mode:
+        og_batch_size = int(network_batch_shape[0])
+        net.blobs['data'].reshape(1, network_batch_shape[1], network_batch_shape[2], network_batch_shape[3])
+        net.reshape()
+        # print('Changed batchsize to {}'.format(1))
+
+    batch_size = net.blobs['data'].shape[0]
+    input_batches = split_into_batches(input_images, batch_size)
+    output = []
+
+    num_batches = len(input_batches)
+
+    if not single_mode:
+        print('...start batch processing with batchsize {}'.format(batch_size))
+
+    for b_i, input_image_batch in enumerate(input_batches):
+
+        if not single_mode and verbose_output:
+            print 'batch ({}/{})'.format(b_i+1, num_batches)
+
+        # test prediction:
+        original_shape = net.blobs['data'].shape
+
+        # last batch can be smaller: adapt network input size for this batch
+        tmp_reduced_batchsize = False
+        if original_shape[0] != input_image_batch.shape[0]:
+            net.blobs['data'].reshape(input_image_batch.shape[0], original_shape[1], original_shape[2], original_shape[3])
+            net.reshape()
+            tmp_reduced_batchsize = True
+            # print('Changed batchsize to {}'.format(input_image_batch.shape[0]))
+
+        net.blobs['data'].data[...] = input_image_batch
+        out = net.forward()
+
+        target_class = get_target_indices(target_class_inds, out['prob'])
+
+        if single_mode:
+
+            if switch_layer > 0 and lrp_method != 'epsilon' and lrp_method != 'alphabeta':
+                relevance = net.lrp_single(int(target_class[0]), lrp_opts(lrp_method, lrp_param, switch_layer = switch_layer))
+            else:
+                relevance = net.lrp_single(int(target_class[0]), lrp_opts(lrp_method, lrp_param))
+
+        else:
+
+            if switch_layer > 0 and lrp_method != 'epsilon' and lrp_method != 'alphabeta':
+                relevance = net.lrp(target_class, lrp_opts(lrp_method, lrp_param, switch_layer = switch_layer))
+            else:
+                relevance = net.lrp(target_class, lrp_opts(lrp_method, lrp_param))
+
+        output.append(relevance)
+
+        # revert network input change for the smaller batch
+        if tmp_reduced_batchsize:
+            net.blobs['data'].reshape(original_shape[0], original_shape[1], original_shape[2], original_shape[3])
+            net.reshape()
+            # print('Changed batchsize to {}'.format(original_shape[0]))
+
+    output = np.concatenate(output)
+
+    if single_mode:
+        net.blobs['data'].reshape(og_batch_size, network_batch_shape[1], network_batch_shape[2], network_batch_shape[3])
+        net.reshape()
+        # print('Changed batchsize to {}'.format(og_batch_size))
+
+    return output
 
 def process_raw_heatmap(rawhm, normalize=False, mean_over_channels=True):
     """

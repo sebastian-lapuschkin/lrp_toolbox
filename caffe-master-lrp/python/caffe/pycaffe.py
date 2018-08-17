@@ -445,8 +445,9 @@ Net.params = _Net_params
 Net.forward = _Net_forward
 Net.backward = _Net_backward
 # LRP
-Net.lrp = _Net_lrp
-Net.lrp_multi = _Net_lrp_multi
+# lrp_multi can process batch sizes larger than 1, try using lrp_single in case problems with lrp_multi arise 
+Net.lrp = _Net_lrp_multi
+Net.lrp_single = _Net_lrp
 
 Net.forward_all = _Net_forward_all
 Net.forward_backward_all = _Net_forward_backward_all
