@@ -137,16 +137,32 @@ def lrp_hm(net, input_images, lrp_method = 'epsilon', lrp_param = 0.0000001, tar
         if single_mode:
 
             if switch_layer > 0 and lrp_method != 'epsilon' and lrp_method != 'alphabeta':
-                relevance = net.lrp_single(int(target_class[0]), lrp_opts(lrp_method, lrp_param, switch_layer = switch_layer))
+                lrpopts =  lrp_opts(lrp_method, lrp_param, switch_layer = switch_layer) 
+                if lrpopts is None:
+                    print('Invalid lrp parameter setting, check lrp_type and lrp_param')
+                    return None
+                relevance = net.lrp_single(int(target_class[0]), lrpopts)
             else:
-                relevance = net.lrp_single(int(target_class[0]), lrp_opts(lrp_method, lrp_param))
+                lrpopts =  lrp_opts(lrp_method, lrp_param) 
+                if lrpopts is None:
+                    print('Invalid lrp parameter setting, check lrp_type and lrp_param')
+                    return None
+                relevance = net.lrp_single(int(target_class[0]), lrpopts)
 
         else:
 
             if switch_layer > 0 and lrp_method != 'epsilon' and lrp_method != 'alphabeta':
-                relevance = net.lrp(target_class, lrp_opts(lrp_method, lrp_param, switch_layer = switch_layer))
+                lrpopts =  lrp_opts(lrp_method, lrp_param, switch_layer = switch_layer) 
+                if lrpopts is None:
+                    print('Invalid lrp parameter setting, check lrp_type and lrp_param')
+                    return None
+                relevance = net.lrp(target_class, lrpopts)
             else:
-                relevance = net.lrp(target_class, lrp_opts(lrp_method, lrp_param))
+                lrpopts =  lrp_opts(lrp_method, lrp_param) 
+                if lrpopts is None:
+                    print('Invalid lrp parameter setting, check lrp_type and lrp_param')
+                    return None
+                relevance = net.lrp(target_class, lrpopts)
 
         output.append(relevance)
 
@@ -255,26 +271,63 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
         lrp_opts.alphabeta_beta     = param
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
-    elif method == 'std_n_ab':
+    elif method == 'eps_n_ab':
+
+        if isinstance(param, tuple) and len(param) == 2:
+            epsilon = param[0]
+            beta    = param[1]
+        else:
+            epsilon = 1e-10
+            beta    = 0.
+
+        lrp_opts.alphabeta_beta     = beta
+        lrp_opts.epsstab            = epsilon 
         lrp_opts.relpropformulatype = 114
-        lrp_opts.alphabeta_beta     = param
-        lrp_opts.epsstab            = 0.0000000001
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     elif method == 'layer_dep':
+
+        if isinstance(param, tuple) and len(param) == 2:
+            epsilon = param[0]
+            beta    = param[1]
+        else:
+            epsilon = 1e-10
+            beta    = 0.
+
+        lrp_opts.alphabeta_beta     = beta
+        lrp_opts.epsstab            = epsilon 
+
         lrp_opts.relpropformulatype = 100
-        lrp_opts.epsstab            = 0.0000000001
-        lrp_opts.alphabeta_beta     = 0.
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     elif method == 'layer_dep_n_flat':
+        
+        if isinstance(param, tuple) and len(param) == 2:
+            epsilon = param[0]
+            beta    = param[1]
+        else:
+            epsilon = 1e-10
+            beta    = 0.
+
+        lrp_opts.alphabeta_beta     = beta
+        lrp_opts.epsstab            = epsilon 
+        
         lrp_opts.relpropformulatype = 102
-        lrp_opts.epsstab            = 0.0000000001
-        lrp_opts.alphabeta_beta     = 0.
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     elif method == 'layer_dep_n_wsquare':
+        if isinstance(param, tuple) and len(param) == 2:
+            epsilon = param[0]
+            beta    = param[1]
+        else:
+            epsilon = 1e-10
+            beta    = 0.
+
+        lrp_opts.alphabeta_beta     = beta
+        lrp_opts.epsstab            = epsilon 
+        
         lrp_opts.relpropformulatype = 104
-        lrp_opts.epsstab            = 0.0000000001
-        lrp_opts.alphabeta_beta     = 0.
+        lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
     elif method == 'deconv':
         lrp_opts.relpropformulatype = 26

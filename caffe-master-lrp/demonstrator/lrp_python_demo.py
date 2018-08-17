@@ -22,7 +22,7 @@ MODEL                   = 'caffenet'                                        # op
 def main():
     simple_lrp_demo()
 
-def simple_lrp_demo(num_images = 3):
+def simple_lrp_demo(num_images = 1):
     """
     Simple example to demonstrate the LRP methods using the Caffe python interface.
     Calculates the prediction and LRP heatmap for num_images of example imaages from the EXAMPLE_IMAGE_FOLDER
@@ -63,7 +63,7 @@ def simple_lrp_demo(num_images = 3):
     ## ############# ##
     # LRP parameters: #
     ## ############# ##
-    lrp_type    = 'epsilon'         
+    lrp_type    = 'epsilon'
     # lrp_type              | meaning of lrp_param  | uses switch_layer | description 
     # ---------------------------------------------------------------------------
     # epsilon               | epsilon               | no                | epsilon lrp
@@ -72,18 +72,20 @@ def simple_lrp_demo(num_images = 3):
     # eps_n_wsquare         | epsilon               | yes               | epsilon lrp until switch_layer,   wsquare lrp for all layers below
     # ab_n_flat             | beta                  | yes               | alphabeta lrp until switch_layer, wflat lrp for all layers below
     # ab_n_wsquare          | beta                  | yes               | alphabeta lrp until switch_layer, wsquare lrp for all layers below
-    # std_n_ab              | beta                  | yes               | standard lrp (epsilon with eps=0) until switch_layer, alphabeta lrp for all layers below
-    # layer_dep             | -                     | no                | standard lrp (epsilon with eps=0) for all fully-connected layers, alphabeta lrp with alpha=1 for all convolution layerrs
-    # layer_dep_n_flat      | -                     | yes               | layer_dep (see above) until switch_layer, wflat lrp for all layers below
-    # layer_dep_n_wsquare   | -                     | yes               | layer_dep (see above) until switch-layer, wsquare lrp for all layers below
+    # eps_n_ab              | (epsilon, beta)       | yes               | epsilon lrp until switch_layer, alphabeta lrp for all layers below
+    # layer_dep             | (epsilon, beta)       | no                | epsilon lrp for all fully-connected layers, alphabeta lrp with alpha=1 for all convolution layerrs
+    # layer_dep_n_flat      | (epsilon, beta)       | yes               | layer_dep (see above) until switch_layer, wflat lrp for all layers below
+    # layer_dep_n_wsquare   | (epsilon, beta)       | yes               | layer_dep (see above) until switch-layer, wsquare lrp for all layers below
 
-    lrp_param   =  0.000001         # (epsilon | beta      | epsilon    | epsilon      | beta    )
-    classind    =  -1              # (class index  | -1 for top_class)
+    # depending on lrp_type, lrp_param needs to be a scalar or a tuple (see table above). If a scalar is given to an lrp_type that expects a tuple, the default epsilon=0., alpha=0. 
+    lrp_param   =   1e-10
 
     # switch_layer param only needed for the composite methods
     # the parameter depicts the first layer for which the second formula type is used.
     # interesting values for caffenet are: 0, 4, 8, 10, 12 | 15, 18, 21 (convolution layers | innerproduct layers)
     switch_layer = 13
+
+    classind    =  -1              # (class index  | -1 for top_class)
 
 
     ## ################################## ##
@@ -92,6 +94,11 @@ def simple_lrp_demo(num_images = 3):
 
     # LRP
     backward = lrp_hm(net, transformed_input, lrp_method=lrp_type, lrp_param=lrp_param, target_class_inds=classind, switch_layer=switch_layer)
+
+    if backward is None:
+        print('----------ERROR-------------')
+        print('LRP result is None, check lrp_type and lrp_param for corectness')
+        return
 
     sum_over_channels  = True
     normalize_heatmap  = False
