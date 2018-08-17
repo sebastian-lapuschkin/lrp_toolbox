@@ -63,11 +63,24 @@ def simple_lrp_demo(num_images = 3):
     ## ############# ##
     # LRP parameters: #
     ## ############# ##
-    lrp_type    = 'epsilon'         # (epsilon | alphabeta | eps_n_flat | eps_n_square | std_n_ab)
+    lrp_type    = 'epsilon'         
+    # lrp_type              | meaning of lrp_param  | uses switch_layer | description 
+    # ---------------------------------------------------------------------------
+    # epsilon               | epsilon               | no                | epsilon lrp
+    # alphabeta             | beta                  | no                | alphabeta lrp, alpha = 1-beta
+    # eps_n_flat            | epsilon               | yes               | epsilon lrp until switch_layer,   wflat lrp for all layers below
+    # eps_n_wsquare         | epsilon               | yes               | epsilon lrp until switch_layer,   wsquare lrp for all layers below
+    # ab_n_flat             | beta                  | yes               | alphabeta lrp until switch_layer, wflat lrp for all layers below
+    # ab_n_wsquare          | beta                  | yes               | alphabeta lrp until switch_layer, wsquare lrp for all layers below
+    # std_n_ab              | beta                  | yes               | standard lrp (epsilon with eps=0) until switch_layer, alphabeta lrp for all layers below
+    # layer_dep             | -                     | no                | standard lrp (epsilon with eps=0) for all fully-connected layers, alphabeta lrp with alpha=1 for all convolution layerrs
+    # layer_dep_n_flat      | -                     | yes               | layer_dep (see above) until switch_layer, wflat lrp for all layers below
+    # layer_dep_n_wsquare   | -                     | yes               | layer_dep (see above) until switch-layer, wsquare lrp for all layers below
+
     lrp_param   =  0.000001         # (epsilon | beta      | epsilon    | epsilon      | beta    )
     classind    =  -1              # (class index  | -1 for top_class)
 
-    # switch_layer param only needed for the composite methods:            eps_n_flat(relpropformulatype 54), eps_n_square (relpropformulatype 56), ab_n_flat (relpropformulatype 58), ab_n_square (relpropformulatype 60), std_n_ab (relpropformulatype 114)
+    # switch_layer param only needed for the composite methods
     # the parameter depicts the first layer for which the second formula type is used.
     # interesting values for caffenet are: 0, 4, 8, 10, 12 | 15, 18, 21 (convolution layers | innerproduct layers)
     switch_layer = 13

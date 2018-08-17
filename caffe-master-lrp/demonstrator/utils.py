@@ -168,7 +168,7 @@ def lrp_hm(net, input_images, lrp_method = 'epsilon', lrp_param = 0.0000001, tar
 def process_raw_heatmaps(rawhm_batch, normalize=False, sum_over_channels=True):
     """
     Process raw heatmap as outputted by the caffe network.
-    Inverts channel swap to RGB and brings the heatmap back to the (height, width, channels) format
+    Inverts channel swap to RGB and brings the heatmap back to the (num_images, height, width, channels) format
 
     Parameters
     ----------
@@ -240,7 +240,7 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
         lrp_opts.epsstab             = param
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
-    elif method == 'eps_n_square':
+    elif method == 'eps_n_wsquare':
         lrp_opts.relpropformulatype = 56
         lrp_opts.epsstab             = param
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
@@ -250,7 +250,7 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
         lrp_opts.alphabeta_beta     = param
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
 
-    elif method == 'ab_n_square':
+    elif method == 'ab_n_wsquare':
         lrp_opts.relpropformulatype = 60
         lrp_opts.alphabeta_beta     = param
         lrp_opts.auxiliaryvariable_maxlayerindexforflatdistinconv = switch_layer
@@ -263,6 +263,16 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
 
     elif method == 'layer_dep':
         lrp_opts.relpropformulatype = 100
+        lrp_opts.epsstab            = 0.0000000001
+        lrp_opts.alphabeta_beta     = 0.
+
+    elif method == 'layer_dep_n_flat':
+        lrp_opts.relpropformulatype = 102
+        lrp_opts.epsstab            = 0.0000000001
+        lrp_opts.alphabeta_beta     = 0.
+
+    elif method == 'layer_dep_n_wsquare':
+        lrp_opts.relpropformulatype = 104
         lrp_opts.epsstab            = 0.0000000001
         lrp_opts.alphabeta_beta     = 0.
 
