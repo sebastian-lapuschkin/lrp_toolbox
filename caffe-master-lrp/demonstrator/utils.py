@@ -397,7 +397,7 @@ def transform_input(input_image, transpose_input_dimensions = False, channel_swa
     return input_image
 
 
-def load_model(model = 'caffenet'):
+def load_model(model = 'caffenet', batchsize=16):
     """
     Load pre-trained model from file
 
@@ -429,7 +429,7 @@ def load_model(model = 'caffenet'):
                         '../models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel',
                         caffe.TEST)
 
-    net.blobs['data'].reshape(1,3,inwid,inhei)
+    net.blobs['data'].reshape(batchsize,3,inwid,inhei)
 
     return net
 
