@@ -32,7 +32,7 @@ def split_into_batches(data, batch_size):
 
     N = data.shape[0]
 
-    num_batches     = N / batch_size + int(N % batch_size != 0)
+    num_batches     = N // batch_size + int(N % batch_size != 0)
 
     batches = []
 
@@ -92,7 +92,7 @@ def lrp_hm(net, input_images, lrp_method = 'epsilon', lrp_param = 0.0000001, tar
     input_shape = input_images.shape
     network_batch_shape = net.blobs['data'].data.shape
 
-    if isinstance( target_class_inds, ( int, long ) ):
+    if isinstance( target_class_inds, int):
         print('Using the same target class {} for all inputs in the batch.'.format(target_class_inds))
     else:
         assert(target_class_inds.shape[0] == input_images.shape[0])
@@ -116,7 +116,7 @@ def lrp_hm(net, input_images, lrp_method = 'epsilon', lrp_param = 0.0000001, tar
     for b_i, input_image_batch in enumerate(input_batches):
 
         if not single_mode and verbose_output:
-            print 'batch ({}/{})'.format(b_i+1, num_batches)
+            print('batch ({}/{})'.format(b_i+1, num_batches))
 
         # test prediction:
         original_shape = net.blobs['data'].shape
@@ -454,8 +454,11 @@ def cropped_imagenet_mean(mean_file_path,inhei, inwid):
         print ('ERROR: Net Input size too large. Now using the pixel/colorchannel mean (scalar)')
         mean = np.mean(mean_from_file)
     else:
-        w_offset = (256 - inwid) / 2
-        h_offset = (256 - inhei) / 2
+        w_offset = (256 - inwid) // 2
+        h_offset = (256 - inhei) // 2
+
+        print(w_offset, h_offset)
+
         mean = mean_from_file[:,w_offset:w_offset+inwid, h_offset:h_offset+inhei]
 
 
