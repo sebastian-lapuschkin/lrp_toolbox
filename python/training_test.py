@@ -11,7 +11,13 @@
 import modules
 import model_io
 
-import numpy as np ; na = np.newaxis
+import importlib.util as imp
+import numpy
+import numpy as np
+if imp.find_spec("cupy"): #use cupy for GPU support if available
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 D,N = 2,200000
 

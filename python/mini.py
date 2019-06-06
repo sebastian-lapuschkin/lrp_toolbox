@@ -14,7 +14,12 @@ import model_io
 import data_io
 import render
 
+import importlib.util as imp
+import numpy
 import numpy as np
+if imp.find_spec("cupy"): #use cupy for GPU support if available
+    import cupy
+    import cupy as np
 na = np.newaxis
 # end of imports
 
@@ -24,6 +29,10 @@ X = X / 127.5 - 1 # normalized data to range [-1 1]
 
 Ypred = nn.forward(X) # forward pass through network
 R = nn.lrp(Ypred) # lrp to explain prediction of X
+
+if not np == numpy: # np=cupy
+        X = np.asnumpy(X)
+        R = np.asnumpy(R)
 
 # render rgb images and save as image
 digit = render.digit_to_rgb(X)

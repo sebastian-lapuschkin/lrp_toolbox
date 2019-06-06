@@ -22,7 +22,7 @@ import numpy
 import time
 import numpy as np
 import importlib.util as imp
-if imp.find_spec("cupy"):
+if imp.find_spec("cupy"): #use cupy for GPU support if available
     import cupy
     import cupy as np
 
