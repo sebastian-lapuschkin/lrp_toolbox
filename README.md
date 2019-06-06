@@ -1,4 +1,4 @@
-# The LRP Toolbox for Artificial Neural Networks (1.2.0)
+# The LRP Toolbox for Artificial Neural Networks (1.2.1)
 
 The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
 specific  to  a  given  data  point  by  attributing
@@ -28,6 +28,7 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 * update treatment of softmax and target class
 * lrp_aware option for efficient calculation of multiple backward passes
 * custom colormaps in render.py
+* __gpu support__ when installing [cupy](https://github.com/cupy/cupy). this is an optional feature. without the cupy package, the code will execute using numpy.
 
 ### caffe implementation
 * update the installation config
