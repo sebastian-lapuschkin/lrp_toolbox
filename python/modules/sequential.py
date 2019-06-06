@@ -181,11 +181,10 @@ class Sequential(Module):
             b : the number of unique indices to pick.
             '''
             assert(b <= N) # if this fails no valid solution can be found.
-            I = np.arange(0)
+            I = numpy.arange(0)
             while I.size < b:
-                I = np.unique(np.append(I,np.random.randint(0,N,[b-I.size,])))
-
-            return I
+                I = numpy.unique(numpy.append(I,numpy.random.randint(0,N,[b-I.size,])))
+            return np.array(I)
 
         t_start = time.time()
         untilConvergence = convergence;    learningFactor = lfactor_initial
@@ -212,16 +211,18 @@ class Sequential(Module):
 
             #periodically evaluate network and optionally adjust learning rate or check for convergence.
             if (d+1) % status == 0:
-                if not Xval == [] and not Yval == []: #if given, evaluate on validation data
+                if not len(Xval) == 0 and not len(Yval) == 0: #if given, evaluate on validation data
                     Ypred = self.forward(Xval)
                     acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Yval, axis=1))
                     l1loss = np.abs(Ypred - Yval).sum()/Yval.shape[0]
-                    print('Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,l1loss))
+                    if not np == numpy: acc = np.asnumpy(acc); l1loss = np.asnumpy(l1loss)
+                    print('Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100, l1loss))
 
                 else: #evaluate on the training data only
                     Ypred = self.forward(X)
                     acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Y, axis=1))
                     l1loss = np.abs(Ypred - Y).sum()/Y.shape[0]
+                    if not numpy == np: acc = np.asnumpy(acc); l1loss = np.asnumpy(l1loss)
                     print('Accuracy after {0} iterations on training data: {1}% (l1-loss: {2:.4})'.format(d+1,acc*100,l1loss))
 
 
@@ -241,11 +242,11 @@ class Sequential(Module):
                     elif lrate_decay == 'sublinear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-(acc*acc)
-                        print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, np.round(learningFactor*100,2)))
+                        print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, numpy.round(learningFactor*100,2)))
                     elif lrate_decay == 'linear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-acc
-                        print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, np.round(learningFactor*100,2)))
+                        print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, numpy.round(learningFactor*100,2)))
 
                     #refresh number of allowed search steps until convergence
                     untilConvergence = convergence
@@ -270,10 +271,17 @@ class Sequential(Module):
                 # print 'alive' signal
                 #sys.stdout.write('.')
                 l1loss = np.abs(Ypred - Y[samples,:]).sum()/Ypred.shape[0]
+                if not np == numpy: l1loss = np.asnumpy(l1loss)
                 sys.stdout.write('batch# {}, lrate {}, l1-loss {:.4}\n'.format(d+1,lrate*learningFactor,l1loss))
                 sys.stdout.flush()
 
         #after training, either due to convergence or iteration limit
+        t_elapsed =  time.time() - t_start
+        m, s = divmod(t_elapsed, 60)
+        h, m = divmod(m, 60)
+        d, h = divmod(h, 24)
+        timestring = '{}d {}h {}m {}s'.format(int(d), int(h), int(m), int(s))
+        print('Training terminated after {}'.format(timestring))
         print('Setting network parameters to best encountered network state with {}% accuracy and a loss of {} from iteration {}.'.format(bestAccuracy*100, bestLoss, bestIter))
         self.modules = bestLayers
 
