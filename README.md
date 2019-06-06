@@ -56,7 +56,7 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 
 ### Obtaining the LRP Toolbox:
-You can directly download the latest full release / current verson from github. However, if you prefer to only download what is necessary for your project/language/purpose, make use of the pre-packaged downloads available at [heatmapping.org](http://www.heatmapping.org/)
+Clone it from github!
 
 
 ### Installing the Toolbox:
