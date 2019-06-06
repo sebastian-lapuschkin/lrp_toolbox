@@ -1,4 +1,4 @@
-# The LRP Toolbox for Artificial Neural Networks (1.3.0rc1)
+# The LRP Toolbox for Artificial Neural Networks (1.3.0rc2)
 
 The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
 specific  to  a  given  data  point  by  attributing
@@ -22,7 +22,7 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 [<img src="http://heatmapping.org/images/caffe.png" width=210>](http://heatmapping.org/caffe.html)
 
 
-### New in 1.3.0rc1:
+### New in 1.3.0rc2:
 #### standalone python implementation:
 * update to python 3
 * update treatment of softmax and target class
