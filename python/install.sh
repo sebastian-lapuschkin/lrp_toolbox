@@ -9,23 +9,28 @@
 # releases of Ubuntu/Linux. There is, however, no guarantee for that.
 # This is especially true for other Linux derivates or OSs in general.
 #
-# The installation of required python packages will by performed via 
+# The installation of required python packages will by performed via
 # the reliable and convenient apt-get.
 #
-# Before executing this script, please read and modify the following commands 
+# Before executing this script, please read and modify the following commands
 # carefully in order to prevent unwanted changes to your system.
 #
 # This installation requires administrator level privileges.
 
 # INSTALL REQUIRED PYTHON PACKAGES
-apt-get install python-numpy python-numpy-dbg python-scipy python-matplotlib python-skimage
+#apt-get install python-numpy python-numpy-dbg python-scipy python-matplotlib python-skimage
 #pip install skimage #python skimage 0.12.3+ for newer ubuntu/windows compatibility
+
+# installing cupy via (ana)conda is recommended.
+pip install numpy matplotlib scikit-image scikit-learn
+
+
 
 
 
 # DOWNLOAD MODELS AND DATA FOR THE DEMO APPLICATION
 # go to toolbox root
-cd .. 
+cd ..
 
 # download and extract the MNIST hand written data set
 if ! [[ -f data/MNIST/test_images.npy && -f data/MNIST/test_labels.npy ]]
