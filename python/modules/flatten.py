@@ -9,8 +9,14 @@
 @license : BSD-2-Clause
 '''
 
-import numpy as np
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 # -------------------------------
 # Flattening Layer
@@ -37,7 +43,7 @@ class Flatten(Module):
         Shape change according to C-order.
         '''
         self.inputshape = X.shape # N x H x W x D
-        return np.reshape(X,[self.inputshape[0],np.prod(self.inputshape[1:])])
+        return np.reshape(X,[self.inputshape[0], numpy.prod(self.inputshape[1:])])
 
     def lrp(self,R, *args, **kwargs):
         '''
@@ -46,3 +52,9 @@ class Flatten(Module):
         # just propagate R further down.
         # makes sure subroutines never get called.
         return np.reshape(R,self.inputshape)
+
+    def to_cupy(self):
+        pass
+
+    def to_numpy(self):
+        pass

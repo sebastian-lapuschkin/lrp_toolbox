@@ -9,8 +9,14 @@
 @license : BSD-2-Clause
 '''
 
-import numpy as np
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 # -------------------------------
 # Rectification layer
@@ -21,6 +27,16 @@ class Rect(Module):
     '''
     def __init__(self):
         Module.__init__(self)
+
+    def to_cupy(self):
+        assert imp.find_spec("cupy"), "module cupy not found."
+        if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.array(self.Y)
+
+    def to_numpy(self):
+        if np == numpy or not imp.find_spec("cupy"):
+            pass #nothing to do if there is no cupy. model should exist as numpy arrays
+        else:
+            if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.asnumpy(self.Y)
 
     def forward(self,X,*args,**kwargs ):
         self.Y = np.maximum(0,X)
@@ -38,3 +54,4 @@ class Rect(Module):
         # just propagate R further down.
         # makes sure subroutines never get called.
         return R
+

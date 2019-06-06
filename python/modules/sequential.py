@@ -11,9 +11,14 @@
 
 import copy
 import sys
-import numpy as np
 import time
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
 na = np.newaxis
 
 # -------------------------------
@@ -38,6 +43,13 @@ class Sequential(Module):
         Module.__init__(self)
         self.modules = modules
 
+    def to_cupy(self):
+        for m in self.modules:
+            m.to_cupy()
+
+    def to_numpy(self):
+        for m in self.modules:
+            m.to_numpy()
 
     def drop_softmax_output_layer(self):
         '''

@@ -9,8 +9,14 @@
 @license : BSD-2-Clause
 '''
 
-import numpy as np
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 # -------------------------------
 # Softmax layer
@@ -23,11 +29,22 @@ class SoftMax(Module):
     def __init__(self):
         Module.__init__(self)
 
+    def to_cupy(self):
+        assert imp.find_spec("cupy"), "module cupy not found."
+        if hasattr(self, 'X') and self.X is not None: self.X = cupy.array(self.X)
+        if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.array(self.Y)
+
+    def to_numpy(self):
+        if np == numpy or not imp.find_spec("cupy"):
+            pass #nothing to do if there is no cupy. model should exist as numpy arrays
+        else:
+            if hasattr(self, 'X') and self.X is not None: self.X = cupy.asnumpy(self.X)
+            if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.asnumpy(self.Y)
+
     def forward(self,X,*args,**kwargs):
         self.X = X
         self.Y = np.exp(X) / np.exp(X).sum(axis=1,keepdims=True)
         return self.Y
-
 
     def lrp(self,R,*args,**kwargs):
         # just propagate R further down.
