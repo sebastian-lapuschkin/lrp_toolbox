@@ -18,8 +18,9 @@ The  implementations  for  Matlab  and  python  are intended as a sandbox or pla
 ### See the LRP Toolbox in Action
 To try out either the python-based MNIST demo, or the Caffe based ImageNet demo in your browser, click on the respective panels:
 
-[<img src="http://heatmapping.org/images/mnist.png" width=210>](http://heatmapping.org/mnist.html)
-[<img src="http://heatmapping.org/images/caffe.png" width=210>](http://heatmapping.org/caffe.html)
+[<img src="http://heatmapping.org/mnist.png" width=210>](https://lrpserver.hhi.fraunhofer.de/handwriting-classification)
+[<img src="http://heatmapping.org/caffe.png" width=210>](https://lrpserver.hhi.fraunhofer.de/image-classification)
+[<img src="http://heatmapping.org/text.png" width=210>](https://lrpserver.hhi.fraunhofer.de/text-classification)
 
 
 ### New in 1.3.0rc2:
