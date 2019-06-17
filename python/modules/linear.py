@@ -168,6 +168,15 @@ class Linear(Module):
             return (Z * (R/Zs)[:,na,:]).sum(axis=2)
 
 
+    def _simple_lrp_opt(self,R):
+        '''
+        LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140.
+        This function is optimized to make use of the paralellization of the numpy dot product.
+        '''
+        Zs = self.Y + 1e-16*((self.Y >= 0)*2 - 1.) #add weakdefault stabilizer to denominator
+        F = R / Zs
+        return self.X * np.dot(F, self.W.T)
+
 
     def _flat_lrp(self,R):
         '''
@@ -218,6 +227,16 @@ class Linear(Module):
         else:
             Z = self.W[na,:,:]*self.X[:,:,na] #localized preactivations
             return (Z * (R/Zs)[:,na,:]).sum(axis=2)
+
+
+    def _epsilon_lrp_opt(self,R, epsilon):
+        '''
+        LRP according to Eq(56) in DOI: 10.1371/journal.pone.0130140.
+        This function is optimized to make use of the paralellization of the numpy dot product.
+        '''
+        Zs = self.Y + epsilon * ((self.Y >= 0)*2-1)#prepare stabilized denominator
+        F = R / Zs
+        return self.X * np.dot(F, self.W.T)
 
 
     def _alphabeta_lrp_slow(self,R,alpha):
@@ -280,3 +299,35 @@ class Linear(Module):
         else:
             raise Exception('This case should never occur: alpha={}, beta={}.'.format(alpha, beta))
 
+    def _alphabeta_lrp_opt(self,R,alpha):
+        '''
+        LRP according to Eq(60) in DOI: 10.1371/journal.pone.0130140
+        This function is optimized to make use of the paralellization of the numpy dot product.
+        '''
+
+        # TODO: treat alpha=1 and beta=1 edge cases to avoid unnecessary computations
+
+        beta  = 1 - alpha
+
+        weight_pos_idxs = weight >= 0
+        weight_p = weight * weight_pos_idxs
+        weight_n = weight * (1-weight_pos_idxs)
+
+        x_pos_idxs = x >=0
+        xp = x * x_pos_idxs
+        xn = x * (1-x_pos_idxs)
+
+        bias_pos_idxs = bias >= 0
+        bias_p = bias * bias_pos_idxs
+        bias_n = bias * (1-bias_pos_idxs)
+
+        Tp = np.dot(xp, weight_p) + np.dot(xn, weight_n) + bias_p
+        Tn = np.dot(xp, weight_n) + np.dot(xn, weight_p) + bias_n
+
+        Fp = R / Tp
+        Fn = R / Tn
+
+        rp = xp * np.dot(Fp, weight_p.T) + xn * np.dot(Fp, weight_n.T)
+        rn = xn * np.dot(Fn, weight_p.T) + xp * np.dot(Fn, weight_n.T)
+
+        return alpha * rp + beta * rn
