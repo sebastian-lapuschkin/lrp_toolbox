@@ -128,6 +128,8 @@ class Module:
             return self._simple_lrp(R)
         elif lrp_var.lower() == 'slow' or lrp_var.lower() == 'simple_slow':
             return self._simple_lrp_slow(R)
+        elif lrp_var.lower() == 'optimized' or lrp_var.lower() == 'simple_optimized':
+            return self._simple_lrp_opt(R)
 
         elif lrp_var.lower() == 'flat':
             return self._flat_lrp(R)
@@ -143,6 +145,8 @@ class Module:
             return self._alphabeta_lrp(R,param)
         elif lrp_var.lower() == 'alphabeta_slow' or lrp_var.lower() == 'alpha_slow':
             return self._alphabeta_lrp_slow(R,param)
+        elif lrp_var.lower() == 'alphabeta_optimized':
+            return self._alphabeta_opt(R,param)
 
         else:
             raise Exception('Unknown lrp variant {}'.format(lrp_var))

@@ -367,3 +367,12 @@ class SumPool(Module):
                     raise Exception('This case should never occur: alpha={}, beta={}.'.format(alpha, beta))
 
         return Rx
+
+
+    # simple lrp versions are not optimized for sumpool
+    def _simple_lrp_opt(self,R):
+        return _simple_lrp(self, R)
+    def _epsilon_lrp_opt(self,R,epsilon):
+        return _epsilon_lrp(self, R, epsilon)
+    def _alphabeta_lrp(self, R, alpha):
+        return _alphabeta_lrp(self, R, alpha)

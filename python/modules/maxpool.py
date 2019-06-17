@@ -161,6 +161,8 @@ class MaxPool(Module):
 
     def _simple_lrp(self,R):
         return self._simple_lrp_slow(R)
+    def _simple_opt(self,R):
+        return self._simple_lrp_slow(R)
 
     def _flat_lrp(self,R):
         '''
@@ -196,7 +198,19 @@ class MaxPool(Module):
         '''
         return self._simple_lrp(R)
 
+    def _epsilon_opt(self,R,epsilon):
+        '''
+        Since there is only one (or several equally strong) dominant activations, default to _simple_lrp
+        '''
+        return self._simple_lrp(R)
+
     def _alphabeta_lrp(self,R,alpha):
+        '''
+        Since there is only one (or several equally strong) dominant activations, default to _simple_lrp
+        '''
+        return self._simple_lrp(R)
+
+    def _alphabeta_lrp_opt(self,R,alpha):
         '''
         Since there is only one (or several equally strong) dominant activations, default to _simple_lrp
         '''
