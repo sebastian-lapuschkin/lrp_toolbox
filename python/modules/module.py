@@ -140,13 +140,15 @@ class Module:
             return self._epsilon_lrp(R,param)
         elif lrp_var.lower() == 'epsilon_slow':
             return self._epsilon_lrp_slow(R,param)
+        elif lrp_var.lower() == 'epsilon_optimized':
+            return self._epsilon_lrp_opt(R,param)
 
         elif lrp_var.lower() == 'alphabeta' or lrp_var.lower() == 'alpha':
             return self._alphabeta_lrp(R,param)
         elif lrp_var.lower() == 'alphabeta_slow' or lrp_var.lower() == 'alpha_slow':
             return self._alphabeta_lrp_slow(R,param)
         elif lrp_var.lower() == 'alphabeta_optimized':
-            return self._alphabeta_opt(R,param)
+            return self._alphabeta_lrp_opt(R,param)
 
         else:
             raise Exception('Unknown lrp variant {}'.format(lrp_var))

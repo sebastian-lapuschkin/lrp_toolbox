@@ -308,6 +308,11 @@ class Linear(Module):
         # TODO: treat alpha=1 and beta=1 edge cases to avoid unnecessary computations
 
         beta  = 1 - alpha
+        
+        # TODO: rename properly, cleanup
+        weight = self.W
+        x = self.X
+        bias = self.B
 
         weight_pos_idxs = weight >= 0
         weight_p = weight * weight_pos_idxs
