@@ -18,6 +18,7 @@ import numpy as np
 if imp.find_spec("cupy"): #use cupy for GPU support if available
     import cupy
     import cupy as np
+    print('USING CUPY')
 na = np.newaxis
 
 import model_io
@@ -99,11 +100,11 @@ def benchmark():
             t_start = time.time();  RAnew0 = nn.lrp(ynew, 'alphabeta', 0.);              lrp_times_new5.append(time.time() - t_start)
             # newer lrp code
             t_start = time.time();  yopt = nn.forward(x);                               forward_times_opt.append(time.time() - t_start)
-            t_start = time.time();  Ropt = nn.lrp(ynew, 'simple');                      lrp_times_opt.append(time.time() - t_start)
-            t_start = time.time();  REopt = nn.lrp(ynew, 'epsilon', 0.01);              lrp_times_opt2.append(time.time() - t_start)
-            t_start = time.time();  RAopt2 = nn.lrp(ynew, 'alphabeta', 2.);              lrp_times_opt3.append(time.time() - t_start)
-            t_start = time.time();  RAopt1 = nn.lrp(ynew, 'alphabeta', 1.);              lrp_times_opt4.append(time.time() - t_start)
-            t_start = time.time();  RAopt0 = nn.lrp(ynew, 'alphabeta', 0.);              lrp_times_opt5.append(time.time() - t_start)
+            t_start = time.time();  Ropt = nn.lrp(ynew, 'simple_optimized');                      lrp_times_opt.append(time.time() - t_start)
+            t_start = time.time();  REopt = nn.lrp(ynew, 'epsilon_optimized', 0.01);              lrp_times_opt2.append(time.time() - t_start)
+            t_start = time.time();  RAopt2 = nn.lrp(ynew, 'alphabeta_optimized', 2.);              lrp_times_opt3.append(time.time() - t_start)
+            t_start = time.time();  RAopt1 = nn.lrp(ynew, 'alphabeta_optimized', 1.);              lrp_times_opt4.append(time.time() - t_start)
+            t_start = time.time();  RAopt0 = nn.lrp(ynew, 'alphabeta_optimized', 0.);              lrp_times_opt5.append(time.time() - t_start)
 
             # lrp aware code and forward pass
             t_start = time.time();  yaw = nn.forward(x, lrp_aware=True);                forward_times_aware.append(time.time() - t_start)
