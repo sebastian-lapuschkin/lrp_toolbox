@@ -305,34 +305,58 @@ class Linear(Module):
         This function is optimized to make use of the paralellization of the numpy dot product.
         '''
 
-        # TODO: treat alpha=1 and beta=1 edge cases to avoid unnecessary computations
-
         beta  = 1 - alpha
+        weight_pos_idxs = self.W >= 0
+        weight_p = self.W * weight_pos_idxs
+        weight_n = self.W * (1-weight_pos_idxs)
+
+        x_pos_idxs = self.X >=0
+        xp = self.X * x_pos_idxs
+        xn = self.X * (1-x_pos_idxs)
+
+        bias_pos_idxs = self.B >= 0
+
+        if beta == 0:
+
+            bias_p = self.B * bias_pos_idxs
+            Tp = np.dot(xp, weight_p) + np.dot(xn, weight_n) + bias_p
+            Fp = R / Tp
+
+            rp = xp * np.dot(Fp, weight_p.T) + xn * np.dot(Fp, weight_n.T)
+
+            return alpha * rp
+
+        elif alpha == 0:
+
+            bias_n = self.B * (1-bias_pos_idxs)
+            Tn = np.dot(xp, weight_n) + np.dot(xn, weight_p) + bias_n
+            Fn = R / Tn
+
+            rn = xn * np.dot(Fn, weight_p.T) + xp * np.dot(Fn, weight_n.T)
+
+            return beta * rn
         
-        # TODO: rename properly, cleanup
-        weight = self.W
-        x = self.X
-        bias = self.B
+        else:
 
-        weight_pos_idxs = weight >= 0
-        weight_p = weight * weight_pos_idxs
-        weight_n = weight * (1-weight_pos_idxs)
+            weight_pos_idxs = self.W >= 0
+            weight_p = self.W * weight_pos_idxs
+            weight_n = self.W * (1-weight_pos_idxs)
 
-        x_pos_idxs = x >=0
-        xp = x * x_pos_idxs
-        xn = x * (1-x_pos_idxs)
+            x_pos_idxs = self.X >=0
+            xp = self.X * x_pos_idxs
+            xn = self.X * (1-x_pos_idxs)
 
-        bias_pos_idxs = bias >= 0
-        bias_p = bias * bias_pos_idxs
-        bias_n = bias * (1-bias_pos_idxs)
+            bias_pos_idxs = self.B >= 0
+            bias_p = self.B * bias_pos_idxs
+            bias_n = self.B * (1-bias_pos_idxs)
 
-        Tp = np.dot(xp, weight_p) + np.dot(xn, weight_n) + bias_p
-        Tn = np.dot(xp, weight_n) + np.dot(xn, weight_p) + bias_n
+            Tp = np.dot(xp, weight_p) + np.dot(xn, weight_n) + bias_p
+            Tn = np.dot(xp, weight_n) + np.dot(xn, weight_p) + bias_n
 
-        Fp = R / Tp
-        Fn = R / Tn
+            Fp = R / Tp
+            Fn = R / Tn
 
-        rp = xp * np.dot(Fp, weight_p.T) + xn * np.dot(Fp, weight_n.T)
-        rn = xn * np.dot(Fn, weight_p.T) + xp * np.dot(Fn, weight_n.T)
+            rp = xp * np.dot(Fp, weight_p.T) + xn * np.dot(Fp, weight_n.T)
+            rn = xn * np.dot(Fn, weight_p.T) + xp * np.dot(Fn, weight_n.T)
 
-        return alpha * rp + beta * rn
+            return alpha * rp + beta * rn
