@@ -44,12 +44,16 @@ class Sequential(Module):
         self.modules = modules
 
     def to_cupy(self):
+        global np
         for m in self.modules:
             m.to_cupy()
+        np = cupy # ensure correct numerics backend
 
     def to_numpy(self):
+        global np
         for m in self.modules:
             m.to_numpy()
+        np = numpy # ensure correct numerics backend
 
     def drop_softmax_output_layer(self):
         '''

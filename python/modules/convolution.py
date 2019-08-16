@@ -53,6 +53,7 @@ class Convolution(Module):
         self.B = np.zeros([self.n])
 
     def to_cupy(self):
+        global np
         assert imp.find_spec("cupy"), "module cupy not found."
         self.W = cupy.array(self.W)
         self.B = cupy.array(self.B)
@@ -60,9 +61,11 @@ class Convolution(Module):
         if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.array(self.Y)
         if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.array(self.Z)
         if hasattr(self, 'DY') and self.DY is not None: self.DY = cupy.array(self.DY)
+        np = cupy
 
     def to_numpy(self):
-        if np == numpy or not imp.find_spec("cupy"):
+        global np
+        if not imp.find_spec("cupy"):
             pass #nothing to do if there is no cupy. model should exist as numpy arrays
         else:
             self.W = cupy.asnumpy(self.W)
@@ -71,6 +74,7 @@ class Convolution(Module):
             if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.asnumpy(self.Y)
             if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.asnumpy(self.Z)
             if hasattr(self, 'DY') and self.DY is not None: self.DY = cupy.asnumpy(self.DY)
+            np = numpy
 
     def forward(self,X,lrp_aware=False):
         '''

@@ -49,6 +49,7 @@ class Linear(Module):
 
 
     def to_cupy(self):
+        global np
         assert imp.find_spec("cupy"), "module cupy not found."
         self.W = cupy.array(self.W)
         self.B = cupy.array(self.B)
@@ -57,9 +58,11 @@ class Linear(Module):
         if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.array(self.Z)
         if hasattr(self, 'dW') and self.dW is not None: self.dW = cupy.array(self.dW)
         if hasattr(self, 'dB') and self.dB is not None: self.dB = cupy.array(self.dB)
+        np = cupy # ensure correct numerics backend
 
     def to_numpy(self):
-        if np == numpy or not imp.find_spec("cupy"):
+        global np
+        if not imp.find_spec("cupy"):
             pass #nothing to do if there is no cupy. model should exist as numpy arrays
         else:
             self.W = cupy.asnumpy(self.W)
@@ -69,6 +72,7 @@ class Linear(Module):
             if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.asnumpy(self.Z)
             if hasattr(self, 'dW') and self.dW is not None: self.dW = cupy.asnumpy(self.dW)
             if hasattr(self, 'dB') and self.dB is not None: self.dB = cupy.asnumpy(self.dB)
+            np = numpy # ensure correct numerics backend
 
 
     def forward(self,X,lrp_aware=False):
