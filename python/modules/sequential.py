@@ -43,6 +43,12 @@ class Sequential(Module):
         Module.__init__(self)
         self.modules = modules
 
+	#make sure to migrate py-modules and nn-modules to the same backend
+        if imp.find_spec("cupy"):
+            self.to_cupy()
+        else:
+            self.to_numpy()
+
     def to_cupy(self):
         global np
         for m in self.modules:

@@ -37,7 +37,7 @@ if train_xor:
     #build a network
     nn = modules.Sequential([modules.Linear(2,3), modules.Tanh(),modules.Linear(3,15), modules.Tanh(), modules.Linear(15,15), modules.Tanh(), modules.Linear(15,3), modules.Tanh() ,modules.Linear(3,2), modules.SoftMax()])
     #train the network.
-    nn.train(X,Y, batchsize = 5)
+    nn.train(X,Y, batchsize = 5, iters=1000)
     acc = np.mean(np.argmax(nn.forward(X), axis=1) == np.argmax(Y, axis=1))
     if not np == numpy: # np=cupy
         acc = np.asnumpy(acc)
@@ -79,10 +79,16 @@ if train_mnist:
             modules.SoftMax()
         ]
     )
-    nn.train(Xtrain, Ytrain, Xtest, Ytest, batchsize=64, iters=int(1e5))
+    
+    nn.train(Xtrain, Ytrain, Xtest, Ytest, batchsize=64, iters=35000, status=1000)
     acc = np.mean(np.argmax(nn.forward(Xtest), axis=1) == np.argmax(Ytest, axis=1))
     if not np == numpy: # np=cupy
         acc = np.asnumpy(acc)
     print('model test accuracy is: {:0.4f}'.format(acc))
     model_io.write(nn, '../mnist_mlp-1296-1296-1296.txt')
 
+    #try loading the model again and compute score, see if this checks out. this time in numpy
+    nn = model_io.read('../mnist_mlp-1296-1296-1296.txt')
+    acc = np.mean(np.argmax(nn.forward(Xtest), axis=1) == np.argmax(Ytest, axis=1))
+    if not np == numpy: acc = np.asnumpy(acc)
+    print('model test accuracy (numpy) is: {:0.4f}'.format(acc))
