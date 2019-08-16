@@ -43,7 +43,7 @@ class Sequential(Module):
         Module.__init__(self)
         self.modules = modules
 
-	#make sure to migrate py-modules and nn-modules to the same backend
+	    #make sure to migrate py-modules and nn-modules to the same backend
         if imp.find_spec("cupy"):
             self.to_cupy()
         else:
@@ -270,11 +270,11 @@ class Sequential(Module):
                 percent_done = float(d+1)/iters #d+1 because we are after the iteration's heavy lifting
                 t_remaining_estimated = t_elapsed/percent_done - t_elapsed
 
-                m, s = divmod(t_remaining_estimated, 60)
-                h, m = divmod(m, 60)
-                d, h = divmod(h, 24)
+                t_m, t_s = divmod(t_remaining_estimated, 60)
+                t_h, t_m = divmod(t_m, 60)
+                t_d, t_h = divmod(t_h, 24)
 
-                timestring = '{}d {}h {}m {}s'.format(int(d), int(h), int(m), int(s))
+                timestring = '{}d {}h {}m {}s'.format(int(t_d), int(t_h), int(t_m), int(t_s))
                 print('    Estimate time until current training ends : {} ({:.2f}% done)'.format(timestring, percent_done*100))
 
             elif (d+1) % (status/10) == 0:

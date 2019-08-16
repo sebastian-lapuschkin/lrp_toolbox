@@ -197,7 +197,7 @@ def _read_txt(path):
         #numpy.reshape may throw ValueErros if reshaping does not work out.
         #In this case: fall back to reading the old plain text format.
         print('probable reshaping/formatting error while reading plain text network file.')
-        print('ValueError message:', e.message)
+        print('ValueError message: {}'.format(e))
         print('Attempting fall-back to legacy plain text format interpretation...')
         return _read_txt_old(path)
         print('fall-back successfull!')
