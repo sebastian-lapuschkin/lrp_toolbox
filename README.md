@@ -5,6 +5,8 @@ specific  to  a  given  data  point  by  attributing
 relevance scores to  important  components
 of  the  input  by  using  the  topology  of  the  learned  model  itself.
 
+<img src="doc/images/nicepic.jpg" width="840">
+
 The LRP Toolbox provides simple and accessible stand-alone implementations of LRP for artificial neural networks supporting Matlab and python. The Toolbox realizes LRP functionality for the Caffe Deep Learning Framework as an extension of Caffe source code published in 10/2015.
 
 The  implementations  for  Matlab  and  python  are intended as a sandbox or playground to familiarize the user to the LRP algorithm and  thus are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
