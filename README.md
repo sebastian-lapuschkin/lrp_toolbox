@@ -30,20 +30,21 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 
 
-### New in 1.3.0rc2:
+### New in 1.3.0rc3:
 #### standalone python implementation:
 * update to python 3
-* update treatment of softmax and target class
+* updated treatment of softmax and target class
 * lrp_aware option for efficient calculation of multiple backward passes
 * custom colormaps in render.py
 * __gpu support__ when installing [cupy](https://github.com/cupy/cupy). this is an optional feature. without the cupy package, the python code will execute using the cpu/numpy.
 
 ### caffe implementation
-* update the installation config
-* new formula types 100, 102, 104
+* updated the installation config
+* new [**recommended**](https://arxiv.org/abs/1910.09840) formula types 100, 102, 104 
 * new python wrapper to use lrp in pycaffe
 * pycaffe demo file
 * bugfixes
+* singularity image for building a hassle-free OS-agnostic command line executable
 
 
 ### New in version 1.2.0
