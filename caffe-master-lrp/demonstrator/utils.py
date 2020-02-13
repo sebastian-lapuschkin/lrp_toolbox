@@ -332,6 +332,9 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
     elif method == 'deconv':
         lrp_opts.relpropformulatype = 26
 
+    elif method == 'guided_backprop':
+        lrp_opts.relpropformulatype = 166
+
     else:
         print('unknown method name in lrp_opts helper function, currently only epsilon and alphabeta are supported')
         return None
