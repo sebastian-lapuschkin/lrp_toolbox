@@ -216,7 +216,7 @@ def process_raw_heatmaps(rawhm_batch, normalize=False, sum_over_channels=True):
         heatmap = heatmap[:,:,:, [2,1,0]]
 
     if normalize:
-        heatmap = heatmap / np.max(np.absolute(heatmap, axis=[1, 2, 3], keepdims=True), axis=[1, 2, 3], keepdims=True)
+        heatmap = heatmap / np.max(np.absolute(heatmap), axis=(1, 2, 3))
 
     return heatmap
 
