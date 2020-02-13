@@ -437,6 +437,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
+		case 166: // guided backrprop (same es deconv in conv layer)
 		case 26: //zeiler: deconvolution
 		{
 			switch(ro.codeexectype)

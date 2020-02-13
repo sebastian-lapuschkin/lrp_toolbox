@@ -372,6 +372,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 	break;
 
 
+	case 166: // guided backprop (same as deconv in inner product layer)
 	case 26: //zeiler: deconvolution
 	{
 		switch (ro.codeexectype) {
