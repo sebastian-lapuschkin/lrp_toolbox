@@ -121,6 +121,9 @@ From: ubuntu:16.04
   tree $(pwd)/lrp_output
   cd ..
   echo "If you can read this, the container has been built successfully"
+
+  echo "...create directory to sync files when calling the container"
+  mkdir /opt/lrp_toolbox/caffe-master-lrp/demonstrator/lrp_demo_files/
   
   
   ####
@@ -137,5 +140,6 @@ From: ubuntu:16.04
   caffe_lrp_commandline.py /opt/caffe_lrp_commandline.py
 
 %runscript
-  python /opt/caffe_lrp_commandline.py "$@"
-
+  # the lrp_demo file only works from the demonstrator directory
+  cd /opt/lrp_toolbox/caffe-master-lrp/demonstrator/
+  python ../../../caffe_lrp_commandline.py "$@"
