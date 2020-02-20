@@ -148,6 +148,44 @@ where the requirement listing for the LRP implementation on Caffe only lists the
 
 
 \subsection*{Installing and Running}
+
+\subsection*{Out of the box: using \emph{Singularity}}
+% calculate LRP heatmaps for pre-trained models without need for coding
+We offer a \emph{Singularity} image which enables a very convenient way to calculate heatmaps for pre-trained \emph{caffe} models on imagenet.
+% example the installation process and workflow for the larger imagenet models, facilitates getting started
+The image also offers an example for the installation process and workflow and facilitates getting started with the \emph{caffe} toolbox.
+% miniintro: singularity
+\emph{Singularity} \cite{kurtzer2017singularity} is a container platform that enables a convenient way to run, store and share code in a controlled environment while offering good hardware management options.
+% ease of use: all dependencies cleared
+Inside the container, all dependencies are taken care of and experiments can be rerun on exactly the same hardware settings making them easily reprocucible. 
+% reproducable
+For more material on \emph{Singularity} , we refer to the authors website (\url{https://sylabs.io/singularity/}).
+% \paragraph{Download and install singularity}
+In order to download and install the \emph{Singularity} platform, follow the instructions in the user guide (\url{https://sylabs.io/guides/3.5/user-guide/quick\_start.html}).
+
+% Build the image
+The singularity image can be found in the \verb!lrp_toolbox/singularity! folder and  is built by calling 
+\begin{Verbatim}[frame = single]
+singularity build --fakeroot --force caffe-lrp-cpu-u16.04.sif caffe-lrp-cpu-u16.04.def
+\end{Verbatim}
+The resulting \verb!.sif! file has all necessary dependencies isntalled and contains demonstration files as well as the needed pre-trained models for them.
+All material for the demo can be found in the \verb|lrp_demo| folder.
+%run the demo
+Start the heatmapping process with 
+\begin{Verbatim}[frame = single]
+bash lrp_demo.sh 
+\end{Verbatim}
+and find the results in \verb|lrp_demo/lrp_output/someimages/|.
+Since \emph{Singularity} containers are read-only, the skript links the \verb|lrp_demo| folder to the equivalent folder on the image and then calls the lrp routine from within the container.
+% adjust the demo for own examples
+The easiest way to add additional examples is to copy  image files to the \verb|lrp_demo/someimages| folder and add the corresponding filenames to the \verb|lrp_demo/testfilelist.txt| file.
+In order to change \emph{LRP} parameters adjust the \verb|lrp_demo/config.txt|.
+Since the contents of these folders are linked to the image when executing the \verb!lrp_demo.sh! skript, the image itself does not need to be rebuilt.
+
+% \begin{Verbatim}[frame = single]
+% singularity run -B lrp_demo:/opt/lrp_toolbox/caffe-master-lrp/demonstrator/lrp_demo_files/ caffe-lrp-cpu-u16.04.sif -c ./lrp_demo_files/config.txt -f ./lrp_demo_files/testfilelist.txt -p ./lrp_demo_files
+% \end{Verbatim}
+
 \subsubsection*{Matlab and python}
 The toolbox implementations for Matlab and python can be run out of the box, given all requirements in Section \ref{sec:setup} are fulfilled. After downloading the toolbox as \texttt{.zip}- or \texttt{.tar.gz}-archives and unpacking and merging its contents to disk, the demo applications can be executed (with\verb| [optional]| substrings indicated by brackets) as
 \begin{Verbatim}[frame = single]
