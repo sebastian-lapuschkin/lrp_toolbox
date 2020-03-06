@@ -107,4 +107,4 @@ cd ..
 
 make pycaffe
 cd demonstrator
-python2 lrp_python_demo.py
+python3 lrp_python_demo.py
