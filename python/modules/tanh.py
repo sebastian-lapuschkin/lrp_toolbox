@@ -9,8 +9,14 @@
 @license : BSD-2-Clause
 '''
 
-import numpy as np
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 # -------------------------------
 # Tanh layer
@@ -22,6 +28,21 @@ class Tanh(Module):
 
     def __init__(self):
         Module.__init__(self)
+
+    def to_cupy(self):
+        global np
+        assert imp.find_spec("cupy"), "module cupy not found."
+        if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.array(self.Y)
+        np = cupy
+
+    def to_numpy(self):
+        global np
+        if not imp.find_spec("cupy"):
+            pass #nothing to do if there is no cupy. model should exist as numpy arrays
+        else:
+            if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.asnumpy(self.Y)
+            np = numpy
+
 
     def forward(self,X,*args,**kwargs):
         self.Y = np.tanh(X)

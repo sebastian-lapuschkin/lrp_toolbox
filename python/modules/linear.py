@@ -9,8 +9,13 @@
 @license : BSD-2-Clause
 '''
 
-import numpy as np
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
 na = np.newaxis
 
 # -------------------------------
@@ -41,6 +46,33 @@ class Linear(Module):
         self.n = n
         self.B = np.zeros([self.n])
         self.W = np.random.normal(0,1.0*m**(-.5),[self.m,self.n])
+
+
+    def to_cupy(self):
+        global np
+        assert imp.find_spec("cupy"), "module cupy not found."
+        self.W = cupy.array(self.W)
+        self.B = cupy.array(self.B)
+        if hasattr(self, 'X') and self.X is not None: self.X = cupy.array(self.X)
+        if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.array(self.Y)
+        if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.array(self.Z)
+        if hasattr(self, 'dW') and self.dW is not None: self.dW = cupy.array(self.dW)
+        if hasattr(self, 'dB') and self.dB is not None: self.dB = cupy.array(self.dB)
+        np = cupy # ensure correct numerics backend
+
+    def to_numpy(self):
+        global np
+        if not imp.find_spec("cupy"):
+            pass #nothing to do if there is no cupy. model should exist as numpy arrays
+        else:
+            self.W = cupy.asnumpy(self.W)
+            self.B = cupy.asnumpy(self.B)
+            if hasattr(self, 'X') and self.X is not None: self.X = cupy.asnumpy(self.X)
+            if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.asnumpy(self.Y)
+            if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.asnumpy(self.Z)
+            if hasattr(self, 'dW') and self.dW is not None: self.dW = cupy.asnumpy(self.dW)
+            if hasattr(self, 'dB') and self.dB is not None: self.dB = cupy.asnumpy(self.dB)
+            np = numpy # ensure correct numerics backend
 
 
     def forward(self,X,lrp_aware=False):
@@ -107,6 +139,7 @@ class Linear(Module):
         '''
         self.X = None
         self.Y = None
+        self.Z = None
         self.dW = None
         self.dB = None
 

@@ -103,7 +103,7 @@ def simple_lrp_demo(num_images = 1):
     sum_over_channels  = True
     normalize_heatmap  = False
 
-    if lrp_type == 'deconv':
+    if lrp_type in ['deconv', 'guided_backprop']:
         sum_over_channels = False
         normalize_heatmap  = True
 

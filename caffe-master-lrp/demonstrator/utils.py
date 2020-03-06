@@ -216,7 +216,7 @@ def process_raw_heatmaps(rawhm_batch, normalize=False, sum_over_channels=True):
         heatmap = heatmap[:,:,:, [2,1,0]]
 
     if normalize:
-        heatmap = heatmap / np.max(np.absolute(heatmap, axis=[1, 2, 3], keepdims=True), axis=[1, 2, 3], keepdims=True)
+        heatmap = heatmap / np.max(np.absolute(heatmap), axis=(1, 2, 3))
 
     return heatmap
 
@@ -331,6 +331,9 @@ def lrp_opts(method = 'epsilon', param = 0., switch_layer = -1):
 
     elif method == 'deconv':
         lrp_opts.relpropformulatype = 26
+
+    elif method == 'guided_backprop':
+        lrp_opts.relpropformulatype = 166
 
     else:
         print('unknown method name in lrp_opts helper function, currently only epsilon and alphabeta are supported')

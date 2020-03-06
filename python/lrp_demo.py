@@ -18,7 +18,14 @@ finally, the resulting heatmap is rendered as an image and (over)written out to 
 
 
 import matplotlib.pyplot as plt
-import numpy as np ; na = np.newaxis
+import time
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"): #use cupy for GPU support if available
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 import model_io
 import data_io
@@ -40,6 +47,8 @@ Y = np.zeros([X.shape[0],np.unique(Y).size])
 Y[np.arange(Y.shape[0]),I] = 1
 
 acc = np.mean(np.argmax(nn.forward(X), axis=1) == np.argmax(Y, axis=1))
+if not np == numpy: # np=cupy
+    acc = np.asnumpy(acc)
 print('model test accuracy is: {:0.4f}'.format(acc))
 
 #permute data order for demonstration. or not. your choice.
@@ -77,6 +86,10 @@ for i in I[:10]:
     #undo input normalization for digit drawing. get it back to range [0,1] per pixel
     x = (x+1.)/2.
 
+    if not np == numpy: # np=cupy
+        x = np.asnumpy(x)
+        R = np.asnumpy(R)
+
     #render input and heatmap as rgb images
     digit = render.digit_to_rgb(x, scaling = 3)
     hm = render.hm_to_rgb(R, X = x, scaling = 3, sigma = 2)
@@ -90,9 +103,12 @@ for i in I[:10]:
 
 
 #note that modules.Sequential allows for batch processing inputs
-'''
-x = X[:10,:]
-y = nn.forward(x)
-R = nn.lrp(y)
-data_io.write(R,'../Rbatch.npy')
-'''
+if True:
+    N = 256
+    t_start = time.time()
+    x = X[:N,...]
+    y = nn.forward(x)
+    R = nn.lrp(y)
+    data_io.write(R,'../Rbatch.npy')
+    print('Computation of {} heatmaps using {} in {:.3f}s'.format(N, np.__name__, time.time() - t_start))
+

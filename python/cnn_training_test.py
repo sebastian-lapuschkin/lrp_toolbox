@@ -12,7 +12,13 @@ import modules
 import model_io
 import data_io
 
-import numpy as np ; na = np.newaxis
+import importlib.util as imp
+import numpy
+import numpy as np
+if imp.find_spec("cupy"): #use cupy for GPU support if available
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 #load the mnist data
 Xtrain = data_io.read('../data/MNIST/train_images.npy')
@@ -41,61 +47,61 @@ I = Ytest[:,0].astype(int)
 Ytest = np.zeros([Xtest.shape[0],np.unique(Ytest).size])
 Ytest[np.arange(Ytest.shape[0]),I] = 1
 
+if True:
+    #model a network according to LeNet-5 architecture
+    lenet = modules.Sequential([
+                                modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
+                                modules.Rect(),\
+                                modules.SumPool(pool=(2,2),stride=(2,2)),\
+                                modules.Convolution(filtersize=(5,5,10,25),stride = (1,1)),\
+                                modules.Rect(),\
+                                modules.SumPool(pool=(2,2),stride=(2,2)),\
+                                modules.Convolution(filtersize=(4,4,25,100),stride = (1,1)),\
+                                modules.Rect(),\
+                                modules.SumPool(pool=(2,2),stride=(2,2)),\
+                                modules.Convolution(filtersize=(1,1,100,10),stride = (1,1)),\
+                                modules.Flatten()
+                            ])
 
-#model a network according to LeNet-5 architecture
-lenet = modules.Sequential([
-                            modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
-                            modules.Rect(),\
-                            modules.SumPool(pool=(2,2),stride=(2,2)),\
-                            modules.Convolution(filtersize=(5,5,10,25),stride = (1,1)),\
-                            modules.Rect(),\
-                            modules.SumPool(pool=(2,2),stride=(2,2)),\
-                            modules.Convolution(filtersize=(4,4,25,100),stride = (1,1)),\
-                            modules.Rect(),\
-                            modules.SumPool(pool=(2,2),stride=(2,2)),\
-                            modules.Convolution(filtersize=(1,1,100,10),stride = (1,1)),\
-                            modules.Flatten()
-                        ])
+    #train the network.
+    lenet.train(   X=Xtrain,\
+                    Y=Ytrain,\
+                    Xval=Xtest,\
+                    Yval=Ytest,\
+                    iters=10**5,\
+                    lrate=0.001,\
+                    batchsize=128)
 
-#train the network.
-lenet.train(   X=Xtrain,\
-                Y=Ytrain,\
-                Xval=Xtest,\
-                Yval=Ytest,\
-                iters=10**6,\
-                lrate=0.001,\
-                batchsize=25)
-
-#save the network
-model_io.write(lenet, '../LeNet-5.txt')
-
-
+    #save the network
+    model_io.write(lenet, '../LeNet-5.txt')
 
 
-#a slight variation to test max pooling layers. this model should train faster.
-maxnet = modules.Sequential([
-                            modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
-                            modules.Rect(),\
-                            modules.MaxPool(pool=(2,2),stride=(2,2)),\
-                            modules.Convolution(filtersize=(5,5,10,25),stride = (1,1)),\
-                            modules.Rect(),\
-                            modules.MaxPool(pool=(2,2),stride=(2,2)),\
-                            modules.Convolution(filtersize=(4,4,25,100),stride = (1,1)),\
-                            modules.Rect(),\
-                            modules.MaxPool(pool=(2,2),stride=(2,2)),\
-                            modules.Convolution(filtersize=(1,1,100,10),stride = (1,1)),\
-                            modules.Flatten(),\
-                            modules.SoftMax()
-                        ])
 
-#train the network.
-maxnet.train(   X=Xtrain,\
-                Y=Ytrain,\
-                Xval=Xtest,\
-                Yval=Ytest,\
-                iters=10**6,\
-                lrate=0.001,\
-                batchsize=25)
+if True:
+    #a slight variation to test max pooling layers. this model should train faster.
+    maxnet = modules.Sequential([
+                                modules.Convolution(filtersize=(5,5,1,10),stride = (1,1)),\
+                                modules.Rect(),\
+                                modules.MaxPool(pool=(2,2),stride=(2,2)),\
+                                modules.Convolution(filtersize=(5,5,10,25),stride = (1,1)),\
+                                modules.Rect(),\
+                                modules.MaxPool(pool=(2,2),stride=(2,2)),\
+                                modules.Convolution(filtersize=(4,4,25,100),stride = (1,1)),\
+                                modules.Rect(),\
+                                modules.MaxPool(pool=(2,2),stride=(2,2)),\
+                                modules.Convolution(filtersize=(1,1,100,10),stride = (1,1)),\
+                                modules.Flatten(),\
+                                modules.SoftMax()
+                            ])
 
-#save the network
-model_io.write(maxnet, '../LeNet-5-maxpooling.txt')
+    #train the network.
+    maxnet.train(   X=Xtrain,\
+                    Y=Ytrain,\
+                    Xval=Xtest,\
+                    Yval=Ytest,\
+                    iters=10**5,\
+                    lrate=0.001,\
+                    batchsize=128)
+
+    #save the network
+    model_io.write(maxnet, '../LeNet-5-maxpooling.txt')
