@@ -21,6 +21,8 @@ import render.*
 
 %load neural network, as well as the MNIST test data and some labels
 nn = model_io.read('../models/MNIST/long-rect.mat');
+nn.drop_softmax_output_layer(); %drop softmax output layer for analyses
+
 X = data_io.read('../data/MNIST/test_images.mat');
 Y = data_io.read('../data/MNIST/test_labels.mat');
 
@@ -50,12 +52,16 @@ for i = I(1:10)
 
     fprintf('True Class:      %d\n', yt-1);
     fprintf('Predicted Class: %d\n\n', yp-1);
-
+    
+    %prepare initial relevance to reflect the model's dominant prediction (ie depopulate non-dominant output neurons)
+    mask = zeros(size(ypred),'like',ypred);
+    mask(:,yp) = 1;
+    Rinit = ypred.*mask;
+    
     %compute first layer relevance according to prediction
-    %R = nn.lrp(ypred);                 %as Eq(56) from DOI: 10.1371/journal.pone.0130140
-    %R = nn.lrp(ypred,'epsilon',1.);   %as Eq(58) from DOI: 10.1371/journal.pone.0130140
-    %R = nn.lrp(ypred,'alphabeta',2);    %as Eq(60) from DOI: 10.1371/journal.pone.0130140
-
+    R = nn.lrp(Rinit);                 %as Eq(56) from DOI: 10.1371/journal.pone.0130140
+    %R = nn.lrp(Rinit,'epsilon',1.);   %as Eq(58) from DOI: 10.1371/journal.pone.0130140
+    %R = nn.lrp(Rinit,'alphabeta',2);    %as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
     %R = nn.lrp(Y(i,:)); %compute first layer relevance according to the true class label
 

@@ -30,7 +30,17 @@ classdef Sequential < modules.Module
             obj = obj@modules.Module();
             obj.modules = modules;
         end
-
+        
+        function drop_softmax_output_layer(obj)
+            %This function removes the softmax output layer from the model, if there is any.
+            
+            if isa(obj.modules{end}, 'modules.SoftMax')
+                disp('removing softmax output mapping')
+                obj.modules(end) = [];
+            else
+                disp('output layer is not softmax. nothing to do')
+            end
+        end
 
         function X = forward(obj,X)
             %X = forward(obj,X)

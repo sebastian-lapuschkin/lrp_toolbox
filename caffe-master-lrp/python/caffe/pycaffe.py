@@ -11,7 +11,7 @@ except:
 import numpy as np
 
 from ._caffe import Net, SGDSolver, NesterovSolver, AdaGradSolver, \
-        RMSPropSolver, AdaDeltaSolver, AdamSolver
+        RMSPropSolver, AdaDeltaSolver, AdamSolver, RelPropOpts
 import caffe.io
 
 # We directly update methods from Net here (rather than using composition or
@@ -158,6 +158,166 @@ def _Net_backward(self, diffs=None, start=None, end=None, **kwargs):
     return {out: self.blobs[out].diff for out in outputs}
 
 
+def _Net_lrp(self, class_inds=None, lrp_opts=None):
+    """
+    LRP: compute layerwise relevance propagation
+    Backward Relevance: Compute Backward Relevance (LRP).
+    For now it works with single input only.
+
+    Parameters
+    ----------
+    class_inds : contains the indices of all classes, for which the heatmap is to be computed as a composite of their respective network output scores.
+    lrp_opts : contains all the options available for LRP.
+
+    Returns
+    -------
+    Rx: {ndarray} raw heat map relevance array
+    """
+    if lrp_opts == None:
+        # LRP default params, just copied them from the C++ demo by Alex
+        # By default runs epsilon-type formula with epsilon = 100
+        lrp_opts = caffe.RelPropOpts()
+        lrp_opts.relpropformulatype = 31
+        lrp_opts.numclasses = 1000
+        lrp_opts.alphabeta_beta = 0
+        lrp_opts.epsstab = 100.0
+        lrp_opts.lastlayerindex = -1
+        lrp_opts.firstlayerindex = 1
+
+        lrp_opts.lrptype_batchnormscale = 1
+        lrp_opts.epscap_batchnormscale = 0
+        lrp_opts.epscap_batchnormscale = 0
+        lrp_opts.alphabeta_batchnormscale = 0
+
+        lrp_opts.lrptype_pool = 0
+        lrp_opts.epsstab_pool = 1e-3
+        lrp_opts.epscap_pool = 1e-3
+        lrp_opts.alphabeta_pool = 1e-3
+
+        lrp_opts.lrptype_eltwise = 2
+        lrp_opts.epsstab_eltwise = 0
+        lrp_opts.epscap_eltwise = 0
+        lrp_opts.alphabeta_eltwise = 0
+        # not sure if these are used
+        lrp_opts.codeexectype = 0
+        lrp_opts.lrn_forward_type = 0
+        lrp_opts.lrn_backward_type = 1
+        lrp_opts.maxpoolingtoavgpoolinginbackwardpass = 0
+        lrp_opts.biastreatmenttype = 0
+
+    # Boost Python vector<int> wrapper
+    bp_class_inds = caffe._caffe.IntVec()
+    bp_class_inds.append(class_inds)
+    # Boost Python vector<vector<double> > wrapper
+    raw_hm = caffe._caffe.DoubleVecVec()
+
+    # Call C++ LRP
+    if (lrp_opts.relpropformulatype in (11,99)): # sensitivity
+        self._backward_gradient(bp_class_inds, raw_hm, lrp_opts)
+        # TODO: compute gradient l2 norm. Norm is on channels Rx[c1]^2 + Rx[c2]^2 + Rx[c3]^2
+    else:
+       self._backward_relevance(bp_class_inds, raw_hm, lrp_opts)
+    # convert to boost.python object to numpy array
+    Rx = np.array(raw_hm, dtype=np.float)
+    # access layer by index to resize LRP output to firstlayer shape.
+    # Since LRP calculates the index for the "top" of the desired layer,
+    # we need to subtract 1 to get the true layer index.
+    #layer_index = lrp_opts.firstlayerindex - 1
+    layer_index = lrp_opts.firstlayerindex # default lrp caffe demo behaviour
+    target_shape = self.blobs[self.blobs.keys()[layer_index]].data.shape
+    Rx = np.reshape(Rx, target_shape)
+    # for some reason the raw heatmap is saved as [batch x ch x w x h] so I flip the inner dims
+    Rx = np.transpose(Rx,(0,1,3,2))[:,::-1, :,:]
+    return Rx
+
+
+def _Net_lrp_multi(self, class_inds=None, lrp_opts=None):
+
+    '''
+    TODOS:
+        - get simple version running (ahmed style in multi)
+        - redefine the input scheme (get rid of explicit lrp_opts thing and make the classic lrp methods conveniently available)
+    '''
+
+    """
+    Apply layer-wise relevance propagation (LRP) for networks witch batchsize > 1.
+
+    Parameters
+    ----------
+    class_inds : contains the indices of all classes, for which the heatmap is to be computed as a composite of their respective network output scores.
+    lrp_opts : contains all the options available for LRP.
+
+    Returns
+    -------
+    Rx: {ndarray} raw heat map relevance array
+    """
+    if lrp_opts == None:
+        # LRP default params, just copied them from the C++ demo by Alex
+        # By default runs epsilon-type formula with epsilon = 100
+        lrp_opts = caffe.RelPropOpts()
+        lrp_opts.relpropformulatype = 31
+        lrp_opts.numclasses = 1000
+        lrp_opts.alphabeta_beta = 0
+        lrp_opts.epsstab = 100.0
+        lrp_opts.lastlayerindex = -1
+        lrp_opts.firstlayerindex = 1
+
+        lrp_opts.lrptype_batchnormscale = 1
+        lrp_opts.epscap_batchnormscale = 0
+        lrp_opts.epscap_batchnormscale = 0
+        lrp_opts.alphabeta_batchnormscale = 0
+
+        lrp_opts.lrptype_pool = 0
+        lrp_opts.epsstab_pool = 1e-3
+        lrp_opts.epscap_pool = 1e-3
+        lrp_opts.alphabeta_pool = 1e-3
+
+        lrp_opts.lrptype_eltwise = 2
+        lrp_opts.epsstab_eltwise = 0
+        lrp_opts.epscap_eltwise = 0
+        lrp_opts.alphabeta_eltwise = 0
+        # not sure if these are used
+        lrp_opts.codeexectype = 0
+        lrp_opts.lrn_forward_type = 0
+        lrp_opts.lrn_backward_type = 1
+        lrp_opts.maxpoolingtoavgpoolinginbackwardpass = 0
+        lrp_opts.biastreatmenttype = 0
+
+    # Boost Python vector<int> wrapper
+    bp_class_inds = caffe._caffe.IntVecVec()
+
+    for idx in range(class_inds.shape[0]):
+        classind = class_inds[idx]
+        bp_ci = caffe._caffe.IntVec()
+        bp_ci.append(int(classind))
+        bp_class_inds.append(bp_ci)
+
+    # Boost Python vector<vector<double> > wrapper
+    raw_hm = caffe._caffe.DoubleVecVecVec()
+
+    # Call C++ LRP
+    if (lrp_opts.relpropformulatype in (11,99)): # sensitivity
+        self._backward_gradient_multi(bp_class_inds, raw_hm, lrp_opts)
+        # TODO: compute gradient l2 norm. Norm is on channels Rx[c1]^2 + Rx[c2]^2 + Rx[c3]^2
+    else:
+       self._backward_relevance_multi(bp_class_inds, raw_hm, lrp_opts)
+    # convert to boost.python object to numpy array
+
+    # access layer by index to resize LRP output to firstlayer shape.
+    # Since LRP calculates the index for the "top" of the desired layer,
+    # we need to subtract 1 to get the true layer index.
+    #layer_index = lrp_opts.firstlayerindex - 1
+    layer_index = lrp_opts.firstlayerindex # default lrp caffe demo behaviour
+
+    layer_key = list(self.blobs.keys())[layer_index]
+
+    Rx = np.array(self.blobs[layer_key].diff).astype(np.float)
+
+    target_shape = self.blobs[layer_key].data.shape
+    Rx = np.reshape(Rx, target_shape)
+    return Rx
+
+
 def _Net_forward_all(self, blobs=None, **kwargs):
     """
     Run net forward in batches.
@@ -284,6 +444,11 @@ Net.blob_loss_weights = _Net_blob_loss_weights
 Net.params = _Net_params
 Net.forward = _Net_forward
 Net.backward = _Net_backward
+# LRP
+# lrp_multi can process batch sizes larger than 1, try using lrp_single in case problems with lrp_multi arise 
+Net.lrp = _Net_lrp_multi
+Net.lrp_single = _Net_lrp
+
 Net.forward_all = _Net_forward_all
 Net.forward_backward_all = _Net_forward_backward_all
 Net.set_input_arrays = _Net_set_input_arrays

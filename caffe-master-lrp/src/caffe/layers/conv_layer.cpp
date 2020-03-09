@@ -79,13 +79,13 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
 	  const int layerindex, const relpropopts & ro, const std::vector<int> & classinds, const bool thenightstartshere )
 {
-	
+
 	switch(ro.relpropformulatype)
 	{
-		case 0:
+		case 0: // epsilon-type formula
 		{
 			//epsstab
 			switch(ro.codeexectype)
@@ -93,8 +93,9 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 				case 0:
 				{
 					//slowneasy
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 					Backward_Relevance_cpu_epsstab_slowneasy(top,
-						 propagate_down, bottom, 
+						 propagate_down, bottom,
 						 layerindex, ro );
 				}
 				break;
@@ -105,29 +106,30 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 				}
 				break;
 			} //	switch(ro.codeexectype)
-		
-			
+
+
 		}
 		break;
-		
-		case 2:
+
+		case 2: // (alpha-beta)-type formula
 		{
 			//alphabeta
 			switch(ro.codeexectype)
 			{
 				case 0:
 				{
-
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 					Backward_Relevance_cpu_alphabeta_4cases(top,
-						 propagate_down, bottom, 
+						 propagate_down, bottom,
 						 layerindex, ro );
 				}
 				break;
 				case 1:
 				{
 					//slowneasy
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 					Backward_Relevance_cpu_alphabeta_slowneasy(top,
-						 propagate_down, bottom, 
+						 propagate_down, bottom,
 						 layerindex, ro );
 
 				}
@@ -139,12 +141,12 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 				}
 				break;
 			} //	switch(ro.codeexectype)
-		
-			
+
+
 		}
 		break;
-		
-		case 6:
+
+		case 6: // (alpha-beta) + z^beta on lowest considered layer
 		{
 			if(layerindex== ro.firstlayerindex)
 			{
@@ -161,7 +163,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-		case 8:
+		case 8: // epsilon + z^beta on lowest considered layer
 		{
 			if(layerindex== ro.firstlayerindex)
 			{
@@ -178,21 +180,26 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-		case 56:
+		case 11: // reserved for sensitivtiy (gradient back grop. called in executable
+		{
+		}
+
+		case 54: // epsilon + flat below a given layer index
 		{
 			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
-			{	
+			{
 				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
 			}
-
-			if(layerindex<= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
-				Backward_Relevance_cpu_wsquare(top,
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
+				Backward_Relevance_cpu_flatdist_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 				Backward_Relevance_cpu_epsstab_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -200,51 +207,23 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-	        case 11:
-	        {
-		    // reserved for sensitivtiy (gradient back grop. called in executable
-			
-	        }
-
-
-		case 60:
+		case 56: // epsilon + w^2 below a given layer index
 		{
-
 			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
-			{	
+			{
 				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
 			}
 
-			if(layerindex<= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
 				Backward_Relevance_cpu_wsquare(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
-				Backward_Relevance_cpu_alphabeta_4cases(top,
-					 propagate_down, bottom,
-					 layerindex, ro );
-			}
-		}
-		break;
-
-
-		case 54:
-		{
-			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
-			{	
-				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
-			}
-			if(layerindex<= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
-			{
-				Backward_Relevance_cpu_flatdist_slowneasy(top,
-					 propagate_down, bottom,
-					 layerindex, ro );
-			}
-			else
-			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 				Backward_Relevance_cpu_epsstab_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
@@ -252,21 +231,151 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-		case 58:
+		case 58: // (alpha-beta) + flat below a given layer index
 		{
 			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
 			{
 				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
 			}
-			if(layerindex<= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
 				Backward_Relevance_cpu_flatdist_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
 			else
 			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 				Backward_Relevance_cpu_alphabeta_4cases(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+		}
+		break;
+
+		case 60: // (alpha-beta) + w^2 below a given layer index
+		{
+			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+			{
+				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+			}
+
+			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
+				Backward_Relevance_cpu_wsquare(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+			else
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+				Backward_Relevance_cpu_alphabeta_4cases(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+		}
+		break;
+
+		case 100: // decomposition type per layer: (alpha-beta) for conv layers, epsilon for inner product layers
+		{
+			switch(ro.codeexectype)
+			{
+				case 0:
+				{
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+					Backward_Relevance_cpu_alphabeta_4cases(top,
+						 propagate_down, bottom,
+						 layerindex, ro );
+				}
+				break;
+				case 1:
+				{
+					//slowneasy
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+					Backward_Relevance_cpu_alphabeta_slowneasy(top,
+						 propagate_down, bottom,
+						 layerindex, ro );
+				}
+				break;
+				default:
+				{
+					LOG(FATAL) << "unknown value for ro.codeexectype " << ro.codeexectype << std::endl;
+					exit(1);
+				}
+				break;
+			} //	switch(ro.codeexectype)
+		}
+		break;
+
+		case 102: // decomposition type per layer + flat below a given layer index
+		{
+			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+			{
+				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+			}
+			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
+				Backward_Relevance_cpu_flatdist_slowneasy(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+			else
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+				Backward_Relevance_cpu_alphabeta_4cases(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+		}
+		break;
+
+		case 104: // decomposition type per layer + w^2 below a given layer index
+		{
+			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+			{
+				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+			}
+
+			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
+				Backward_Relevance_cpu_wsquare(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+			else
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+				Backward_Relevance_cpu_alphabeta_4cases(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+		}
+		break;
+
+		// EXPERIMENTAL AND OTHERS BELOW
+
+    case 114: // epsilon + alphabeta below a given layer index
+    {
+			if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+			{
+				LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+			}
+
+			if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+        Backward_Relevance_cpu_alphabeta_4cases(top,
+					 propagate_down, bottom,
+					 layerindex, ro );
+			}
+			else
+			{
+				LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
+        Backward_Relevance_cpu_epsstab_slowneasy(top,
 					 propagate_down, bottom,
 					 layerindex, ro );
 			}
@@ -328,16 +437,17 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 		}
 		break;
 
-		case 26:
+		case 166: // guided backrprop (same es deconv in conv layer)
+		case 26: //zeiler: deconvolution
 		{
-			//zeilerlike
 			switch(ro.codeexectype)
 			{
 				case 0:
 				{
+					LOG(INFO) << "ConvLayer ro.relpropformulatype " << ro.relpropformulatype << " (Deconvolution: Zeiler)";
 					//slowneasy
 					Backward_Relevance_cpu_zeilerlike_slowneasy(top,
-						 propagate_down, bottom, 
+						 propagate_down, bottom,
 						 layerindex, ro );
 				}
 				break;
@@ -348,8 +458,8 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 				}
 				break;
 			} //	switch(ro.codeexectype)
-		
-			
+
+
 		}
 		break;
 
@@ -360,46 +470,46 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu(const vector<Blob<Dtype>*>&
 			exit(1);
 		}
 		break;
-		
+
 	}
-	
+
 }
 
 
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
 	  const int layerindex, const relpropopts & ro ) {
-	
+
         // an inplace relu may alter the layer, thats why the forward here
         Forward_cpu( bottom, top);
 
 	  const Dtype* weight = this->blobs_[0]->cpu_data();
 
-	
+
 	  for (int i = 0; i < top.size(); ++i) {
 	    const Dtype* top_diff = top[i]->cpu_diff();
 	    const Dtype* bottom_data = bottom[i]->cpu_data();
 	    Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
 		//memset(bottom_diff, (Dtype)0., sizeof(Dtype) * bottom[i]->count());
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
-	    
-	    
+
+
 	    const Dtype* top_data = top[i]->cpu_data();
-	    
-	    
+
+
 	    int Mfull=this->num_output_; //conv_out_channels_ /group_;
-	    
+
 	    const int first_spatial_axis = this->channel_axis_ + 1;
 	    int N= bottom[i]->count(first_spatial_axis); //this->conv_out_spatial_dim_;
 	    int K= this->blobs_[0]->count(1); //this->kernel_dim_;
-	    
+
 	    //Blob<Dtype> topdata_witheps(1, 1, 1, 1);
 	    //topdata_witheps.Reshape(top[i]->shape());
 	    Blob<Dtype> topdata_witheps((top[i])->shape());
-	    
+
 	    int outcount=topdata_witheps.count();
-	    
+
     	LOG(INFO) << "M: this->num_output_"<< this->num_output_ ;
     	LOG(INFO) << "K: this->blobs_[0]->count(1)"<< this->blobs_[0]->count(1) ;
     	LOG(INFO) << "??: this->blobs_[0]->count(0)"<< this->blobs_[0]->count(0) ;
@@ -409,11 +519,11 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(const vec
 	    /*
 	    if(topdata_witheps.count()!=Mfull * N)
 	    {
-	    	
+
 	    	LOG(ERROR) << "top.size()"<< top.size()  ;
 	    	LOG(ERROR) << i << " at i ,  top[i]->shape_string() " << top[i]->shape_string() ;
 	    	LOG(ERROR) << i << " at i ,  bottom[i]->shape_string() " << bottom[i]->shape_string() ;
-	    	
+
 	    	LOG(ERROR) << "this->num_"<< this->num_ ;
 
 	    	LOG(ERROR) << "this->top_dim_"<< this->top_dim_ ;
@@ -423,44 +533,44 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(const vec
 	    	LOG(ERROR) << "K: this->blobs_[0]->count(1)"<< this->blobs_[0]->count(1) ;
 	    	LOG(ERROR) << "N: bottom[i]->count(first_spatial_axis)"<< bottom[i]->count(first_spatial_axis) ;
 
-	    	
+
 	    	LOG(FATAL) << "Incorrect weight shape: "<< topdata_witheps.shape_string()
 	    	 << " Incorrect weight count: "<< topdata_witheps.count() << " " << outcount
 			 << " expected count " << Mfull * N ;
 
 	    }
 	    */
-	    
-	    
+
+
 	    Dtype* topdata_witheps_data=topdata_witheps.mutable_cpu_data();
 	    caffe_copy<Dtype>(outcount, top_diff, topdata_witheps_data);
-	    
-  
+
+
 	      for(int c=0;c< outcount ;++c)
 	      {
 	    	  //something_J =R_j / (output_j + eps * sign (output_j) )
 	    	if(top_data[c]>0)
-	    	{	
+	    	{
 	    	  topdata_witheps_data[c]/= top_data[c]+ro.epsstab;
-	    	} 
+	    	}
 	    	else if(top_data[c]<0)
 	    	{
 	    		topdata_witheps_data[c]/= top_data[c]-ro.epsstab;
 	    	}
-	    	
+
 	    	//if (isnan(topdata_witheps_data[c]))
 	    	//{
-	    	//	LOG(ERROR) << "have a nan at c=" << c << " top_diff[c]" <<top_diff[c]  <<  " top_data[c] " << top_data[c] << "ro.epsstab" << ro.epsstab; 
+	    	//	LOG(ERROR) << "have a nan at c=" << c << " top_diff[c]" <<top_diff[c]  <<  " top_data[c] " << top_data[c] << "ro.epsstab" << ro.epsstab;
 	    	//}
-	    	
+
 	      } //for(int c=0;c< M * N ;++c)
 
 	      for (int n = 0; n < this->num_; ++n) {
-	    	  
-	    	  // stuff_i = \sum_j w_{ij} something_j  
+
+	    	  // stuff_i = \sum_j w_{ij} something_j
 	        this->backward_cpu_gemm(topdata_witheps_data + n * this->top_dim_, weight,
 	              bottom_diff + n * this->bottom_dim_);
-	        		
+
 		      // now bottom_diff * bottom_data
 	        	for(int d=0;d< this->bottom_dim_ ;++d)
 	        	{
@@ -470,11 +580,11 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(const vec
 	    	    	//	LOG(ERROR) << "have a nan in bottom_data at d=" << d ;
 	    	    	//}
 	        	}
-	        
+
 	      } // for (int n = 0; n < this->num_; ++n)
-	      
-	    
-	    
+
+
+
 	  } // for (int i = 0; i < top.size(); ++i) {
 }
 
@@ -482,35 +592,35 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(const vec
 
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
 	  const int layerindex, const relpropopts & ro ) {
-	
+
 	  const Dtype* weight = this->blobs_[0]->cpu_data();
         Forward_cpu( bottom, top);
-	
+
 	  for (int i = 0; i < top.size(); ++i) {
 	    const Dtype* top_diff = top[i]->cpu_diff();
 	    const Dtype* bottom_data = bottom[i]->cpu_data();
 	    Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
 		//memset(bottom_diff, (Dtype)0., sizeof(Dtype) * bottom[i]->count());
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
-	    
-	    
+
+
 	    const Dtype* top_data = top[i]->cpu_data();
-	    
-	    
+
+
 	    int Mfull=this->num_output_; //conv_out_channels_ /group_;
-	    
+
 	    const int first_spatial_axis = this->channel_axis_ + 1;
 	    int N= bottom[i]->count(first_spatial_axis); //this->conv_out_spatial_dim_;
 	    int K= this->blobs_[0]->count(1); //this->kernel_dim_;
-	    
+
 	    //Blob<Dtype> topdata_witheps(1, 1, 1, 1);
 	    //topdata_witheps.Reshape(top[i]->shape());
 	    Blob<Dtype> topdata_witheps((top[i])->shape());
-	    
+
 	    int outcount=topdata_witheps.count();
-	    
+
     	LOG(INFO) << "M: this->num_output_"<< this->num_output_ ;
     	LOG(INFO) << "K: this->blobs_[0]->count(1)"<< this->blobs_[0]->count(1) ;
     	LOG(INFO) << "??: this->blobs_[0]->count(0)"<< this->blobs_[0]->count(0) ;
@@ -520,11 +630,11 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(const 
 	    /*
 	    if(topdata_witheps.count()!=Mfull * N)
 	    {
-	    	
+
 	    	LOG(ERROR) << "top.size()"<< top.size()  ;
 	    	LOG(ERROR) << i << " at i ,  top[i]->shape_string() " << top[i]->shape_string() ;
 	    	LOG(ERROR) << i << " at i ,  bottom[i]->shape_string() " << bottom[i]->shape_string() ;
-	    	
+
 	    	LOG(ERROR) << "this->num_"<< this->num_ ;
 
 	    	LOG(ERROR) << "this->top_dim_"<< this->top_dim_ ;
@@ -534,35 +644,35 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(const 
 	    	LOG(ERROR) << "K: this->blobs_[0]->count(1)"<< this->blobs_[0]->count(1) ;
 	    	LOG(ERROR) << "N: bottom[i]->count(first_spatial_axis)"<< bottom[i]->count(first_spatial_axis) ;
 
-	    	
+
 	    	LOG(FATAL) << "Incorrect weight shape: "<< topdata_witheps.shape_string()
 	    	 << " Incorrect weight count: "<< topdata_witheps.count() << " " << outcount
 			 << " expected count " << Mfull * N ;
 
 	    }
 	    */
-	    
-	    
+
+
 	    Dtype* topdata_witheps_data=topdata_witheps.mutable_cpu_data();
 	    caffe_copy<Dtype>(outcount, top_diff, topdata_witheps_data);
-	    
+
 
 	      for (int n = 0; n < this->num_; ++n) {
-	    	  
-	    	  // stuff_i = \sum_j w_{ij} something_j  
+
+	    	  // stuff_i = \sum_j w_{ij} something_j
 	        this->backward_cpu_gemm(topdata_witheps_data + n * this->top_dim_, weight,
 	              bottom_diff + n * this->bottom_dim_);
-	        		
+
 		      // now bottom_diff * bottom_data
 	        	//for(int d=0;d< this->bottom_dim_ ;++d)
 	        	//{
 	        	//	bottom_diff[d + n * this->bottom_dim_]*=bottom_data[d + n * this->bottom_dim_]; // R_i = x_i * stuff_i
 	        	//}
-	        
+
 	      } // for (int n = 0; n < this->num_; ++n)
-	      
-	    
-	    
+
+
+
 	  } // for (int i = 0; i < top.size(); ++i) {
 }
 
@@ -572,17 +682,17 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(const 
 
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
 	  const int layerindex, const relpropopts & ro ) {
-	
+
 	  const Dtype* weight = this->blobs_[0]->cpu_data();
-	  
+
 		if(ro.alphabeta_beta <0)
 		{
-			LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ; 
+			LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ;
 		}
 
-	
+
 	  for (int i = 0; i < top.size(); ++i) {
 	    const Dtype* top_diff = top[i]->cpu_diff();
 	    const Dtype* bottom_data = bottom[i]->cpu_data();
@@ -591,8 +701,8 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(const v
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
 
 	    //const Dtype* top_data = top[i]->cpu_data();
-	    
-	    
+
+
 	    const int first_spatial_axis = this->channel_axis_ + 1;
     	LOG(INFO) << "M: this->num_output_"<< this->num_output_ ;
     	LOG(INFO) << "K: this->blobs_[0]->count(1)"<< this->blobs_[0]->count(1) ;
@@ -604,35 +714,35 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(const v
 
 
 	      for (int n = 0; n < this->num_; ++n) {
-	    	  
+
 	       // this->backward_cpu_gemm(topdata_witheps_data + n * this->top_dim_, weight,
 	       //       bottom_diff + n * this->bottom_dim_);
-	        		
+
 	        this->alphabeta(
 	        		top_diff+n * this->top_dim_, //ex output,
-	        		weight, bottom_data + n * this->bottom_dim_, 
+	        		weight, bottom_data + n * this->bottom_dim_,
 					bottom_diff + n * this->bottom_dim_, ro);
-	        
+
 	      } // for (int n = 0; n < this->num_; ++n)
-	      
-	    
-	    
+
+
+
 	  } // for (int i = 0; i < top.size(); ++i) {
 }
 
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_alphabeta_4cases(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
 	  const int layerindex, const relpropopts & ro ) {
-	
+
 	  const Dtype* weight = this->blobs_[0]->cpu_data();
-	  
+
 		if(ro.alphabeta_beta <0)
 		{
-			LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ; 
+			LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ;
 		}
 
-	
+
 	  for (int i = 0; i < top.size(); ++i) {
 	    const Dtype* top_diff = top[i]->cpu_diff();
 	    const Dtype* bottom_data = bottom[i]->cpu_data();
@@ -641,8 +751,8 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_alphabeta_4cases(const vect
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
 
 	    //const Dtype* top_data = top[i]->cpu_data();
-	    
-	    
+
+
 	    const int first_spatial_axis = this->channel_axis_ + 1;
   	LOG(INFO) << "M: this->num_output_"<< this->num_output_ ;
   	LOG(INFO) << "K: this->blobs_[0]->count(1)"<< this->blobs_[0]->count(1) ;
@@ -654,19 +764,19 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_alphabeta_4cases(const vect
 
 
 	      for (int n = 0; n < this->num_; ++n) {
-	    	  
+
 	       // this->backward_cpu_gemm(topdata_witheps_data + n * this->top_dim_, weight,
 	       //       bottom_diff + n * this->bottom_dim_);
-	        		
+
 	        this->alphabeta_4cases(
 	        		top_diff+n * this->top_dim_, //ex output,
 	        		weight, bottom_data + n * this->bottom_dim_,
 					bottom_diff + n * this->bottom_dim_, ro);
-	        
+
 	      } // for (int n = 0; n < this->num_; ++n)
-	      
-	    
-	    
+
+
+
 	  } // for (int i = 0; i < top.size(); ++i) {
 }
 
@@ -724,7 +834,7 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_wsquare(const vector<Blob<D
 
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_flatdist_slowneasy(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom, 
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom,
 	  const int layerindex, const relpropopts & ro ) {
 	//	  const Dtype* weight = this->blobs_[0]->cpu_data();
 
@@ -745,23 +855,23 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_flatdist_slowneasy(const ve
 	    const Dtype* top_diff = top[i]->cpu_diff();
 	    Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
-	    
-	    
+
+
 	    //const Dtype* top_data = top[i]->cpu_data();
-	    
-	    
+
+
 	   // int Mfull=this->num_output_; //conv_out_channels_ /group_;
-	    
+
 	    const int first_spatial_axis = this->channel_axis_ + 1;
 	  //  int N= bottom[i]->count(first_spatial_axis); //this->conv_out_spatial_dim_;
 	  //  int K= this->blobs_[0]->count(1); //this->kernel_dim_;
-	    
+
 	    //Blob<Dtype> topdata_witheps(1, 1, 1, 1);
 	    //topdata_witheps.Reshape(top[i]->shape());
 	    Blob<Dtype> topdata_witheps((top[i])->shape());
-	    
+
 	    int outcount=topdata_witheps.count();
-	    
+
     	LOG(INFO) << "M: this->num_output_"<< this->num_output_ ;
     	LOG(INFO) << "K: this->blobs_[0]->count(1)"<< this->blobs_[0]->count(1) ;
     	LOG(INFO) << "??: this->blobs_[0]->count(0)"<< this->blobs_[0]->count(0) ;
@@ -770,10 +880,10 @@ void ConvolutionLayer<Dtype>::Backward_Relevance_cpu_flatdist_slowneasy(const ve
 
 	    Dtype* topdata_witheps_data=topdata_witheps.mutable_cpu_data();
 	    caffe_copy<Dtype>(outcount, top_diff, topdata_witheps_data);
-	    
+
 	      for (int n = 0; n < this->num_; ++n) {
-	    	  
-	    	  // stuff_i = \sum_j flatweight_data_{ij} top_diff_j  
+
+	    	  // stuff_i = \sum_j flatweight_data_{ij} top_diff_j
 	        this->backward_cpu_gemm(topdata_witheps_data + n * this->top_dim_, flatweight_data,
 	              bottom_diff + n * this->bottom_dim_);
 	      } // for (int n = 0; n < this->num_; ++n)

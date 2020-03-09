@@ -9,8 +9,13 @@
 @license : BSD-2-Clause
 '''
 
-import numpy as np
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
 na = np.newaxis
 
 
@@ -47,6 +52,29 @@ class Convolution(Module):
         self.W = np.random.normal(0,1./(self.fh*self.fw*self.fd)**.5, filtersize)
         self.B = np.zeros([self.n])
 
+    def to_cupy(self):
+        global np
+        assert imp.find_spec("cupy"), "module cupy not found."
+        self.W = cupy.array(self.W)
+        self.B = cupy.array(self.B)
+        if hasattr(self, 'X') and self.X is not None: self.X = cupy.array(self.X)
+        if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.array(self.Y)
+        if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.array(self.Z)
+        if hasattr(self, 'DY') and self.DY is not None: self.DY = cupy.array(self.DY)
+        np = cupy
+
+    def to_numpy(self):
+        global np
+        if not imp.find_spec("cupy"):
+            pass #nothing to do if there is no cupy. model should exist as numpy arrays
+        else:
+            self.W = cupy.asnumpy(self.W)
+            self.B = cupy.asnumpy(self.B)
+            if hasattr(self, 'X') and self.X is not None: self.X = cupy.asnumpy(self.X)
+            if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.asnumpy(self.Y)
+            if hasattr(self, 'Z') and self.Z is not None: self.Z = cupy.asnumpy(self.Z)
+            if hasattr(self, 'DY') and self.DY is not None: self.DY = cupy.asnumpy(self.DY)
+            np = numpy
 
     def forward(self,X,lrp_aware=False):
         '''
@@ -171,6 +199,7 @@ class Convolution(Module):
     def clean(self):
         self.X = None
         self.Y = None
+        self.Z = None
         self.DY = None
 
 
@@ -321,6 +350,7 @@ class Convolution(Module):
                     Bp = (self.B * (self.B > 0))[na,na,na,na,...]
                     Zsp = Zp.sum(axis=(1,2,3),keepdims=True) + Bp
                     Ralpha = alpha * ((Zp/Zsp) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+                    Ralpha[np.isnan(Ralpha)] = 0
                 else:
                     Ralpha = 0
 
@@ -329,6 +359,7 @@ class Convolution(Module):
                     Bn = (self.B * (self.B < 0))[na,na,na,na,...]
                     Zsn = Zn.sum(axis=(1,2,3),keepdims=True) + Bn
                     Rbeta = beta * ((Zn/Zsn) * R[:,i:i+1,j:j+1,na,:]).sum(axis=4)
+                    Rbeta[np.isnan(Rbeta)] = 0
                 else:
                     Rbeta = 0
 

@@ -129,15 +129,16 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		const bool thenightstartshere) {
 
 	switch (ro.relpropformulatype) {
-	case 0: {
-		//epsstab
+	case 0: // epsilon-type formula
+	{
 		switch (ro.codeexectype) {
 		case 0: {
 			//slowneasy
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
-			break;
+		break;
 		default: {
 			LOG(FATAL) << "unknown value for ro.codeexectype "
 					<< ro.codeexectype << std::endl;
@@ -147,14 +148,16 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		} //	switch(ro.codeexectype)
 
 	}
-		break;
-	case 2: {
-		//alphabeta
+	break;
+
+	case 2: // (alpha-beta)-type formula
+	{
 		switch (ro.codeexectype) {
 		case 0:
 		case 1:
 		{
 			//slowneasy
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
 			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
@@ -168,86 +171,116 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		} //	switch(ro.codeexectype)
 
 	}
-		break;
-	case 6: 
-	case 56: {
-		//epsstab
-		switch (ro.codeexectype) {
-		case 0: {
-			//slowneasy
-			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
-		}
-			break;
-		default: {
-			LOG(FATAL) << "unknown value for ro.codeexectype "
-					<< ro.codeexectype << std::endl;
-			exit(1);
-		}
-			break;
-		} //	switch(ro.codeexectype)
+	break;
 
+	case 54: // epsilon + flat below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
+			//LOG(FATAL) << "DISABLED";
+			//exit(1);
+			//Backward_Relevance_cpu_flatdist_slowneasy(top, propagate_down, bottom,	layerindex, ro );
+			Backward_Relevance_cpu_flatweight_slowneasy(top, propagate_down, bottom,	layerindex, ro );
+		}
+		else
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
 	}
-	case 11: //gradient in demonstrator
-	case 58:
+	break;
+
+	case 56: // epsilon + w^2 below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
 		{
-		//alphabeta
-		switch (ro.codeexectype) {
-		case 0: 
-		case 1:
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
 		{
-			//slowneasy
-			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
+			//LOG(FATAL) << "DISABLED";
+			//exit(1);
+			//Backward_Relevance_cpu_wsquare(top, propagate_down, bottom,	layerindex, ro );
+			Backward_Relevance_cpu_wsquare_slowneasy(top, propagate_down, bottom,	layerindex, ro );
 		}
-			break;
-		default: {
-			LOG(FATAL) << "unknown value for ro.codeexectype "
-					<< ro.codeexectype << std::endl;
-			exit(1);
-		}
-			break;
-
-		} //	switch(ro.codeexectype)
-
-		}
-		break;
-
-	case 60:
+		else
 		{
-		//alphabeta
-		switch (ro.codeexectype) {
-		case 0: 
-		case 1:
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
+
+	case 58: // (alpha-beta) + flat below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
 		{
-			//slowneasy
-			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro);
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
 		}
-			break;
-		default: {
-			LOG(FATAL) << "unknown value for ro.codeexectype "
-					<< ro.codeexectype << std::endl;
-			exit(1);
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
+			//LOG(FATAL) << "DISABLED";
+			//exit(1);
+			//Backward_Relevance_cpu_flatdist_slowneasy(top, propagate_down, bottom,layerindex, ro );
+			Backward_Relevance_cpu_flatweight_slowneasy(top, propagate_down, bottom,layerindex, ro );
 		}
-			break;
-
-		} //	switch(ro.codeexectype)
-
+		else
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+			Backward_Relevance_cpu_alphabeta_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
 		}
-		break;
+	}
+	break;
 
+	case 60: // (alpha-beta) + w^2 below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
 
-	case 8:
-	case 54:
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
+			//LOG(FATAL) << "DISABLED";
+			//exit(1);
+			//Backward_Relevance_cpu_wsquare(top,	propagate_down, bottom, layerindex, ro );
+			Backward_Relevance_cpu_wsquare_slowneasy(top,	propagate_down, bottom, layerindex, ro );
+		}
+		else
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+			Backward_Relevance_cpu_alphabeta_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
+
+	case 100: // decomposition type per layer: (alpha-beta) for conv layers, epsilon for inner product layers
 	{
 		switch (ro.codeexectype) {
 		case 0: {
 			//slowneasy
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
 			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
 		}
-			break;
+		break;
 		default: {
 			LOG(FATAL) << "unknown value for ro.codeexectype "
 					<< ro.codeexectype << std::endl;
@@ -255,36 +288,96 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 		}
 			break;
 		} //	switch(ro.codeexectype)
+
 	}
-		break;
+	break;
+
+	case 102: // composite method + flat below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (flat)";
+			//LOG(FATAL) << "DISABLED";
+			//exit(1);
+			//Backward_Relevance_cpu_flatdist_slowneasy(top, propagate_down, bottom, layerindex, ro );
+			Backward_Relevance_cpu_flatweight_slowneasy(top, propagate_down, bottom, layerindex, ro );
+		}
+		else
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
+
+	case 104: // decomposition type per layer + w^2 below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (wsquare)";
+			//LOG(FATAL) << "DISABLED";
+			//exit(1);
+			//Backward_Relevance_cpu_wsquare(top,propagate_down, bottom,layerindex, ro );
+			Backward_Relevance_cpu_wsquare_slowneasy(top,propagate_down, bottom,layerindex, ro );
+		}
+		else
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
+			Backward_Relevance_cpu_epsstab_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+	}
+	break;
 
 
+
+	// EXPERIMENTAL AND OTHERS BELOW
+
+	case 6: // (alpha-beta) + z^beta on lowest considered layer
+	case 8: // epsilon + z^beta on lowest considered layer
+	case 11: //gradient in demonstrator
 	case 18:
 	case 22:
+	{
+		int fc6layerindex=15;
+		if (layerindex > fc6layerindex )
 		{
-			int fc6layerindex=15;
-			if (layerindex > fc6layerindex )
-			{
-				relpropopts ro2=ro;
-				ro2.relpropformulatype=0;
-				ro2.alphabeta_beta=0;
-				Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro2);
-			}
-			else
-			{
-				relpropopts ro2=ro;
-				ro2.relpropformulatype=0;
-				ro2.alphabeta_beta=1;
-				Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
-					bottom, layerindex, ro2);
-			}
+			relpropopts ro2=ro;
+			ro2.relpropformulatype=0;
+			ro2.alphabeta_beta=0;
+			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+				bottom, layerindex, ro2);
 		}
-		break;
-	case 26: {
-		//zeiler
+		else
+		{
+			relpropopts ro2=ro;
+			ro2.relpropformulatype=0;
+			ro2.alphabeta_beta=1;
+			Backward_Relevance_cpu_alphabeta_slowneasy(top, propagate_down,
+				bottom, layerindex, ro2);
+		}
+	}
+	break;
+
+
+	case 166: // guided backprop (same as deconv in inner product layer)
+	case 26: //zeiler: deconvolution
+	{
 		switch (ro.codeexectype) {
 		case 0: {
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (Deconvolution: Zeiler)";
 			//slowneasy
 			Backward_Relevance_cpu_zeilerlike_slowneasy(top, propagate_down,
 					bottom, layerindex, ro);
@@ -300,6 +393,30 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu(
 
 	}
 		break;
+
+	case 114: // epsilon + alphabeta below a given layer index
+	{
+		if(ro.auxiliaryvariable_maxlayerindexforflatdistinconv<0)
+		{
+			LOG(FATAL) << "ro.auxiliaryvariable_maxlayerindexforflatdistinconv not set for this case in convlayer";
+		}
+
+		if(layerindex <= ro.auxiliaryvariable_maxlayerindexforflatdistinconv)
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (alphabeta)";
+			Backward_Relevance_cpu_alphabeta_slowneasy(top,
+					propagate_down, bottom,
+					layerindex, ro );
+		}
+		else
+		{
+			LOG(INFO) << "InnerproductLayer ro.relpropformulatype " << ro.relpropformulatype << " (eps)";
+			Backward_Relevance_cpu_epsstab_slowneasy(top, propagate_down,
+					bottom, layerindex, ro);
+		}
+	}
+	break;
+
 
 
 	default: {
@@ -329,7 +446,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_epsstab_slowneasy(
 		//memset(bottom_diff, 0, sizeof(Dtype) * bottom[i]->count());
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
 
-		
+
 		const Dtype* top_data = top[i]->cpu_data();
 		Blob < Dtype > topdata_witheps((top[i])->shape());
 
@@ -387,7 +504,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_zeilerlike_slowneasy(
 		//memset(bottom_diff, 0, sizeof(Dtype) * bottom[i]->count());
 	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
 
-		
+
 		const Dtype* top_data = top[i]->cpu_data();
 		Blob < Dtype > topdata_witheps((top[i])->shape());
 
@@ -427,10 +544,10 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
 		const vector<Blob<Dtype>*>& bottom, const int layerindex,
 		const relpropopts & ro) {\
-	
+
 	if(ro.alphabeta_beta <0)
 	{
-		LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ; 
+		LOG(FATAL) << "ro.alphabeta_beta <0 should be non-neg" << ro.alphabeta_beta ;
 	}
 
 	for (int i = 0; i < top.size(); ++i) {
@@ -446,7 +563,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 
 		Blob < Dtype > pos_sums(1, 1, M_, N_);
 		Blob < Dtype > neg_sums(1, 1, M_, N_);
-		
+
 		Dtype* pos_sums_data = pos_sums.mutable_cpu_data();
 		Dtype* neg_sums_data = neg_sums.mutable_cpu_data();
 		memset(pos_sums_data, 0, sizeof(Dtype) * M_ * N_);
@@ -466,13 +583,13 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 									* weights[enind * K_ + kernelind]);
 
 				}
-				
-				
+
+
 			}
 		}
 		*/
-		
-		
+
+
 		if(bias_term_)
 		{
 			switch(ro.biastreatmenttype)
@@ -492,7 +609,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 										* weights[enind * K_ + kernelind]);
 
 					}
-					
+
 					Dtype bterm=bias_multiplier_.cpu_data()[mind] * this->blobs_[1]->cpu_data()[enind];
 					pos_sums_data[mind * N_ + enind] += std::max(Dtype(0.),bterm);
 					neg_sums_data[mind * N_ + enind] += std::min(Dtype(0.),bterm);
@@ -517,7 +634,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 										* weights[enind * K_ + kernelind] + bterm / K_ );
 
 					}
-					
+
 
 				}
 			}
@@ -525,11 +642,11 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			break;
 			default:
 			{
-				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype; 
+				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype;
 			}
 			break;
 			} //			switch(ro.biastreatmenttype)
-			
+
 		}
 		else //if(bias_term_)
 		{
@@ -546,11 +663,11 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 										* weights[enind * K_ + kernelind]);
 
 					}
-					
+
 				}
 			}
 		} // else of if(bias_term_)
-		
+
 		float beta=ro.alphabeta_beta;
 		float alpha = 1.0 + beta;
 
@@ -559,8 +676,8 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			{
 			case 0: //ignore bias
 			{
-		
-		
+
+
 		for (long mind = 0; mind < M_; ++mind) {
 			for (long enind = 0; enind < N_; ++enind) {
 				Dtype z1 = 0;
@@ -594,8 +711,8 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			break;
 			case 1: //distrib bias as 1/n
 			{
-		
-		
+
+
 		for (long mind = 0; mind < M_; ++mind) {
 			for (long enind = 0; enind < N_; ++enind) {
 				Dtype bterm=bias_multiplier_.cpu_data()[mind] * this->blobs_[1]->cpu_data()[enind];
@@ -631,7 +748,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 			break;
 			default:
 			{
-				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype; 
+				LOG(FATAL) << "uknown value for: ro.biastreatmenttype " << ro.biastreatmenttype;
 			}
 			break;
 			} //			switch(ro.biastreatmenttype)
@@ -667,7 +784,7 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 				} //			for (long enind = 0; enind < N_; ++enind) {
 			} //		for (long mind = 0; mind < M_; ++mind) {
 		} //else of if (this->bias_term_) {
-			
+
 		//  if (bias_term_) {
 		//    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, 1, (Dtype)1.,
 		//        bias_multiplier_.cpu_data(),
@@ -675,6 +792,143 @@ void InnerProductLayer<Dtype>::Backward_Relevance_cpu_alphabeta_slowneasy(
 		//  }
 
 } //for (int i = 0; i < top.size(); ++i)
+}
+
+template<typename Dtype>
+void InnerProductLayer<Dtype>::Backward_Relevance_cpu_flatweight_slowneasy(
+		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
+		const vector<Blob<Dtype>*>& bottom, const int layerindex,
+		const relpropopts & ro) {
+
+        // an inplace relu may alter the layer, thats why the forward here
+        Forward_cpu( bottom, top);
+
+	for (int i = 0; i < top.size(); ++i) {
+		const Dtype* top_diff = top[i]->cpu_diff();
+
+		Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
+	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
+
+
+		LOG(INFO) << "top.size()" << top.size();// << "part of it:" << i<< " weight shape: " << topdata_witheps.shape_string();
+		LOG(INFO) << "M_, K_, N_" << M_ << " "<< K_ << " "<< N_;
+
+
+        Blob < Dtype > weightones(this->blobs_[0]->shape());
+        Dtype* weightones_data_m=weightones.mutable_cpu_data();
+   	    caffe_set(weightones.count(), Dtype(1.0), weightones_data_m);
+
+        const Dtype* weightones_data=weightones.cpu_data();
+        Dtype divfac= 1./((Dtype)( K_));
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, M_, K_, N_, divfac, top_diff, weightones_data, (Dtype) 0., bottom[i]->mutable_cpu_diff());
+
+
+	} //for (int i = 0; i < top.size(); ++i)
+}
+
+
+
+template<typename Dtype>
+void InnerProductLayer<Dtype>::Backward_Relevance_cpu_wsquare_slowneasy(
+		const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
+		const vector<Blob<Dtype>*>& bottom, const int layerindex,
+		const relpropopts & ro) {
+
+        // an inplace relu may alter the layer, thats why the forward here
+        Forward_cpu( bottom, top);
+
+    //top-data M X N
+    /// bottom data M X K
+    // weights  N X K
+
+	for (int i = 0; i < top.size(); ++i) {
+		const Dtype* top_diff = top[i]->cpu_diff();
+		const Dtype* bottom_data = bottom[i]->cpu_data();
+		Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
+		//memset(bottom_diff, 0, sizeof(Dtype) * bottom[i]->count());
+	    caffe_set(bottom[i]->count(), Dtype(0.0), bottom_diff);
+
+
+		const Dtype* top_data = top[i]->cpu_data();
+		Blob < Dtype > topdata_witheps((top[i])->shape());
+
+		LOG(INFO) << "top.size()" << top.size() << "part of it:" << i
+				<< " weight shape: " << topdata_witheps.shape_string();
+		LOG(INFO) << "M_, K_, N_" << M_ << " "<< K_ << " "<< N_;
+		int outcount = topdata_witheps.count();
+		if (topdata_witheps.count() != M_ * N_) {
+			LOG(FATAL) << "Incorrect weight shape: "
+					<< topdata_witheps.shape_string()
+					<< " Incorrect weight count: " << topdata_witheps.count()
+					<< " " << outcount << " expected count " << M_ * N_;
+
+			exit(1);
+		}
+
+		Dtype* topdata_witheps_data = topdata_witheps.mutable_cpu_data();
+		caffe_copy < Dtype > (outcount, top_diff, topdata_witheps_data);
+
+		for (int c = 0; c < outcount; ++c) {
+			//something_J =R_j / (output_j + eps * sign (output_j) )
+			if (top_data[c] > 0) {
+				topdata_witheps_data[c] /= top_data[c] + ro.epsstab;
+			} else if (top_data[c] < 0) {
+				topdata_witheps_data[c] /= top_data[c] - ro.epsstab;
+			}
+		} //for(int c=0;c< M * N ;++c)
+
+        Blob < Dtype > weightpower2(this->blobs_[0]->shape());
+        Dtype* weightpower2_data_m=weightpower2.mutable_cpu_data();
+
+        const Dtype* weightpointer=this->blobs_[0]->cpu_data();
+   		for (int c = 0; c < weightpower2.count(); ++c) {
+            weightpower2_data_m[c]=weightpointer[c]*weightpointer[c];
+        }
+
+    //top-data M X N
+    /// bottom data M X K
+    // weights  N X K
+
+
+         // weight is : N x K
+        // needs to sum to 1 over: K, so wsums must be length N
+
+        Blob < Dtype > ones(1,1,1,K_);
+        Dtype* ones_data_m=ones.mutable_cpu_data();
+        caffe_set(ones.count(), Dtype(1.0), ones_data_m);
+
+        Blob < Dtype > wsums(1,1,1,N_);
+        Dtype* wsums_data_m=wsums.mutable_cpu_data();
+
+        const Dtype* weightpower2_data=weightpower2.cpu_data();
+        const Dtype* ones_data=ones.cpu_data();
+        caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasTrans, N_, 1, K_, (Dtype) 1.,  weightpower2_data, ones_data, (Dtype) 0., wsums_data_m);
+
+        const Dtype* wsums_data=wsums.cpu_data();
+    	for (int n = 0; n <  N_; ++n) {
+        if( wsums_data[n] >0)
+        {
+    	    for (int k = 0; k < K_ ; ++k) {
+	            weightpower2_data_m[ n * K_ + k ] /=wsums_data[n] ;
+		    }
+        }
+        }
+
+
+	      //for (int n = 0; n < this->num_; ++n) {
+		caffe_cpu_gemm < Dtype
+				> (CblasNoTrans, CblasNoTrans, M_, K_, N_, (Dtype) 1., top_diff, weightpower2_data, (Dtype) 0., bottom[i]->mutable_cpu_diff());
+
+
+
+
+
+
+
+
+	} //for (int i = 0; i < top.size(); ++i)
 }
 
 #ifdef CPU_ONLY

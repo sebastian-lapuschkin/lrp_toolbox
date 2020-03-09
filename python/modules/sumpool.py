@@ -9,8 +9,14 @@
 @license : BSD-2-Clause
 '''
 
-import numpy as np
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 # -------------------------------
 # Sum Pooling layer
@@ -36,6 +42,23 @@ class SumPool(Module):
 
         self.pool = pool
         self.stride = stride
+
+    def to_cupy(self):
+        global np
+        assert imp.find_spec("cupy"), "module cupy not found."
+        if hasattr(self, 'X') and self.X is not None: self.X = cupy.array(self.X)
+        if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.array(self.Y)
+        np = cupy
+
+    def to_numpy(self):
+        global np
+        if not imp.find_spec("cupy"):
+            pass #nothing to do if there is no cupy. model should exist as numpy arrays
+        else:
+            if hasattr(self, 'X') and self.X is not None: self.X = cupy.asnumpy(self.X)
+            if hasattr(self, 'Y') and self.Y is not None: self.Y = cupy.asnumpy(self.Y)
+        np = numpy
+
 
     def forward(self,X,*args,**kwargs):
         '''
@@ -105,8 +128,8 @@ class SumPool(Module):
         hstride, wstride = self.stride
 
         #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hpool) // hstride + 1
-        Wout = (W - wpool) // wstride + 1
+        Hout = int((H - hpool) / hstride + 1)
+        Wout = int((W - wpool) / wstride + 1)
 
         normalizer = 1./np.sqrt(hpool * wpool)
 
@@ -132,8 +155,8 @@ class SumPool(Module):
         hstride, wstride = self.stride
 
         #assume the given pooling and stride parameters are carefully chosen.
-        Hout = (H - hpool) // hstride + 1
-        Wout = (W - wpool) // wstride + 1
+        Hout = int((H - hpool) / hstride + 1)
+        Wout = int((W - wpool) / wstride + 1)
 
         Rx = np.zeros(self.X.shape)
         for i in range(Hout):

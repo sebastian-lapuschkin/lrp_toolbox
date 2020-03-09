@@ -10,8 +10,14 @@
 
 import os
 import pickle
-import numpy as np
 from modules import Sequential,Linear,Tanh,Rect,SoftMax,Convolution,Flatten,SumPool,MaxPool
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 #--------------------
 #   model reading
@@ -86,7 +92,10 @@ def read(path, fmt = None):
     if fmt is None: #try to infer format
         fmt = os.path.splitext(path)[1].replace('.','').lower()
 
-    return _read_as[fmt](path)
+    model = _read_as[fmt](path)
+    if imp.find_spec("cupy"):
+        model.to_cupy()
+    return model
 
 
 def _read_pickled(path):
@@ -100,7 +109,7 @@ def _read_txt(path):
     print('loading plain text model from',path)
 
     def _read_txt_helper(path):
-        with open(path,'rb') as f:
+        with open(path,'r') as f:
             content = f.read().split('\n')
 
             modules = []
@@ -188,7 +197,7 @@ def _read_txt(path):
         #numpy.reshape may throw ValueErros if reshaping does not work out.
         #In this case: fall back to reading the old plain text format.
         print('probable reshaping/formatting error while reading plain text network file.')
-        print('ValueError message:', e.message)
+        print('ValueError message: {}'.format(e))
         print('Attempting fall-back to legacy plain text format interpretation...')
         return _read_txt_old(path)
         print('fall-back successfull!')
@@ -197,7 +206,7 @@ def _read_txt(path):
 def _read_txt_old(path):
     print('loading plain text model from', path)
 
-    with open(path, 'rb') as f:
+    with open(path, 'r') as f:
         content = f.read().split('\n')
 
         modules = []
@@ -226,7 +235,7 @@ def _read_txt_old(path):
             else:
                 raise ValueError('Layer type ' + [s for s in line.split() if len(s) > 0][0] +  ' not supported by legacy plain text format.')
 
-            c+=1;
+            c+=1
             line = content[c]
 
         return Sequential(modules)
@@ -272,6 +281,8 @@ def write(model, path, fmt = None):
     '''
 
     model.clean()
+    if not np == numpy: #np = cupy
+        model.to_numpy() #TODO reconvert after writing?
     if fmt is None:
         fmt = os.path.splitext(path)[1].replace('.','').lower()
 
@@ -290,7 +301,7 @@ def _write_txt(model,path):
     if not isinstance(model, Sequential):
         raise Exception('Argument "model" must be an instance of module.Sequential, wrapping a sequence of neural network computation layers, but is {0}'.format(type(model)))
 
-    with open(path, 'wb') as f:
+    with open(path, 'w') as f:
         for layer in model.modules:
             if isinstance(layer,Linear):
                 '''

@@ -1,17 +1,17 @@
-# The LRP Toolbox for Artificial Neural Networks (1.2.0)
+# The LRP Toolbox for Artificial Neural Networks (1.3.0rc3)
 
 The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
 specific  to  a  given  data  point  by  attributing
 relevance scores to  important  components
 of  the  input  by  using  the  topology  of  the  learned  model  itself.
 
+<img src="doc/images/nicepic.jpg" width="840">
+
 The LRP Toolbox provides simple and accessible stand-alone implementations of LRP for artificial neural networks supporting Matlab and python. The Toolbox realizes LRP functionality for the Caffe Deep Learning Framework as an extension of Caffe source code published in 10/2015.
 
 The  implementations  for  Matlab  and  python  are intended as a sandbox or playground to familiarize the user to the LRP algorithm and  thus are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
 
-<img src="doc/images/1.png" width="280">
-<img src="doc/images/2.png" width="280">
-<img src="doc/images/7.png" width="280">
+<img src="doc/images/1.png" width="280"><img src="doc/images/2.png" width="280"><img src="doc/images/7.png" width="280">
 
 <img src="doc/images/volcano2.jpg" width="210"><img src="doc/images/volcano2_hm.jpg" width="210">
 <img src="doc/images/scooter10.jpg" width="210"><img src="doc/images/scooter_10_hm.jpg" width="210">
@@ -20,9 +20,31 @@ The  implementations  for  Matlab  and  python  are intended as a sandbox or pla
 ### See the LRP Toolbox in Action
 To try out either the python-based MNIST demo, or the Caffe based ImageNet demo in your browser, click on the respective panels:
 
-[<img src="http://heatmapping.org/images/mnist.png" width=210>](http://heatmapping.org/mnist.html)
-[<img src="http://heatmapping.org/images/caffe.png" width=210>](http://heatmapping.org/caffe.html)
+| **MNIST**     | **Images**           | **Text**  |
+|:-----------:|:-------------:|:-----:|
+| [<img src="http://heatmapping.org/mnist.png" width=210>](https://lrpserver.hhi.fraunhofer.de/handwriting-classification)      | [<img src="http://heatmapping.org/caffe.png" width=210>](https://lrpserver.hhi.fraunhofer.de/image-classification) |[<img src="http://heatmapping.org/text.png" width=210>](https://lrpserver.hhi.fraunhofer.de/text-classification) |
+| A simple LRP demo based on neural networks that predict handwritten digits and were trained using the MNIST data set.       |   A more complex LRP demo based on a neural network implemented using Caffe. The neural network predicts the contents of the picture.    |   An LRP demo that explains classification on natural language. The neural network predicts the type of document.  |
 
+
+
+
+
+
+### New in 1.3.0rc3:
+#### standalone python implementation:
+* update to python 3
+* updated treatment of softmax and target class
+* lrp_aware option for efficient calculation of multiple backward passes
+* custom colormaps in render.py
+* __gpu support__ when installing [cupy](https://github.com/cupy/cupy). this is an optional feature. without the cupy package, the python code will execute using the cpu/numpy.
+
+### caffe implementation
+* updated the installation config
+* new [**recommended**](https://arxiv.org/abs/1910.09840) formula types 100, 102, 104 
+* new python wrapper to use lrp in pycaffe
+* pycaffe demo file
+* bugfixes
+* singularity image for building a hassle-free OS-agnostic command line executable
 
 
 ### New in version 1.2.0
@@ -43,7 +65,7 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 
 ### Obtaining the LRP Toolbox:
-You can directly download the latest full release / current verson from github. However, if you prefer to only download what is necessary for your project/language/purpose, make use of the pre-packaged downloads available at [heatmapping.org](http://www.heatmapping.org/)
+Clone it from github!
 
 
 ### Installing the Toolbox:
@@ -73,7 +95,9 @@ When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/p
 
 
     
-### Misc
+### Misc & Related
 
 For further research and projects involving LRP, visit [heatmapping.org](http://heatmapping.org)
+
+Also, consider paying https://github.com/albermax/innvestigate a visit! Next to LRP, iNNvestigate efficiently implements a hand full of additional DNN analysis methods and can boast with a >500-fold increase in computation speed when compared with our CPU-bound Caffe implementation! 
 

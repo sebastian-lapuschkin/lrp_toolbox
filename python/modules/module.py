@@ -33,19 +33,19 @@ class Module:
 
     def forward(self,X,lrp_aware=False):
         ''' forward passes the input data X to the layer's output neurons.
-        
+
         Parameters
         ----------
 
         X : numpy.ndarray
-            the input activations for this layer, shaped [batchsize, ...] 
+            the input activations for this layer, shaped [batchsize, ...]
 
         lrp_aware : bool
             controls whether the forward pass is to be computed with awareness for multiple following
             LRP calls. this will sacrifice speed in the forward pass but will save time if multiple LRP
             calls will follow for the current X, e.g. wit different parameter settings or for multiple
             target classes.
-        
+
         '''
         return X
 
@@ -153,25 +153,31 @@ class Module:
     # ---------------------------------------------------------
 
     def _simple_lrp(self,R):
-        raise NotImplementedError()
+        raise NotImplementedError('_simple_lrp missing in ' + self.__class__.__name__)
 
     def _simple_lrp_slow(self,R):
-        raise NotImplementedError()
+        raise NotImplementedError('_simple_lrp_slow missing in ' + self.__class__.__name__)
 
     def _flat_lrp(self,R):
-        raise NotImplementedError()
+        raise NotImplementedError('_flat_lrp missing in ' + self.__class__.__name__)
 
     def _ww_lrp(self,R):
-        raise NotImplementedError()
+        raise NotImplementedError('_ww_lrp missing in ' + self.__class__.__name__)
 
     def _epsilon_lrp(self,R,param):
-        raise NotImplementedError()
+        raise NotImplementedError('_epsilon_lrp missing in ' + self.__class__.__name__)
 
     def _epsilon_lrp_slow(self,R,param):
-        raise NotImplementedError()
+        raise NotImplementedError('_epsilon_lrp_slow missing in ' + self.__class__.__name__)
 
     def _alphabeta_lrp(self,R,param):
-        raise NotImplementedError()
+        raise NotImplementedError('_alphabeta_lrp missing in ' + self.__class__.__name__)
 
     def _alphabeta_lrp_slow(self,R,param):
-        raise NotImplementedError()
+        raise NotImplementedError('_alphabeta_lrp_slow missing in ' + self.__class__.__name__)
+
+    def to_cupy(self):
+        raise NotImplementedError('to_cupy missing in ' + self.__class__.__name__)
+
+    def to_numpy(self):
+        raise NotImplementedError('to_numpy missing in ' + self.__class__.__name__)

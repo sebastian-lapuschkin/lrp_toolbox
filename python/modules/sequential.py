@@ -11,9 +11,14 @@
 
 import copy
 import sys
-import numpy as np
 import time
 from .module import Module
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"):
+    import cupy
+    import cupy as np
 na = np.newaxis
 
 # -------------------------------
@@ -37,6 +42,36 @@ class Sequential(Module):
         '''
         Module.__init__(self)
         self.modules = modules
+
+	    #make sure to migrate py-modules and nn-modules to the same backend
+        if imp.find_spec("cupy"):
+            self.to_cupy()
+        else:
+            self.to_numpy()
+
+    def to_cupy(self):
+        global np
+        for m in self.modules:
+            m.to_cupy()
+        np = cupy # ensure correct numerics backend
+
+    def to_numpy(self):
+        global np
+        for m in self.modules:
+            m.to_numpy()
+        np = numpy # ensure correct numerics backend
+
+    def drop_softmax_output_layer(self):
+        '''
+        This function removes the softmax output layer from the model, if there is any.
+        '''
+        from .softmax import SoftMax
+        if isinstance(self.modules[-1],  SoftMax):
+            print('removing softmax output mapping')
+            del self.modules[-1]
+        else:
+            print('output layer is not softmax. nothing to do')
+
 
 
     def forward(self,X,lrp_aware=False):
@@ -84,7 +119,7 @@ class Sequential(Module):
             m.clean()
 
 
-    def train(self, X, Y,  Xval = [], Yval = [],  batchsize = 25, iters = 10000, lrate = 0.005, lrate_decay = None, lfactor_initial=1.0 , status = 250, convergence = -1, transform = None):
+    def train(self, X, Y,  Xval = [], Yval = [],  batchsize = 25, iters = 10000, lrate = 0.005, lrate_decay = None, lfactor_initial=1.0 , status = 250, convergence = -1, transform = None, silent=False):
         '''
         Provides a method for training the neural net (self) based on given data.
 
@@ -156,11 +191,10 @@ class Sequential(Module):
             b : the number of unique indices to pick.
             '''
             assert(b <= N) # if this fails no valid solution can be found.
-            I = np.arange(0)
+            I = numpy.arange(0)
             while I.size < b:
-                I = np.unique(np.append(I,np.random.randint(0,N,[b-I.size,])))
-
-            return I
+                I = numpy.unique(numpy.append(I,numpy.random.randint(0,N,[b-I.size,])))
+            return np.array(I)
 
         t_start = time.time()
         untilConvergence = convergence;    learningFactor = lfactor_initial
@@ -187,24 +221,26 @@ class Sequential(Module):
 
             #periodically evaluate network and optionally adjust learning rate or check for convergence.
             if (d+1) % status == 0:
-                if not Xval == [] and not Yval == []: #if given, evaluate on validation data
+                if not len(Xval) == 0 and not len(Yval) == 0: #if given, evaluate on validation data
                     Ypred = self.forward(Xval)
                     acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Yval, axis=1))
                     l1loss = np.abs(Ypred - Yval).sum()/Yval.shape[0]
-                    print('Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100,l1loss))
+                    if not np == numpy: acc = np.asnumpy(acc); l1loss = np.asnumpy(l1loss)
+                    if not silent: print('Accuracy after {0} iterations on validation set: {1}% (l1-loss: {2:.4})'.format(d+1, acc*100, l1loss))
 
                 else: #evaluate on the training data only
                     Ypred = self.forward(X)
                     acc = np.mean(np.argmax(Ypred, axis=1) == np.argmax(Y, axis=1))
                     l1loss = np.abs(Ypred - Y).sum()/Y.shape[0]
-                    print('Accuracy after {0} iterations on training data: {1}% (l1-loss: {2:.4})'.format(d+1,acc*100,l1loss))
+                    if not numpy == np: acc = np.asnumpy(acc); l1loss = np.asnumpy(l1loss)
+                    if not silent: print('Accuracy after {0} iterations on training data: {1}% (l1-loss: {2:.4})'.format(d+1,acc*100,l1loss))
 
 
                 #save current network parameters if we have improved
                 #if acc >= bestAccuracy and l1loss <= bestLoss:
                 # only go by loss
                 if l1loss <= bestLoss:
-                    print('    New loss-optimal parameter set encountered. saving....')
+                    if not silent: print('    New loss-optimal parameter set encountered. saving....')
                     bestAccuracy = acc
                     bestLoss = l1loss
                     bestLayers = copy.deepcopy(self.modules)
@@ -216,40 +252,49 @@ class Sequential(Module):
                     elif lrate_decay == 'sublinear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-(acc*acc)
-                        print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, np.round(learningFactor*100,2)))
+                        if not silent: print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, numpy.round(learningFactor*100,2)))
                     elif lrate_decay == 'linear':
                         #slow down learning to better converge towards an optimum with increased network performance.
                         learningFactor = 1.-acc
-                        print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, np.round(learningFactor*100,2)))
+                        if not silent: print('    Adjusting learning rate to {0} ~ {1}% of its initial value'.format(learningFactor*lrate, numpy.round(learningFactor*100,2)))
 
                     #refresh number of allowed search steps until convergence
                     untilConvergence = convergence
                 else:
                     untilConvergence-=1
                     if untilConvergence == 0 and convergence > 0:
-                        print('    No more recorded model improvements for {0} evaluations. Accepting model convergence.'.format(convergence))
+                        if not silent: print('    No more recorded model improvements for {0} evaluations. Accepting model convergence.'.format(convergence))
                         break
 
                 t_elapsed =  time.time() - t_start
                 percent_done = float(d+1)/iters #d+1 because we are after the iteration's heavy lifting
                 t_remaining_estimated = t_elapsed/percent_done - t_elapsed
 
-                m, s = divmod(t_remaining_estimated, 60)
-                h, m = divmod(m, 60)
-                d, h = divmod(h, 24)
+                t_m, t_s = divmod(t_remaining_estimated, 60)
+                t_h, t_m = divmod(t_m, 60)
+                t_d, t_h = divmod(t_h, 24)
 
-                timestring = '{}d {}h {}m {}s'.format(int(d), int(h), int(m), int(s))
-                print('    Estimate time until current training ends : {} ({:.2f}% done)'.format(timestring, percent_done*100))
+                timestring = '{}d {}h {}m {}s'.format(int(t_d), int(t_h), int(t_m), int(t_s))
+                if not silent: print('    Estimate time until current training ends : {} ({:.2f}% done)'.format(timestring, percent_done*100))
 
             elif (d+1) % (status/10) == 0:
                 # print 'alive' signal
                 #sys.stdout.write('.')
                 l1loss = np.abs(Ypred - Y[samples,:]).sum()/Ypred.shape[0]
-                sys.stdout.write('batch# {}, lrate {}, l1-loss {:.4}\n'.format(d+1,lrate*learningFactor,l1loss))
-                sys.stdout.flush()
+                if not np == numpy: l1loss = np.asnumpy(l1loss)
+                if not silent:
+                    sys.stdout.write('batch# {}, lrate {}, l1-loss {:.4}\n'.format(d+1,lrate*learningFactor,l1loss))
+                    sys.stdout.flush()
 
         #after training, either due to convergence or iteration limit
-        print('Setting network parameters to best encountered network state with {}% accuracy and a loss of {} from iteration {}.'.format(bestAccuracy*100, bestLoss, bestIter))
+        if not silent:
+            t_elapsed =  time.time() - t_start
+            m, s = divmod(t_elapsed, 60)
+            h, m = divmod(m, 60)
+            d, h = divmod(h, 24)
+            timestring = '{}d {}h {}m {}s'.format(int(d), int(h), int(m), int(s))
+            print('Training terminated after {}'.format(timestring))
+            print('Setting network parameters to best encountered network state with {}% accuracy and a loss of {} from iteration {}.'.format(bestAccuracy*100, bestLoss, bestIter))
         self.modules = bestLayers
 
 

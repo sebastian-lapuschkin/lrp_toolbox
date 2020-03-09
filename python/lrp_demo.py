@@ -18,14 +18,23 @@ finally, the resulting heatmap is rendered as an image and (over)written out to 
 
 
 import matplotlib.pyplot as plt
-import numpy as np ; na = np.newaxis
+import time
+import numpy
+import numpy as np
+import importlib.util as imp
+if imp.find_spec("cupy"): #use cupy for GPU support if available
+    import cupy
+    import cupy as np
+na = np.newaxis
 
 import model_io
 import data_io
 import render
 
 #load a neural network, as well as the MNIST test data and some labels
-nn = model_io.read('../models/MNIST/long-rect.nn') # 99.17% prediction accuracy
+nn = model_io.read('../models/MNIST/long-tanh.nn') # 99.16% prediction accuracy
+nn.drop_softmax_output_layer() #drop softnax output layer for analyses
+
 X = data_io.read('../data/MNIST/test_images.npy')
 Y = data_io.read('../data/MNIST/test_labels.npy')
 
@@ -37,9 +46,15 @@ I = Y[:,0].astype(int)
 Y = np.zeros([X.shape[0],np.unique(Y).size])
 Y[np.arange(Y.shape[0]),I] = 1
 
+acc = np.mean(np.argmax(nn.forward(X), axis=1) == np.argmax(Y, axis=1))
+if not np == numpy: # np=cupy
+    acc = np.asnumpy(acc)
+print('model test accuracy is: {:0.4f}'.format(acc))
+
 #permute data order for demonstration. or not. your choice.
 I = np.arange(X.shape[0])
 #I = np.random.permutation(I)
+
 
 #predict and perform LRP for the 10 first samples
 for i in I[:10]:
@@ -50,24 +65,30 @@ for i in I[:10]:
     print('True Class:     ', np.argmax(Y[i]))
     print('Predicted Class:', np.argmax(ypred),'\n')
 
+    #prepare initial relevance to reflect the model's dominant prediction (ie depopulate non-dominant output neurons)
+    mask = np.zeros_like(ypred)
+    mask[:,np.argmax(ypred)] = 1
+    Rinit = ypred*mask
 
     #compute first layer relevance according to prediction
-    #R = nn.lrp(ypred)                   #as Eq(56) from DOI: 10.1371/journal.pone.0130140
-    R = nn.lrp(ypred,'epsilon',0.01)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
-    #R = nn.lrp(ypred,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
+    #R = nn.lrp(Rinit)                   #as Eq(56) from DOI: 10.1371/journal.pone.0130140
+    R = nn.lrp(Rinit,'epsilon',0.01)    #as Eq(58) from DOI: 10.1371/journal.pone.0130140
+    #R = nn.lrp(Rinit,'alphabeta',2)    #as Eq(60) from DOI: 10.1371/journal.pone.0130140
 
 
-    #R = nn.lrp(Y[na,i]) #compute first layer relevance according to the true class label
-
-
+    #R = nn.lrp(ypred*Y[na,i]) #compute first layer relevance according to the true class label
     '''
     yselect = 3
     yselect = (np.arange(Y.shape[1])[na,:] == yselect)*1.
-    R = nn.lrp(yselect) #compute first layer relvance for an arbitrarily selected class
+    R = nn.lrp(ypred*yselect) #compute first layer relvance for an arbitrarily selected class
     '''
 
     #undo input normalization for digit drawing. get it back to range [0,1] per pixel
     x = (x+1.)/2.
+
+    if not np == numpy: # np=cupy
+        x = np.asnumpy(x)
+        R = np.asnumpy(R)
 
     #render input and heatmap as rgb images
     digit = render.digit_to_rgb(x, scaling = 3)
@@ -82,9 +103,12 @@ for i in I[:10]:
 
 
 #note that modules.Sequential allows for batch processing inputs
-'''
-x = X[:10,:]
-y = nn.forward(x)
-R = nn.lrp(y)
-data_io.write(R,'../Rbatch.npy')
-'''
+if True:
+    N = 256
+    t_start = time.time()
+    x = X[:N,...]
+    y = nn.forward(x)
+    R = nn.lrp(y)
+    data_io.write(R,'../Rbatch.npy')
+    print('Computation of {} heatmaps using {} in {:.3f}s'.format(N, np.__name__, time.time() - t_start))
+
