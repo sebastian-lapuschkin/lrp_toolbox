@@ -1,3 +1,5 @@
+## Programmed using mxnet version 1.1.0 ##
+
 import mxnet as mx
 from mxnet import nd, autograd
 
