@@ -1,11 +1,8 @@
 import mxnet as mx
 from mxnet import nd, autograd
 
-from mxnet import autograd
-
 import types
-
-import numpy as np # TODO: remove numpy, update to latest mxnet version
+import numpy as np 
 
 def translate_to_gluon(nn_sta, ctx=mx.cpu(), dtype='float32'):
     '''
@@ -49,11 +46,14 @@ def translate_to_gluon(nn_sta, ctx=mx.cpu(), dtype='float32'):
 
             # adjust dtype and transfer parameters
             if ctx != mx.cpu():
-                print('Parameter currently not supported on gpu (takes ages)')
+                # print('Parameter currently not supported on gpu (takes ages)')
+                print('gpu mode: still so slow???')
+
+
             else:
                 print('->Begin parameter casting')
-                dense.weight.cast(dtype)
-                dense.bias.cast(dtype)
+            dense.weight.cast(dtype)
+            dense.bias.cast(dtype)
             dense.weight.set_data(nd.array(weight.T, dtype=dtype))
             dense.bias.set_data(  nd.array(bias,     dtype=dtype))
 
@@ -153,7 +153,6 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1
 
         if layer.__class__.__name__ == 'Dense':
 
-
             if layer._flatten:
                 flatter = lambda x: x.reshape((0,-1))
             else:
@@ -167,6 +166,7 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1
                 print('lrp_type: {} | param: {}'.format(lrp_type, lrp_param))
 
         elif layer.__class__.__name__ == 'Conv2D':
+
             if layer_idx <= switch_layer:
                 lrp_type_sw = 'alphabeta'
                 lrp_param_sw = 1.
@@ -214,7 +214,8 @@ def patch_lrp_gradient(net, lrp_type='simple', lrp_param = 0., switch_layer = -1
     if inefficient_maxpool:
         print('WARNING: using inefficient maxpool implementation (LOOPS)!!!')
     elif wta_mpool:
-        print('WARNING: maxpool implementation uses mxnet gradient, relevance is not redistributed if several inputs in the window are equal and maximal. First max activation gets all the relevance.')
+        pass
+        # print('WARNING: maxpool implementation uses mxnet gradient, relevance is not redistributed if several inputs in the window are equal and maximal. First max activation gets all the relevance.')
 
     if not outer_call:
         return layer_idx + 1
@@ -456,13 +457,13 @@ class DenseLRP(mx.operator.CustomOp):
 
         if self.lrp_type == 'simple':
             zs = y + 1e-16*( (y >= 0) * 2 - 1.) #add weakdefault stabilizer to denominator
-            z  = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
-            rx = nd.sum(z * nd.expand_dims(ry/zs, 1), axis=2)
+            F = ry / zs
+            rx = x * nd.dot(F, weight)
 
         elif self.lrp_type == 'epsilon' or self.lrp_type == 'eps':
             zs = y + self.lrp_param*( (y >= 0) * 2 - 1.) #add epsilon stabilizer
-            z  = nd.expand_dims(weight.T, axis=0) * nd.expand_dims(x, axis=2) #localized preactivations
-            rx = nd.sum(z * nd.expand_dims(ry/zs, 1), axis=2)
+            F = ry / zs
+            rx = x * nd.dot(F, weight)
 
         elif self.lrp_type == 'alphabeta' or self.lrp_type == 'alpha':
 
