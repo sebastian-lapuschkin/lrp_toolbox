@@ -309,7 +309,7 @@ def _Net_lrp_multi(self, class_inds=None, lrp_opts=None):
     #layer_index = lrp_opts.firstlayerindex - 1
     layer_index = lrp_opts.firstlayerindex # default lrp caffe demo behaviour
 
-    layer_key = list(self.blobs.keys())[layer_index]
+    layer_key = self.blobs.keys()[layer_index]
 
     Rx = np.array(self.blobs[layer_key].diff).astype(np.float)
 

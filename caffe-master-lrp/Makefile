@@ -186,8 +186,7 @@ endif
 ifeq ($(USE_OPENCV), 1)
 	LIBRARIES += opencv_core opencv_highgui opencv_imgproc
 endif
-# PYTHON_LIBRARIES :=  boost_python python2.7
-PYTHON_LIBRARIES := boost_python3 python3.6m
+PYTHON_LIBRARIES := boost_python python2.7
 WARNINGS := -Wall -Wno-sign-compare
 
 ##############################
