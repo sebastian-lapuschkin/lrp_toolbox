@@ -155,7 +155,7 @@ We offer a \emph{Singularity} image which enables a convenient way to calculate 
 % example the installation process and workflow for the larger imagenet models, facilitates getting started
 The image can be used as an example for the installation process and workflow and facilitates getting started with the \emph{caffe} toolbox.
 % miniintro: singularity
-\emph{Singularity} \cite{kurtzer2017singularity} is a container platform that enables a convenient way to run, store and share code in a controlled environment while offering good hardware management options.
+\emph{Singularity} \cite{kurtzer2017singularity} is a container platform that offers a convenient workflow to run, store and share code in a controlled environment with good hardware management options.
 % ease of use: all dependencies cleared
 Inside the container, all dependencies are taken care of and experiments can be rerun on exactly the same hardware settings making them easily reproducible. 
 % reproducable
@@ -170,24 +170,16 @@ cd <toolbox_location>/singularity
 singularity build --fakeroot --force caffe-lrp-cpu-u16.04.sif caffe-lrp-cpu-u16.04.def
 \end{Verbatim}
 The resulting \verb!.sif! file has all necessary dependencies installed and contains demonstration files as well as the needed pre-trained models.
-All material for the demo can be found in the \verb|lrp_demo| folder.
-%run the demo
-The demo calculates relevance scores for several images and stores them as heatmaps. The demo is started by calling
-\begin{Verbatim}[frame = single]
-cd <toolbox_location>/singularity
-bash lrp_demo.sh 
-\end{Verbatim}
-and results in are stored in \verb|lrp_demo/lrp_output/someimages/|.
-Since \emph{Singularity} containers are read-only, the skript links the \verb|lrp_demo| folder to the equivalent folder on the image and then calls the lrp routine from within the container.
-% adjust the demo for own examples
-The easiest way to add additional examples is to copy  image files to the \verb|lrp_demo/someimages| folder and add the corresponding filenames to the \verb|lrp_demo/testfilelist.txt| file.
-In order to change \emph{LRP} parameters adjust the \verb|lrp_demo/config.txt|.
-Since the contents of these folders are linked to the image when executing the \verb!lrp_demo.sh! skript, the image itself does not need to be rebuilt.
-For more information about the \emph{LRP} parameter options below in Section~\nameref{sec:caffe_specifics}.
 
-% \begin{Verbatim}[frame = single]
-% singularity run -B lrp_demo:/opt/lrp_toolbox/caffe-master-lrp/demonstrator/lrp_demo_files/ caffe-lrp-cpu-u16.04.sif -c ./lrp_demo_files/config.txt -f ./lrp_demo_files/testfilelist.txt -p ./lrp_demo_files
-% \end{Verbatim}
+%run the demo
+The container comes with a demo skript that calculates relevance scores for images on the caffe models.
+It is called using \verb!singularity run! and a configuration file, a filelist file and an output path need to be specified:
+\begin{Verbatim}[frame = single]
+singularity run caffe-lrp-cpu-u16.04.sif -c CONFIGPATH -f FILELISTPATH -p OUTPUTPATH
+\end{Verbatim}
+Examples for config and filelist files can be found in \verb!<toolbox_location>/caffe-master-lrp/demonstrator/!. 
+Attention: use absolute paths for \verb!CONFIGPATH!, \verb!FILELISTPATH! and \verb!OUTPUTPATH! and take care that the filelist file only contains absolute paths as well.
+For more information about the \emph{LRP} parameter options that can be changed in the configfile, see below in Section~\nameref{sec:caffe_specifics}.
 
 \subsubsection*{Matlab and python}
 The toolbox implementations for Matlab and python can be run out of the box, given all requirements in Section \ref{sec:setup} are fulfilled. After downloading the toolbox as \texttt{.zip}- or \texttt{.tar.gz}-archives and unpacking and merging its contents to disk, the demo applications can be executed (with\verb| [optional]| substrings indicated by brackets) as
