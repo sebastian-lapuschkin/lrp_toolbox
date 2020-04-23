@@ -14,7 +14,7 @@ From: ubuntu:16.04
   ####
   echo ">>> STEP 0: DISTRO PACKAGE INSTALLATION"
   ####
-  
+
   # install caffe-related dependencies. order of installation must be exactly this. else, it will break down.
   apt-get update
   apt-get install -y libleveldb-dev \
@@ -29,46 +29,36 @@ From: ubuntu:16.04
                      libgoogle-glog-dev \
                      liblmdb-dev \
                      libmagick++-dev
-                     
+
   apt-get update
   apt-get install -y --no-install-recommends libboost-all-dev
-  
+
   apt-get update
   apt-get install -y apt-utils \
                      wget \
                      sed \
                      git \
-                     tree
-  
-  # python stuff. this will mostly affect the pycaffe interface (currelty inactive)
-  # ATTENTION! This installation step has an interactive component!
-  apt-get update
-  apt-get install -y python3\
-                     python3-pip \
-                     python3-numpy \
-                     python3-scipy \
-                     python3-matplotlib \
-                     python3-pil \
-                     
-  pip3 install opencv-python                   
-  pip3 install scikit-image==0.13.1
+                     tree \
+                     unzip
 
-  
-  
+
   ####
   echo ">>> STEP 1: CLONE RELEVANT REPOSITORIES"
   ####
   cd /opt
-  git clone https://github.com/sebastian-lapuschkin/understanding-age-gender-deep-learning-models
-  git clone https://github.com/sebastian-lapuschkin/lrp_toolbox/
+  #git clone https://github.com/sebastian-lapuschkin/lrp_toolbox/
+  wget https://github.com/sebastian-lapuschkin/lrp_toolbox/archive/master.zip
+  unzip master.zip
+  mv lrp_toolbox-master lrp_toolbox
+  rm master.zip
 
-  
+
   ####
   echo ">>> STEP 2: APPLY DISTRO-SPECIFIC PATCH TO CAFFE"
   ####
   # enter the caffe lrp folder, patch code for ubuntu 14.04->16.04 and install.
   cd /opt/lrp_toolbox/caffe-master-lrp
-  
+
   # include "hdf5.h" -> #include "hdf5/serial/hdf5.h"
   # include "hdf5_hl.h" -> #include "hdf5/serial/hdf5_hl.h"
   # links hdf5 to where it can be found by caffe make and modifies makefile.
@@ -90,10 +80,10 @@ From: ubuntu:16.04
 
   echo "    step 2.4: modify imagemagick include paths and library names for demonstrator"
   cd demonstrator
-  sed -i -e "s/-lMagick++/-lMagick++-6.Q16/g" -e "s/-lMagickWand/-lMagickWand-6.Q16/g" -e "s/-lMagickCore/-lMagickCore-6.Q16/g" -e "s|-I /usr/include/ImageMagick/|-I /usr/include/ImageMagick-6 -I /usr/include/x86_64-linux-gnu/ImageMagick-6/|g" build.sh 
+  sed -i -e "s/-lMagick++/-lMagick++-6.Q16/g" -e "s/-lMagickWand/-lMagickWand-6.Q16/g" -e "s/-lMagickCore/-lMagickCore-6.Q16/g" -e "s|-I /usr/include/ImageMagick/|-I /usr/include/ImageMagick-6 -I /usr/include/x86_64-linux-gnu/ImageMagick-6/|g" build.sh
   cd ..
-  
-  
+
+
   ####
   echo ">>> STEP 3: BUILD CAFFE FOR LRP"
   ####
@@ -102,12 +92,12 @@ From: ubuntu:16.04
   make all -j10
   # make test
   # make runtest # NOTE: tests from LayerFactoryTest/ will fail. Does not matter though for LRP; but will kill the container building
-  
-  
+
+
   ####
   echo ">>> STEP 4: BUILD AND TEST DEMONSTRATOR APPLICATION"
   ####
-  
+
   cd /opt/lrp_toolbox/caffe-master-lrp/demonstrator
   bash build.sh
   chmod +x lrp_demo
@@ -115,23 +105,14 @@ From: ubuntu:16.04
   # DOWNLOAD BVLC REFERENCE CAFFE MODEL AND START DEMONSTRATOR
   bash download_model.sh
   ./lrp_demo ./config_sequential.txt ./testfilelist.txt ./
-  echo 
+  echo
 
   echo "output images can be found in $(pwd)/lrp_output:"
   tree $(pwd)/lrp_output
   cd ..
   echo "If you can read this, the container has been built successfully"
-  
-  
-  ####
-  # FOR NOW WE SKIP BUILDING THE PYCAFFE INTERFACE, UNTIL MAX HAS CLEANED UP HIS VERSIONING STUFF
-  ####
-  # make pycaffe
-  # cd demonstrator
-  # python lrp_python_demo.py
-  #
-  # export PYTHONPATH=/opt/lrp_toolbox/caffe-master-lrp/python:$PYTHONPATH
-    
+
+
 
 %files
   caffe_lrp_commandline.py /opt/caffe_lrp_commandline.py
