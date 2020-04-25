@@ -1,4 +1,4 @@
-# The LRP Toolbox for Artificial Neural Networks (1.3.0rc3)
+# The LRP Toolbox for Artificial Neural Networks (1.3.0)
 
 The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
 specific  to  a  given  data  point  by  attributing
@@ -30,21 +30,22 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 
 
-### New in 1.3.0rc3:
+### New in 1.3.0:
 #### standalone python implementation:
 * update to python 3
 * updated treatment of softmax and target class
-* lrp_aware option for efficient calculation of multiple backward passes
+* lrp_aware option for efficient calculation of multiple backward passes (at the cost of a more expensive forward pass)
 * custom colormaps in render.py
-* __gpu support__ when installing [cupy](https://github.com/cupy/cupy). this is an optional feature. without the cupy package, the python code will execute using the cpu/numpy.
+* __gpu support__ when [cupy](https://github.com/cupy/cupy) is installed. this is an optional feature. without the cupy package, the python code will execute using the cpu/numpy.
 
 ### caffe implementation
 * updated the installation config
-* new [**recommended**](https://arxiv.org/abs/1910.09840) formula types 100, 102, 104 
+* new [**recommended**](https://arxiv.org/abs/1910.09840) formula types 100, 102, 104
+* support for Guided Backprop via formula type 166
 * new python wrapper to use lrp in pycaffe
 * pycaffe demo file
 * bugfixes
-* singularity image for building a hassle-free OS-agnostic command line executable
+* [singularity image definition](singularity/caffe-lrp-cpu-u16.04.def) for building a hassle-free OS-agnostic command line executable 
 
 
 ### New in version 1.2.0
@@ -65,7 +66,7 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 
 ### Obtaining the LRP Toolbox:
-Clone it from github!
+Clone or download it from github!
 
 
 ### Installing the Toolbox:
@@ -77,6 +78,23 @@ After having obtained the toolbox code, data and models of choice, simply move i
     bash install.sh
 
 Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/doc/manual/manual.pdf).
+
+#### Attention for Caffe-LRP
+We highly recommend building LRP for Caffe via the [singularity image definition](singularity/caffe-lrp-cpu-u16.04.def) (You might regret doing something else outside of Ubuntu 14.04 LTS or Ubuntu 16.04 LTS...):
+Call
+
+	cd <toolbox_location>/singularity
+	singularity build --fakeroot --force caffe-lrp-cpu-u16.04.sif caffe-lrp-cpu-u16.04.def
+
+and the go have a coffee. The resulting caffe-lrp-cpu-u16.04.sif is an (executable) Singularity image which allows you to process LRP (and other methods) for Caffe Models with
+
+[singularity run] ./caffe-lrp-cpu-u16.04.sif -c CONFIGPATH -f FILELISTPATH -p OUTPUTPATH
+
+Have a look at [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/doc/manual/manual.pdf) for details.
+
+
+
+
 
 ### The LRP Toolbox Paper
 
