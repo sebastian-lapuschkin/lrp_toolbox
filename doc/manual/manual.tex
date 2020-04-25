@@ -31,7 +31,7 @@
 
 \begin{document}
 
-\title{LRP Toolbox for Artificial Neural Networks 1.2.0 -- Manual}
+\title{LRP Toolbox for Artificial Neural Networks 1.3.0 \\ Manual}
 
 \author{Sebastian Lapuschkin \and Alexander Binder \and Gr\'egoire Montavon \and Maximilian Kohlbrenner \and Klaus-Robert M\"uller \and Wojciech Samek}
 
@@ -42,19 +42,21 @@
 \newpage
 
 \section{Overview}
-This is the manual for the LRP Toolbox for Artificial Neural Networks, an open-source implementation of the Layer-wise Relevance Propagation (LRP)\cite{bach15} Algorithm for deep learning architectures. LRP is capable of decomposing the decision function $f(\cdot)$ of a given neural network model wrt to an input point $\x$ in order to compute \emph{relevance values} $R^{(1)}_d$ at input level explaining \emph{why} and \emph{how} the model predicts the way it does.
+This is the manual for the LRP Toolbox for Artificial Neural Networks,
+an open-source implementation of the Layer-wise Relevance Propagation (LRP)\cite{bach15}
+algorithm for deep learning architectures.
+LRP is capable of decomposing the decision function $f(\cdot)$ of a given neural network model wrt to an input point $\x$ in order to compute \emph{relevance values} $R^{(1)}_d$ at input level explaining \emph{why} and \emph{how} the model predicts the way it does.
 
-The computed relevance values describe whether the state of input component $x_d$ contributes towards the recognition of the classifier's prediction target if $R^{(1)}_d > 0$ --- or opposes it if $R^{(1)}_d < 0$ --- and can be visualized as a heatmap for visual assessment. A detailed description of LRP can either in the original publication \cite{bach15} or further below in Section \ref{sec:lrp}.
+The computed relevance values describe whether the state of input component $x_d$ contributes towards the recognition of the classifier's prediction target if $R^{(1)}_d > 0$ --- or opposes it if $R^{(1)}_d < 0$ --- and can be visualized as a heatmap for visual assessment.
+A detailed description of LRP can either in the original publication~\cite{bach15} or further below in Section~\ref{sec:lrp}.
+A recent overview containing hints and tips regarding effective application of LRP, and an overview over applications in the sciences is given in~\cite{samek2020toward}.
 
-The toolbox comes with platform-independent stand-alone implementations of LRP in Matlab and python and a plugin for the Caffe \cite{jia2014caffe} open-source ConvNet implementation. Models, Data and Results can be imported and exported as Matlab's \texttt{.mat} files, numpy's \texttt{.npy} or \texttt{.npz} files for python or ASCII-formatted plain text. For details about the supported formats for each implementation see Section \ref{sec:implementation}. 
+The toolbox comes with platform-independent stand-alone implementations of LRP in Matlab and python and a plugin for the Caffe~\cite{jia2014caffe} Deep Learning Toolkit.
+Models, Data and Results can be imported and exported as Matlab's \texttt{.mat} files, numpy's \texttt{.npy} or \texttt{.npz} files for python or ASCII-formatted plain text. For details about the supported formats for each implementation see Section \ref{sec:implementation}.
 
 Both the Matlab and python code are fully documented and for each example impelentations demonstrate the application of LRP at hand of the MNIST hand written digit data set \cite{lecun1998mnist}.
 The LRP implementation for Caffe extends the respective classes and files with the needed functionality and operates directly on images and pre-trained model from the command line.
-The most recent official release of the source code and example data and models are available from 
-\begin{center}
-\url{http://heatmapping.org}
-\end{center}
-with work-in-progress code and release candidates being obtainable via
+The most recent official release of the source code and example data and models are available from
 \begin{center}
 \url{https://github.com/sebastian-lapuschkin/lrp_toolbox}
 \end{center}
@@ -67,51 +69,10 @@ The following Section \ref{sec:setup} will guide through the process of obtainin
 \label{sec:setup}
 
 \subsection*{Getting the latest toolbox version}
-The latest official release of the LRP Toolbox is available for download from the official homepage:
+The latest official release of the LRP Toolbox is available from
 \begin{center}
-\url{http://heatmapping.org}
+	\url{https://github.com/sebastian-lapuschkin/lrp_toolbox}
 \end{center}
-
-For using the \textbf{Matlab} implementation, download and merge the following archives:
-
-\texttt{lrp\_toolbox\_matlab.zip} \emph{containing the source code}
-
-
-\texttt{models\_mnist\_mat.zip} \emph{containing Matlab readable model files}
-
-%or: \texttt{models\_mnist\_txt.zip} \emph{containing plain text model files}
-
-\texttt{data\_mnist\_mat.zip} \emph{containing the MATLAB readable MNIST data}
-
-%or: \texttt{data\_mnist\_txt.zip} \emph{containing the MNIST data in ASCII format}
-
-
-\vspace{0.5cm}
-For using the \textbf{python} implementation, download and merge the following archives:
-
-\texttt{lrp\_toolbox\_python.zip} \emph{containing the source code}
-
-\texttt{models\_mnist\_nn.zip} \emph{containing python-readable model files}
-
-%or: \texttt{models\_mnist\_txt.zip} \emph{containing plain text model files}
-
-\texttt{data\_mnist\_npy.zip} \emph{containing the numpy readable MNIST data}
-
-%or: \texttt{data\_mnist\_txt.zip} \emph{containing the MNIST data in ASCII format}
-
-\vspace{0.5cm}
-There are also plain text versions for the MNIST data and pre-trained neural network models available for download, which can be read by both the python and Matlab implementations.
-
-
-
-
-\vspace{0.5cm}
-For using LRP within the \textbf{Caffe} Framework download
-
-\texttt{lrp\_toolbox\_caffe.zip} \emph{containing the extended caffe source code,} \texttt{.cpp}- and \texttt{.hpp}-files \emph{-files implementing tools to compute heatmaps from images using Caffe and some example images.}
-
-\vspace{0.5cm}
-More work-in-progress versions of the toolbox code and future release candidates may be obtained via \url{https://github.com/sebastian-lapuschkin/lrp_toolbox}.
 
 
 
@@ -123,12 +84,12 @@ The python and matlab implementations are available for systems running Linux, W
 \hline
 \textbf{python} & \textbf{Matlab} & \textbf{Caffe} \\
 \hline
-python 2.7.5+	& Matlab 8.3.0.532 (R2014a) & \emph{Caffe-own requirements:}   \\
-numpy 1.7.1+   & optional:  & Boost Libraries (1.55.0) \\
-matplotlib 1.3.0+	   &\hspace{5mm} Image Processing Toolbox&  Protocol Buffers:  \\
-skimage 0.8.2+	   & &  \hspace{5mm} libprotobuf (2.5.0)\\
-			& & \hspace{5mm} protobuf-compiler (2.5.0)  \\
-			& & Google logging: libglogs (0.3.3)\\
+python$\geq$3.5.6	& Matlab 8.3.0.532 (R2014a) & \emph{Caffe-own requirements:}   \\
+numpy$\geq$1.18.3   & (Image Processing Toolbox)  & Boost Libraries (1.55.0) \\
+matplotlib$\geq$3.0.3	   &&  Protocol Buffers:  \\
+scikit-image$\geq$0.15.0	   & &  \hspace{5mm} libprotobuf (2.5.0)\\
+scikit-learn$\geq$0.22.2.post1			& & \hspace{5mm} protobuf-compiler (2.5.0)  \\
+(cupy$\geq$5.0.0)			& & Google logging: libglogs (0.3.3)\\
 	   & &  Google Flags: libgflags (2.0)\\
  & &  HDF5: libhdf5 (1.8.11)  \\
 		   & & Google Snappy: libsnappy (1.1.0)\\
@@ -151,20 +112,20 @@ where the requirement listing for the LRP implementation on Caffe only lists the
 
 \subsection*{Out of the box: using \emph{Singularity}}
 % calculate LRP heatmaps for pre-trained models without need for coding
-We offer a \emph{Singularity} image which enables a convenient way to calculate \emph{LRP} relevance scores for pre-trained imagenet models using \emph{caffe}.
+For Caffe, we offer a \emph{Singularity} image which enables a convenient way to calculate attribution maps with LRP and other implemented methods (\texttt{ctrl+f} for \texttt{``relpropopts.relpropformulatype''} in this manual) for pre-trained CNN models.
 % example the installation process and workflow for the larger imagenet models, facilitates getting started
-The image can be used as an example for the installation process and workflow and facilitates getting started with the \emph{caffe} toolbox.
+The image can be used as an example demonstrating the installation process and workflow. It helps getting started with the LRP toolbox for Caffe.
 % miniintro: singularity
-\emph{Singularity} \cite{kurtzer2017singularity} is a container platform that offers a convenient workflow to run, store and share code in a controlled environment with good hardware management options.
+Singularity \cite{kurtzer2017singularity} is a container platform that offers a convenient workflow to run, store and share code in a controlled environment with good hardware management options.
 % ease of use: all dependencies cleared
-Inside the container, all dependencies are taken care of and experiments can be rerun on exactly the same hardware settings making them easily reproducible. 
+Inside the container, all dependencies are taken care of and experiments can be rerun on exactly the same hardware settings making them easily reproducible.
 % reproducable
-For more material on \emph{Singularity} , we refer to the \emph{sylabs} website (\url{https://sylabs.io/singularity/}).
+For more material on \emph{Singularity}, you may refer to the \emph{sylabs} website (e.g.,~\url{https://sylabs.io/singularity/}).
 % \paragraph{Download and install singularity}
 In order to download and install the \emph{Singularity} platform, follow the instructions in the user guide (\url{https://sylabs.io/guides/3.5/user-guide/quick\_start.html}).
 
 % Build the image
-The singularity image can be found in the \verb!lrp_toolbox/singularity! folder and  is built by calling 
+The singularity image can be found in the \verb!lrp_toolbox/singularity! folder and  is built by calling
 \begin{Verbatim}[frame = single]
 cd <toolbox_location>/singularity
 singularity build --fakeroot --force caffe-lrp-cpu-u16.04.sif caffe-lrp-cpu-u16.04.def
@@ -173,13 +134,14 @@ The resulting \verb!.sif! file has all necessary dependencies installed and cont
 
 %run the demo
 The container comes with a demo skript that calculates relevance scores for images on the caffe models.
-It is called using \verb!singularity run! and a configuration file, a filelist file and an output path need to be specified:
+It is called using \verb!singularity run! (or directly as an executable, assuming the required permissionas have been set) and a configuration file, a filelist file and an output path need to be specified:
 \begin{Verbatim}[frame = single]
-singularity run caffe-lrp-cpu-u16.04.sif -c CONFIGPATH -f FILELISTPATH -p OUTPUTPATH
+[singularity run] ./caffe-lrp-cpu-u16.04.sif -c CONFIGPATH -f FILELISTPATH -p OUTPUTPATH
 \end{Verbatim}
-Examples for config and filelist files can be found in \verb!<toolbox_location>/caffe-master-lrp/demonstrator/!. 
-Attention: use absolute paths for \verb!CONFIGPATH!, \verb!FILELISTPATH! and \verb!OUTPUTPATH! and take care that the filelist file only contains absolute paths as well.
-For more information about the \emph{LRP} parameter options that can be changed in the configfile, see below in Section~\nameref{sec:caffe_specifics}.
+Examples for config and filelist files can be found in \verb!<toolbox_location>/caffe-master-lrp/demonstrator/!~.
+Attention: the use of absolute paths for \verb!CONFIGPATH!, \verb!FILELISTPATH! and \verb!OUTPUTPATH!  is recomended.
+take care that the file behind \verb!FILELISTPATH! only contains absolute paths as well.
+For more information about the LRP parameter options that can be changed in the configfile, see below in Section~\nameref{sec:caffe_specifics}.
 
 \subsubsection*{Matlab and python}
 The toolbox implementations for Matlab and python can be run out of the box, given all requirements in Section \ref{sec:setup} are fulfilled. After downloading the toolbox as \texttt{.zip}- or \texttt{.tar.gz}-archives and unpacking and merging its contents to disk, the demo applications can be executed (with\verb| [optional]| substrings indicated by brackets) as
@@ -192,14 +154,18 @@ for the Matlab implementation and
 cd <toolbox_location>/python
 python lrp_[cnn_]demo.py
 \end{Verbatim}
-for python. On systems running Ubuntu 14.04 LTS (other versions might also be supported), executing
+for python. On systems running Ubuntu 14.04 LTS (or newer), executing
 \begin{Verbatim}[frame = single]
 cd <toolbox_location>/python
-sudo bash install.sh
+bash install.sh
 \end{Verbatim}
-will install all required software packages, download the MNIST \cite{lecun1998mnist} data set and several neural network models trained to discriminate between digit classes and then execute \texttt{lrp\_demo}. Please read and modify \texttt{install.sh} carefully to suit your needs.
+will install all required software packages, and then execute the \texttt{lrp\_demo}. Please read and modify \texttt{install.sh} carefully to suit your needs.
+Note that an installation of the \texttt{cupy} package for python enables GPU support for the Python-based LRP implementation.
 
 \subsubsection*{Caffe open-source package}
+
+\emph{Note that below information is deprecated for Linux versions newer that Ubuntu 16.04 LTS. We recommend sticking to the Singulariy build described earlier to minimize headaches.}
+\vspace{2mm}
 
 The LRP implementation for Caffe has been forked from the Caffe repository on October 3rd 2015 (rc2). After fulfilling all requirements listed above, execute
 \begin{Verbatim}[frame = single]
@@ -224,12 +190,13 @@ The caffe heatmap computation binary then called as e.g.
 Where \texttt{config\textunderscore sequential.txt} is the config file for the sequentially operating binary. \texttt{testfilelist.txt} lists image names to compute heatmaps for, with an optional prediction target. The contents of both files are discussed further below in Section \nameref{sec:caffe_specifics}. The last parameter --- here \texttt{./} --- as a path prefix added to each image file in \texttt{testfilelist.txt}. Should the paths in \texttt{testfilelist.txt} be full paths already, \texttt{/} should be the working choice.
 The first part of above command \texttt{./lrp\_demo ./config\_sequential.txt [...]} may be exchanged to \texttt{./lrp\_parallel\_demo ./config.txt [...]} to process all images listed in \texttt{./testfilelist.txt} in parallel at the cost of increased memory consumption.
 
-On systems running Ubuntu 14.04 LTS (other versions might also be supported), executing
+On systems running Ubuntu 14.04 LTS or Ubuntu 16.04 LTS, executing
 \begin{Verbatim}[frame = single]
 cd <toolbox_location>/caffe-master-lrp
 bash install.sh
 \end{Verbatim}
 will install all required software packages, build Caffe and the demonstrator application and compute a small set of heatmaps for chosen example images.
+For arbitrary/newer Linux distributions, we recommend building LRP for Caffe using our Singularity container definition.
 
 \section{LRP for Artificial Neural Networks Summarized}
 \label{sec:lrp}
@@ -241,9 +208,9 @@ z_{ij} &  =  x_iw_{ij} \\
 z_j & =  \sum\limits_i z_{ij} + b_j\\
 x_j & =  g(z_j)
 \end{align}
-where $x_i$ is the $i$th index of the input $\x$ of a (hidden) layer $l$, with $w_{ij}$ connecting the $i$th unit from layer $l$ to the $j$th unit of the succeeding layer $l+1$. 
+where $x_i$ is the $i$th index of the input $\x$ of a (hidden) layer $l$, with $w_{ij}$ connecting the $i$th unit from layer $l$ to the $j$th unit of the succeeding layer $l+1$.
 The variables $z_{ij}$ describe the \emph{forward messages} from the input neurons $i$ to the output neurons $j$, which are then aggregated by summation together with a bias term $b_j$.
-An optional non-linear activation function is described by $g$. 
+An optional non-linear activation function is described by $g$.
 Commonly used non-linearities are the hyperbolic tangent $g(z_j) = \tanh(z_j)$, the rectifying linear unit (ReLU) $g(z_j) = \max(0,z_j)$ or a softmax function $g(z_j) = \exp(z_j)/\sum_{j'}\exp(z_{j'})$.
 
  Multilayer neural networks stack several of these layers, each of them composed of a greater number of neurons. This formulation of neural networks is also sufficient to cover a wide range of architectures such as the simple multilayer perceptron or convolutional neural networks.
@@ -268,7 +235,7 @@ f(\x) = \dots = \sum\limits_{j \in (l+1)} R^{(l+1)}_j = \sum\limits_{i \in (l)} 
 ensuring the relevance conservation principle of LRP holds.
 
 Deep neural networks are sequences of linear or convolution layers alternating with non-linear activations and/or pooling steps and the decomposition process of LRP operates in a layer-by-layer manner.
-In the case of a linear fully connected layer 
+In the case of a linear fully connected layer
 \begin{align}
 z_{ij} = x_iw_{ij} ~&~ z_j = \sum\limits_i z_{ij} + b_j
 \end{align}
@@ -278,7 +245,7 @@ Therefore, a first possible choice of  relevance decomposition is given as
 R^{(l,l+1)}_{i\leftarrow j} = \frac{z_{ij}}{z_j}\cdot R_j^{(l+1)}
 \label{eq:lrp_naive}
 \end{align}
-easily showing to approximate the conservation properties of Equation \ref{eq:cons}. Specifically, 
+easily showing to approximate the conservation properties of Equation \ref{eq:cons}. Specifically,
 \begin{align}
 \sum\limits_i R^{(l,l+1)}_{i\leftarrow j} = R_j^{(l+1)} \cdot (1 - \frac{b_j}{z_j})
 \end{align}
@@ -307,7 +274,7 @@ The $\epsilon$-decomposition formula explains the predictor output ``as-is'', wh
 
 \paragraph{The $\alpha-\beta$-decomposition formula.}
 An alternative and numerically conservative stabilizing method is the $\alpha-\beta$-method (or shorter, just $\alpha$-decomposition).
-This decomposition treats the activating and inhibiting activation factors of a layer separately, e.g. let $z_j^+ = \sum_i z^+_{ij} + b^+_j$ and $z_j^- = \sum_i z^-_{ij} + b^-_j$ with 
+This decomposition treats the activating and inhibiting activation factors of a layer separately, e.g. let $z_j^+ = \sum_i z^+_{ij} + b^+_j$ and $z_j^- = \sum_i z^-_{ij} + b^-_j$ with
 
 \begin{align}
 z^+_{ij} = \begin{cases} z_{ij} &;~ z_{ij} > 0 \\ 0  &;~ else \end{cases}
@@ -361,7 +328,7 @@ with the usual workflow consisting of the following steps:
 \item Forward-pass data $\x$ through classifier, obtain $y_{\text{pred}} = f(\x)$. The forward pass is not only necessary to obtain a prediction $y_{\text{pred}}$ but more importantly to populate the classifier's internal variables with information specific to $\x$.
 \item Apply LRP to obtain input layer relevances $R^{(1)}_d$ explaining the decision of the classifier for $\x$ ...
 	\begin{itemize}
-		\item wrt to the prediction $y_{\text{pred}}$ 
+		\item wrt to the prediction $y_{\text{pred}}$
 		\item or: wrt to a chosen prediction target $y_{\text{choice}}$
 	\end{itemize}
 	by setting the desired final layer relevance as input to LRP. See \cite{bach15}, \texttt{mini.$\lbrace$py,m$\rbrace$}, \texttt{lrp\_demo.$\lbrace$py,m$\rbrace$} and \texttt{lrp\_cnn\_demo.$\lbrace$py,m$\rbrace$} for details and examples.
@@ -370,7 +337,7 @@ with the usual workflow consisting of the following steps:
 
 
 \subsection*{Examples and Interpretation of Results}
-The LRP Toolbox provides working examples on pre-trained models for the MNIST~\cite{lecun1998mnist} data sets for the python and Matlab implementations and an example implementation of an LRP application for arbitrary photographic image data for Caffe. Data and models for the Matlab and python examples in respective binary formats and a shared plain text format are provided accordingly. For Caffe, exemplary image data is provided within the download archives and a  reference model and corresponding meta information can be downloaded by following above installation steps. 
+The LRP Toolbox provides working examples on pre-trained models for the MNIST~\cite{lecun1998mnist} data sets for the python and Matlab implementations and an example implementation of an LRP application for arbitrary photographic image data for Caffe. Data and models for the Matlab and python examples in respective binary formats and a shared plain text format are provided accordingly. For Caffe, exemplary image data is provided within the download archives and a  reference model and corresponding meta information can be downloaded by following above installation steps.
 In the following, minimal working examples for both Matlab and python demonstrate the basic workflow with Figure \ref{fig:example} presenting the resulting images. Both minimal working examples are included as \texttt{<toolbox\_path>/matlab/mini.m} and \texttt{<toolbox\_path>/python/mini.py} \\
 \begin{minipage}[t]{.5\textwidth}
 \subsubsection*{\vphantom{python} Matlab}
@@ -390,7 +357,7 @@ In the following, minimal working examples for both Matlab and python demonstrat
 \subfloat[python : true class]{\includegraphics[width=0.25\textwidth]{./graphics/hm_py.png}}
 \hspace{0.11\textwidth}
 \subfloat[python : class $2$]{\includegraphics[width=0.25\textwidth]{./graphics/hm_py2.png}}
-\caption{(a) and (b) : Heatmap visualizations computed as a result of the execution of both above listed code samples. (c) : The input digit explained as a $2$ by setting input for \texttt{nn.lrp()} to \texttt{np.array([0,0,1,0,0,0,0,0,0,0])[na,:]}. The image is a result of the python implementation.  For both languages, the input parameters in angle brackets specifying the loaded model and data locations have been set to\\
+\caption{(a) and (b) : Heatmap visualizations computed as a result of the execution of both above listed code samples. (c) : The input digit explained as a $2$ by setting input for \texttt{nn.lrp()} to \texttt{np.array([0,0,1,0,0,0,0,0,0,0])[na,:] $\ast$ YPred} (i.e. by masking the respective outputs of all other classes) . The image is a result of the python implementation.  For both languages, the input parameters in angle brackets specifying the loaded model and data locations have been set to\\
 \texttt{ <model\_path> = '<toolbox\_path>/models/MNIST/long-rect.txt'} and\\
 \texttt{ <data\_path> =  '<toolbox\_path>/data/MNIST/test\_images.txt'}\\
 The resulting rgb-images have been written to a location specified by \texttt{<i\_path>}.
@@ -400,7 +367,7 @@ Slight differences in digit outlines and color hue are the result of internal di
 
 \subsubsection*{Interpretation of Heatmap Scores}
 LRP computes a relevance score $R_d^{(1)}$ for each component of the classifier input $x_d$ in its given state. For the given model (high) positive values $f(\x)$ indicate the presence of an object or concept in an input sample.
-Likewise, positive values $R_d^{(1)}$ argue for evidence for the presence of a concept --- the (chosen) prediction target --- via the state of $x_d$. 
+Likewise, positive values $R_d^{(1)}$ argue for evidence for the presence of a concept --- the (chosen) prediction target --- via the state of $x_d$.
 
 Figures \ref{fig:example} (a) and (b) demonstrate heatmaps for an input digit showing a hand-written $7$ next to a heatmap visualizing the input layer relevance values rating the input pixel's contribution towards the detection of a digit $7$, as computed with the samples implementations in  \texttt{mini.$\lbrace$py,m$\rbrace$}. (High) positive scores are visualized in orange to red color, while colder color hues signify neutral (green) to negative (blue) contributions to the detection of class $7$.
 
@@ -435,22 +402,22 @@ The python implementation of the LRP functionality heavily relies on numpy for e
 	\begin{itemize}
 		\item \textbf{python} : The python implementation can read and write neural network model files via functions \texttt{model\_io.read()} and \texttt{model\_io.write()}. Supported are python's \texttt{pickle} object serialization format and a plain text file format shared with Matlab and described further below. Default file name extensions for the pickled in- and output format are \texttt{.nn} and \texttt{.pickle} and \texttt{.txt} for the plain text description of the model. See the manual for details.
 		\item \textbf{Matlab} : Supported are the with python shared plain text model description via \texttt{.txt} files and \texttt{.mat} files holding model information. Reading and Writing can be realized using \texttt{+model\_io.read()} and \texttt{+model\_io.write()}.
-		
+
 		\item \textbf{Caffe} : It is able to read the models trained with the Caffe package, e.g. those from the Caffe Model Zoo.
-		\end{itemize}		
-		
+		\end{itemize}
+
 \item[{\textbf{Heatmaps}}]
 	\begin{itemize}
 		\item \textbf{python} : The output of raw heatmap data can be managed using the module \texttt{data\_io}. Visualizing and writing the heatmap as rgb images is achieved using the functions \texttt{render.hm\_to\_rgb()} and \texttt{render.save\_image()}. The former converts an input relevance matrix or vector using a color map to a rgb image and the latter combines and writes a series of images in various formats.
 		\item \textbf{Matlab} : The Matlab implementation offers the same functionality as its python counterpart via correspondingly named functions provided in package \texttt{+render}. An example on how to use these functions to draw and save heatmaps is given in the demo implementation.
-		\item \textbf{Caffe} : The C++ version outputs four files into the path specified in the configfile as \texttt{standalone\textunderscore outpath}. The first two files, 
+		\item \textbf{Caffe} : The C++ version outputs four files into the path specified in the configfile as \texttt{standalone\textunderscore outpath}. The first two files,
 
-\texttt{$\langle imagefilename\rangle$\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.jpg} and 
+\texttt{$\langle imagefilename\rangle$\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.jpg} and
 
-\texttt{$\langle imagefilename\rangle$\textunderscore heatmap.jpg} are simply the image how it looks like when it enters the quadratic receptive field of the neural network, and the resulting heatmap. While they are easily to be read in image viewers, they are unsuited for further processing of the heatmap. For that reason the file 
+\texttt{$\langle imagefilename\rangle$\textunderscore heatmap.jpg} are simply the image how it looks like when it enters the quadratic receptive field of the neural network, and the resulting heatmap. While they are easily to be read in image viewers, they are unsuited for further processing of the heatmap. For that reason the file
 
 \texttt{$\langle imagefilename\rangle$\textunderscore rawhm.txt} provides a the raw unnormalized heatmap scores as plain text. For a detailed explanation of the format of this file please refer to the manual. The last file, \texttt{$\langle imagefilename\rangle$\textunderscore toptenscores.txt} outputs the indices of the highest ranked classes and their scores.
-Note that when using the \texttt{*\_minimaloutput} - implementations, only the plain text outputs will be generated.	
+Note that when using the \texttt{*\_minimaloutput} - implementations, only the plain text outputs will be generated.
 %	The first line is the number of channels \texttt{(3)}. The second line gives height and width of the output. In the next line the heatmap scores are printed in the following order: the first row of channel 1, the second row of channel 1, ..., the last row of channel 1, the first row of channel 2, the second row of channel 2 ..., the last row of channel 2, the first row of channel 3 and so on. The fourth file,\emph{toptenscores.txt} consists of at most ten lines (less if the classification problem has less classes), corresponding to the classes with the highest prediction scores. Each line having the index of the class starting at zero and the output score from the top layer of the neural network. The noGUI version works slightly different. It created 4 files with the same content by appending to the original filename the suffixes \emph{\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.jpg}, \emph{\textunderscore heatmap.jpg}  , \emph{\textunderscore rawhm.txt} and \emph{\textunderscore toptenscores.txt}. The resulting files are written into the directory given by the entry \emph{standalone\textunderscore outpath} in the config file.
 %	}
 			\end{itemize}
@@ -458,7 +425,7 @@ Note that when using the \texttt{*\_minimaloutput} - implementations, only the p
 
 
 \subsubsection*{Matlab and python modules}
-The stand-alone implementations of Matlab and python have been designed with a highly similar module or package structure within the possibilities of the programming languages. Modules for python are realized as single \texttt{*.py}-files containing all the module's functions. Synonymous to the modules of python are packages for Matlab, sharing the same names as their python counterparts. The difference is that packages for Matlab are realized as folders (with a leading \texttt{+} sign in front of the package name for Matlab to identify the folder as a package), with all implemented package functions or classes located as separate \texttt{.m}-files therein. The names and functionality of all implemented functions are to a large extend identical in between both stand-alone implementations and will therefore be outlined in unison. Notable differences will be highlighted in the respective descriptions using the flags $<$Matlab-specific$>$\mat and $<$python-specific$>$\py in case certain traits are not shared between the implementations. The descriptions of modules and packages are synonymous for a structural description and will be considered interchangeable. The following description will start with explaining the functions \texttt{lrp\_demo}, \texttt{lrp\_cnn\_demo} and \texttt{mini} as entry points to example implementations first and continue with the module structure. For a more detailed in-depth description of class- and method signatures please refer to the source code. 
+The stand-alone implementations of Matlab and python have been designed with a highly similar module or package structure within the possibilities of the programming languages. Modules for python are realized as single \texttt{*.py}-files containing all the module's functions. Synonymous to the modules of python are packages for Matlab, sharing the same names as their python counterparts. The difference is that packages for Matlab are realized as folders (with a leading \texttt{+} sign in front of the package name for Matlab to identify the folder as a package), with all implemented package functions or classes located as separate \texttt{.m}-files therein. The names and functionality of all implemented functions are to a large extend identical in between both stand-alone implementations and will therefore be outlined in unison. Notable differences will be highlighted in the respective descriptions using the flags $<$Matlab-specific$>$\mat and $<$python-specific$>$\py in case certain traits are not shared between the implementations. The descriptions of modules and packages are synonymous for a structural description and will be considered interchangeable. The following description will start with explaining the functions \texttt{lrp\_demo}, \texttt{lrp\_cnn\_demo} and \texttt{mini} as entry points to example implementations first and continue with the module structure. For a more detailed in-depth description of class- and method signatures please refer to the source code.
 
 Example implementations of the LRP pipeline:
 \begin{itemize}
@@ -471,13 +438,13 @@ Example implementations of the LRP pipeline:
 
 Package structure:
 \begin{itemize}
-\item \texttt{data\_io} provides functionality for reading and writing block-formatted data matrices in various formats. 
+\item \texttt{data\_io} provides functionality for reading and writing block-formatted data matrices in various formats.
 	\begin{itemize}
-	
+
 		\item \texttt{read(path, fmt)} reads a data matrix from disc, located at \texttt{path}. If \texttt{fmt} is not given, the correct file format is inferred from the extension of \texttt{path}. Supported extensions / values for \texttt{fmt} are \texttt{'npy'\py , 'npz'\py , 'txt' , 'mat'}. Returns a matrix\mat or numpy array\py.
-		
+
 		\item \texttt{write(data, path, fmt)} receives a data matrix \texttt{data} and writes it to \texttt{path} in format \texttt{fmt}. If \texttt{fmt} is not given, the correct file format is inferred from the extension of \texttt{path}. Supported extensions / values for \texttt{fmt} are \texttt{'npy'\py , 'npz'\py , 'txt' , 'mat'}.
-		
+
 	\end{itemize}
 \item \texttt{model\_io} provides an IO interface to read and write serialized neural network models in various formats.
 	\begin{itemize}
@@ -485,62 +452,62 @@ Package structure:
 
 
 		\item \texttt{write(model, path, fmt)} writes a neural network model represented via an instance of \texttt{modules.Sequential} to \texttt{path} in a given output format \texttt{fmt}. Should \texttt{fmt} not be given, it will be inferred from the file name extension in \texttt{path}. Supported formats and values for \texttt{fmt} are \texttt{'pickle'\py , 'pickled'\py , 'nn'\py, 'txt', 'mat'\mat}, where the python-specific formats are implemented using python's \texttt{pickle} module and \texttt{txt} is a plain text model description format shared between Matlab and python explained further below.
-		
-		
+
+
 	\end{itemize}
 \item \texttt{modules}
 	\begin{itemize}
-	
+
 		\item \texttt{Module} implements an abstract class for neural network modules, defining a common interface which all other classes inheriting \texttt{Module} implement. The inherited default behaviour of all method stubs is to do nothing when called.
 	\begin{itemize}
 	\item If not implemented by inheriting methods, the function \texttt{forward(X)} will return \texttt{X} without change.
 	\item \texttt{set\_lrp\_parameters(lrp\_var,lrp\_param)} allows to pre-set lrp parameters per layer, with \texttt{lrp\_var} identifying the desired decomposition method per name as string type input, and \texttt{lrp\_param} providing a method-specific parameter.
-	\item \texttt{lrp(R, lrp\_var, param)} performs LRP wrt to an initial relevance input \texttt{R} and a previously fed-forward batch of data via a call of \texttt{forward(X)}. The parameters \texttt{lrp\_var} and \texttt{param} are optional. If not given,  the model (e.g. each layer) tries to use pre-set lrp parameters or will default to the simple lrp implementation from Equation \ref{eq:lrp_naive}.  
-				
+	\item \texttt{lrp(R, lrp\_var, param)} performs LRP wrt to an initial relevance input \texttt{R} and a previously fed-forward batch of data via a call of \texttt{forward(X)}. The parameters \texttt{lrp\_var} and \texttt{param} are optional. If not given,  the model (e.g. each layer) tries to use pre-set lrp parameters or will default to the simple lrp implementation from Equation \ref{eq:lrp_naive}.
+
 				\texttt{lrp\_param $\in$ $\lbrace$ None\py, []\mat,'none' , 'simple', 'epsilon','eps', 'alphabeta',} \texttt{'alpha','ww','w\^{}2','flat' $\rbrace$} defines the decomposition alternative to use for all layers during the application of LRP. By default, the simple decomposition method in Equation \ref{eq:lrp_naive} will be applied, or any specific lrp parameters set using \texttt{set\_lrp\_parameters}. Setting the parameter to \texttt{'epsilon'} or \texttt{'alphabeta'} will cause the application of Equations \ref{eq:lrp_epsilon} and \ref{eq:lrp_alphabeta} respectively. \texttt{'eps'} and \texttt{'alpha'} are short equivalents for both methods. \texttt{'ww'} or \texttt{'w\^{}2'} will apply Equation \ref{eq:lrp_ww} and \texttt{'flat'} will apply Equation \ref{eq:lrp_flat}. Some layers do have default fall-back decompositions when the provided decomposition choice does not make sense.
-				
+
 				The parameter \texttt{param} may be used to set the corresponding free parameters $\epsilon$ and $\alpha$ of both methods. Default value is \texttt{[]\mat} or \texttt{None\py}.
-	\end{itemize}			
-			
+	\end{itemize}
+
 		\item \texttt{Sequential} represents the instance of an artificial neural network.
 			\begin{itemize}
 				\item \texttt{Sequential(modules)} Constructor. The parameter \texttt{modules} is an enumerable collection\py / cell array\mat of instances of class \texttt{Module} as computational layers of the network.
-				
+
 				\item \texttt{forward(X)} receives an input \texttt{X}, propagates it through the network and populates the network with input-specific data and internal data representations. Returns a network output.
-				
+
 				\item \texttt{train(X, Y, Xval, Yval, batchsize, iters, lrate, lrate\_decay, lfactor\_initial, status, convergence, transform)} implements a training procedure for the neural network implementation, using the error backpropagation algorithm. \texttt{train} receives a set of training data \texttt{X}		 and training labels  \texttt{Y},   on which the network is trained over \texttt{iters} (default is 10000) training iterations with mini batches of \texttt{batchsize} (default 25) samples at a time. Every \texttt{status} (default is 250) training iterations, the network is evaluated on the validation data \texttt{Xval} with labels \texttt{Yval}. If no input for the validation set is provided the whole training data is used for estimating the prediction performance. A training iteration consists of a forward pass of a minibatch, a backward pass of the delta between the prediction and the expected results followed by an update step. The speed of learning is determined by \texttt{lrate} (default is 0.005). \texttt{lrate\_decay} controls whether and how the learning rate will diminish during trainig, depending on the network performance. The default value is \texttt{'none'}, with alternatives being \texttt{'linear'} and \texttt{'sublinear'}. \texttt{lfactor\_initial} (default 1.0) is a multiplicative factor to the base learning rate. Using this, with multiple consecutive calls of \texttt{train} allows for a step-wise decrease in the learning rate over the complete network training. \texttt{convergence} (-1) is an integer value defining the number of iterations allowed without measurable network improvements, until model convergence is declared and the training is stopped. Values smaller than zero will disable this convergence check. The input variable \texttt{transform} accepts the handle of a function, which is to be applied to each input batch. This allows for slight input transformations, such as the addition of noise, etc. Default value is \texttt{None}, which is equivalent to the application of an identity function (aka. does nothing).
 				 \item \texttt{backward(DY)} performs a backward pass through the network, taking the error gradient \texttt{DY} as input.
 				 \item \texttt{update(lrate)} updates the network modules, after the error gradient has been computed using \texttt{backward}. \texttt{lrate} is a multiplicative factor determining the training velocity.
 				\item \texttt{lrp(R,lrp\_var, lrp\_param)}
 				The method returns first layer relevance values $R_d^{(1)}$. See the description of  \texttt{modules.Module.lrp} for details.
-				
-				
-				\item \texttt{clean()} iterates over all layers of the neural network and calls \texttt{clean()} on the implementing modules, removing temporary data necessary for LRP	which has been memorized during the forward pass. This method is called in \texttt{model\_io.write()}. 
+
+
+				\item \texttt{clean()} iterates over all layers of the neural network and calls \texttt{clean()} on the implementing modules, removing temporary data necessary for LRP	which has been memorized during the forward pass. This method is called in \texttt{model\_io.write()}.
 			\end{itemize}
-			
+
 		\item \texttt{Linear} represents a linear layer.
 			\begin{itemize}
 				\item \texttt{Linear(m,n)} creates a linear neural network layer instance with \texttt{m} input dimensions and \texttt{n} output dimensions.
-				
+
 				\item \texttt{forward(X)} performs a forward-pass of the input \texttt{X} and returns an \texttt{n} dimensional output by applying $Y  = \texttt{X}W + B$, where $W$ is a weight matrix, $B$ the bias term and $Y$ the output.
-								
+
 				\item \texttt{lrp(R, lrp\_var, param)} performs LRP with upper layer relevances $R^{(l+1)}$ and returns relevance values $R^{(l)}$ for the layer input. See the description of \texttt{modules.Module.lrp} for details on the possible range of parameters.
-				
+
 			\end{itemize}
 		\item \texttt{Tanh} implements an activation layer with non-linear $\tanh$ units.
 			\begin{itemize}
 				\item \texttt{forward(X)} applies the $\tanh$ function to the input \texttt{X} and returns the result.
-			\end{itemize}	
-				
+			\end{itemize}
+
 		\item \texttt{Rect} implements a rectification activation layer.
 			\begin{itemize}
 				\item \texttt{forward(X)} computes and returns $\max(0,\texttt{X})$
-			\end{itemize}	
-				
+			\end{itemize}
+
 		\item \texttt{SoftMax} implements a soft-max normalization layer
 			\begin{itemize}
 				\item \texttt{forward(X)} computes and returns $\forall i ~ \frac{\exp(\texttt{X}_i)}{\sum_j \exp(\texttt{X}_j)}$ for each row of \texttt{X}
-			\end{itemize}		
+			\end{itemize}
 	\end{itemize}
 \item \texttt{render} provides functionality to draw and save relevances and heatmaps as rgb-images
 	\begin{itemize}
@@ -602,14 +569,14 @@ For implementing LRP for the Caffe open source framework, several source files h
 \subsubsection*{Relevant C++ Interfaces}
 There are two different interfaces, in class \texttt{net} (in \texttt{net.hpp} and  \texttt{net.cpp})
 \begin{verbatim}
-  void net::Backward_Relevance(const std::vector<int> & classinds, 
-  vector<vector<double> > & rawhm, 
+  void net::Backward_Relevance(const std::vector<int> & classinds,
+  vector<vector<double> > & rawhm,
   const relpropopts & ro);
 \end{verbatim}
 and
 \begin{verbatim}
-  void net::Backward_Relevance_multi(const std::vector< std::vector<int> > & classinds, 
-  vector< vector<vector<double> > > & rawhm, 
+  void net::Backward_Relevance_multi(const std::vector< std::vector<int> > & classinds,
+  vector< vector<vector<double> > > & rawhm,
   const relpropopts & ro);
 \end{verbatim}
 
@@ -628,7 +595,7 @@ Both interfaces require a forward pass to be run before calling them. The result
 
 
 
-For the first interface: 
+For the first interface:
 
  \texttt{classinds} contains the indices of all classes, for which the heatmap is to be computed as a composite of their respective network output scores.
 
@@ -653,7 +620,7 @@ The second interface is a vectorized version of the first interface, i.e. \textt
 \item 60 for $\alpha-\beta$ and $w^2$ decompositions below a given layer
 % new methods:
 \item 166 for Guided Backpropagation \cite{springenberg2014striving}
-\item 100 for LRP composite (see \cite{DBLP:journals/corr/abs-1910-09840}): $\alpha-\beta$ for convolution layers, $\epsilon$ for the rest
+\item 100 for LRP composite (see \cite{kohlbrenner2019towards}): $\alpha-\beta$ for convolution layers, $\epsilon$ for the rest
 \item 102 for LRP composite (see 100) and flat below a given layer
 \item 104 for LRP composite (see 100) and $w^2$ below a given layer
 \end{itemize}
@@ -667,9 +634,9 @@ The second interface is a vectorized version of the first interface, i.e. \textt
 
 \texttt{auxiliaryvariable\_maxlayerindexforflatdistinconv} proves the layer index from which on either flat or $w^2$ relevance decomposition is performed (see \texttt{lrp.relpropformulatype}s 54 to 60.
 
-\texttt{relpropopts.firstlayerindex} is the index of the lowest layer at which relevance scores are taken and copied into the output vector of vectors \texttt{rawhm}. 
+\texttt{relpropopts.firstlayerindex} is the index of the lowest layer at which relevance scores are taken and copied into the output vector of vectors \texttt{rawhm}.
 
-the format of \texttt{rawhm} is determined by 
+the format of \texttt{rawhm} is determined by
 \begin{verbatim}
 const int channels = bottom_vecs_[i][0]->channels();
 const int hei = bottom_vecs_[i][0]->height();
@@ -700,19 +667,19 @@ Other variables which are not supported in this release and have to be set to de
 \subsubsection*{The shared plain text file format}
 
 
-		The plain text file format is shared among the Matlab and python implementations of the LRP Toolbox and describes 
+		The plain text file format is shared among the Matlab and python implementations of the LRP Toolbox and describes
         the model by listing its computational layers line by line as
 
         \begin{verbatim}
 <Layername_i> [<shape parameters>]
 [<Layer_params_i>]
         \end{verbatim}
-     
+
      	The following layers apply component-wise transformations to the input and thus only require a single line to be fully parameterized, e.g.
-     	
-     	\begin{verbatim}  
-Rect       
-Tanh         
+
+     	\begin{verbatim}
+Rect
+Tanh
 SoftMax
 Flatten
         \end{verbatim}
@@ -721,34 +688,34 @@ Flatten
 Linear m n
 W
 B
-       \end{verbatim}       
+       \end{verbatim}
         with $m$ and $n$ being integer values describing the dimensions of the weight matrix $W$ as $[m \times n]$ and
         $W$ being the human readable ascii-representation of the matrix, where $W$ is reshaped to a s	ingle vector in C-order and written out as a
         white space separated line of floating point values.
         After the line describing $W$, the bias term $B$ is written out as a single line of $n$ white space separated floating point values.
-        
-        
+
+
 		Both Max- and SumPooling layer share the same structure, except for the layer name:
 		\begin{verbatim}
 SumPool hpool wpool hstride wstride
 		\end{verbatim}
-		
+
 		and
 		\begin{verbatim}
 MaxPool hpool wpool hstride wstride
-		\end{verbatim}	    
+		\end{verbatim}
         with $hpool$ and $wpool$ being the pooling operations respective height and width and $hstride$ and $wstride$ being the vertical and horizontal stride between pooling applications.
-        
+
         Finally, Convolution layers are parsed out as
         \begin{verbatim}
-Convolution hf wf df nf hstride wstride 
+Convolution hf wf df nf hstride wstride
 W
 B
         \end{verbatim}
         where $hstride$ and $wstride$ serve the same purpose as for the pooling layers, and $hf, wf, df$ and $nf$ are the filter bank's height, width and depth ( = input depth = number of input channels) and number of filters ( = output depth = number of output channels) respectively. As with the Linear layer $W$ are the learned weights, reshaped in C-order to a single vector written out as a single line of white-space separated values. $B$ is the vector if bias terms of the layer, equalling in length to $nf$.
-        
+
         An example of a simple network trained to solve the \texttt{XOR}-problem is given below. The model file is also included as plain text in \texttt{<toolbox\_path>/models/XOR/xor\_net\_small.txt}
-        
+
 \subsubsection*{XOR-Solving Example Network}
 \input{./graphics/xor_net_small.txt}
 
@@ -760,15 +727,15 @@ B
 
 The C++ version outputs four files into the path specified in the configuration file as \texttt{standalone\textunderscore outpath}:
 
-The first two files are 
+The first two files are
 
-\texttt{$\langle imagefilename\rangle$\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.png} and 
+\texttt{$\langle imagefilename\rangle$\textunderscore as\textunderscore inputted\textunderscore into\textunderscore the\textunderscore dnn.png} and
 
 \texttt{$\langle imagefilename\rangle$\textunderscore heatmap.png}. Those files are simply the image as it enters the quadratic receptive field of the neural network, and the resulting heatmap. While they are easily to be read in image viewers, they are unsuited for further processing of the heatmap. Note that both image files are \emph{not} written out when using the implementations named \texttt{*\_minimaloutput}. This code only writes out the results as plain the text files described below.
 
 
-\texttt{$\langle imagefilename\rangle$\textunderscore rawhm.txt} provides the raw unnormalized heatmap scores as plain text. 
-The format is as follows: 
+\texttt{$\langle imagefilename\rangle$\textunderscore rawhm.txt} provides the raw unnormalized heatmap scores as plain text.
+The format is as follows:
 
 \begin{Verbatim}[frame=single]
 C
@@ -804,18 +771,18 @@ The configuration file syntax for LRP for Caffe is realized as pairs of lines, w
 \begin{itemize}
 	\item \texttt{param\textunderscore file} (string) \\
 File of the caffe layer definitions as text file. Usually has the ending \texttt{.prototxt}. Check whether the value  \texttt{dims: x} in the \texttt{prototxt} file is appropriate for your case. If you process only one image, you can set that to 1 and your code performs faster and uses less memory.
-	
+
 	\item \texttt{model\textunderscore file} (string) \\
 	File containing the Caffe model weights, usually as a binary file.
-	
+
 	\item \texttt{mean\textunderscore file} (string) \\
 Absolute path to the image mean which gets substracted from the input image. Format is a Caffe blob proto if the value of use\textunderscore mean\textunderscore file\textunderscore asbinaryprotoblob is a positive integer.
 
 	\item \texttt{use\_mean\_file\_asbinaryprotoblob} (integer) \\
 	Set it to a positive integer if you to load a Caffe blob protofile as mean file.
-	
+
 	\item \texttt{synsetfile} (string) \\
-Absolute path to a file containing as many lines as number of classes, with each line being the class label of the respective class. 
+Absolute path to a file containing as many lines as number of classes, with each line being the class label of the respective class.
 
 \item \texttt{lastlayerindex} (integer) \\
 Index of the highest layer where to start back-propagating LRP scores. Possible choice: any non-negative value for an explicit layer index, or $-1$ for auto-detecting the lowest oftmax layer or $-2$ for auto-detecting the highest inner product layer.
@@ -833,7 +800,7 @@ Size of the largest side of the image after resizing, should be larger than \tex
 Path where to output the heatmap files.
 
 \item \texttt{standalone\_rootpath}  (string) \\
-should be the name of a subdirectory in the full path name of the input image files. The part of the path, starting at this string is appended to \texttt{<standalone\_outpath>}. Exits with error if the full path of the input image file does not contain this string. In particular, for the outputs written into \texttt{standalone\_outpath}, the path structure is preserved starting with \texttt{standalone\_rootpath}. This is helpful when two input images have identical filenames but are residing in different subdirectories. Example: 
+should be the name of a subdirectory in the full path name of the input image files. The part of the path, starting at this string is appended to \texttt{<standalone\_outpath>}. Exits with error if the full path of the input image file does not contain this string. In particular, for the outputs written into \texttt{standalone\_outpath}, the path structure is preserved starting with \texttt{standalone\_rootpath}. This is helpful when two input images have identical filenames but are residing in different subdirectories. Example:
 \begin{itemize}
 \item \texttt{standalone\_outpath} is \texttt{/home/user99/results/03102015}
 \item Input file is \texttt{/home/user99/data/data25092015/cats/cat03.jpg}
@@ -843,17 +810,25 @@ Then, outfiles are written as e.g. \texttt{~/home/user99/results/03102015/data25
 
 
 \item \texttt{relpropformulatype} (integer) \\
-Set to 0 for the $\epsilon$-type formula, 2 for the $\alpha$-$\beta$-type formula, 11 or 99 for Sensitivity Analysis and 26 for Deconvolution, 54 for $\epsilon$+flat, 56  for $\epsilon+w^2$, 58 for $\alpha-\beta$+flat and 60 for $\alpha-\beta+w^2$.
+Set to 0 for the $\epsilon$-type formula,
+2 for the $\alpha$-$\beta$-type formula,
+11 or 99 for Sensitivity Analysis and 26 for Deconvolution,
+54 for $\epsilon$+flat,
+56  for $\epsilon+w^2$,
+58 for $\alpha-\beta$+flat
+and 60 for $\alpha-\beta+w^2$.
+166 selects Guided Backprop.
+The numeric codes 100, 102 and 104 implement the currently recommended layer-dependent LRP decomposition approaches for feed-forward neural networks~\cite{kohlbrenner2019towards,samek2020toward}
 
 \item \texttt{auxiliaryvariable\_maxlayerindexforflatdistinconv} (integer) \\
-Defines the layer index below (and including) for which ---  for the  \texttt{relpropformulatype}s 54 to 60 --- either flat or $w^2$ decomposition is applied instead of either $\epsilon$ or $\alpha-\beta$.
+Defines the layer index below (and including) for which ---  for the  \texttt{relpropformulatype}s 54 to 60 and 100, 102, 104 --- either flat or $w^2$ decomposition is applied instead of either $\epsilon$ or $\alpha-\beta$.
 
 \item \texttt{epsstab} (float) \\
 Value of $\epsilon$ for the $\epsilon$-type formula. Must be non-negative.
 
 \item \texttt{alphabeta\_beta} (float) \\
 Value of $\beta$ for the $\alpha$-$\beta$-type formula. Must be non-negative.
-	
+
 
 \end{itemize}
 
