@@ -88,7 +88,7 @@ Call
 
 and the go have a coffee. The resulting caffe-lrp-cpu-u16.04.sif is an (executable) Singularity image which allows you to process LRP (and other methods) for Caffe Models with
 
-[singularity run] ./caffe-lrp-cpu-u16.04.sif -c CONFIGPATH -f FILELISTPATH -p OUTPUTPATH
+	[singularity run] ./caffe-lrp-cpu-u16.04.sif -c CONFIGPATH -f FILELISTPATH -p OUTPUTPATH
 
 Have a look at [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/doc/manual/manual.pdf) for details.
 
