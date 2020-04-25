@@ -78,7 +78,8 @@ After having obtained the toolbox code, data and models of choice, simply move i
 Make sure to at least skim through the installation scripts! For more details and instructions please refer to [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/blob/master/doc/manual/manual.pdf).
 
 #### Attention for Caffe-LRP
-We highly recommend building LRP for Caffe via the [singularity image definition](singularity/caffe-lrp-cpu-u16.04.def) (You might regret doing something else outside of Ubuntu 14.04 LTS or Ubuntu 16.04 LTS...):
+We highly recommend building LRP for Caffe via the [singularity image definition](singularity/caffe-lrp-cpu-u16.04.def) (You might regret doing something else outside of Ubuntu 14.04 LTS or Ubuntu 16.04 LTS...).
+In this case, we also recommend to *only* download the content of the [singularity](singularity) folder.
 Call
 
 	cd <toolbox_location>/singularity
