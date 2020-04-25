@@ -31,14 +31,14 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 
 ### New in 1.3.0:
-#### standalone python implementation:
+#### Standalone Python implementation:
 * update to python 3
 * updated treatment of softmax and target class
 * lrp_aware option for efficient calculation of multiple backward passes (at the cost of a more expensive forward pass)
 * custom colormaps in render.py
 * __gpu support__ when [cupy](https://github.com/cupy/cupy) is installed. this is an optional feature. without the cupy package, the python code will execute using the cpu/numpy.
 
-### caffe implementation
+#### Caffe implementation
 * updated the installation config
 * new [**recommended**](https://arxiv.org/abs/1910.09840) formula types 100, 102, 104
 * support for Guided Backprop via formula type 166
@@ -53,8 +53,6 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 * Convnets with Sum- and Maxpooling are now supported, including demo code.
 * LRP-parameters can now be set for each layer individually
 * w² and flat weight decomposition implemented.
-
-
 
 #### Caffe:
 * Minimal output versions implemented.
