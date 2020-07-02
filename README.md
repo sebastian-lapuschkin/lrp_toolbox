@@ -11,10 +11,10 @@ The LRP Toolbox provides simple and accessible stand-alone implementations of LR
 
 The  implementations  for  Matlab  and  python  are intended as a sandbox or playground to familiarize the user to the LRP algorithm and  thus are implemented with readability and transparency in mind.  Models and data can be imported and exported using raw text formats, Matlab's .mat files and the .npy format for python/numpy.
 
-<img src="doc/images/1.png" width="280"><img src="doc/images/2.png" width="280"><img src="doc/images/7.png" width="280">
+<img src="doc/images/1.png" width="270"><img src="doc/images/2.png" width="270"><img src="doc/images/7.png" width="270">
 
-<img src="doc/images/volcano2.jpg" width="210"><img src="doc/images/volcano2_hm.jpg" width="210">
-<img src="doc/images/scooter10.jpg" width="210"><img src="doc/images/scooter_10_hm.jpg" width="210">
+<img src="doc/images/volcano2.jpg" width="205"><img src="doc/images/volcano2_hm.jpg" width="205">
+<img src="doc/images/scooter10.jpg" width="205"><img src="doc/images/scooter_10_hm.jpg" width="205">
 
 
 ### See the LRP Toolbox in Action
@@ -22,7 +22,7 @@ To try out either the python-based MNIST demo, or the Caffe based ImageNet demo 
 
 | **MNIST**     | **Images**           | **Text**  |
 |:-----------:|:-------------:|:-----:|
-| [<img src="http://heatmapping.org/mnist.png" width=210>](https://lrpserver.hhi.fraunhofer.de/handwriting-classification)      | [<img src="http://heatmapping.org/caffe.png" width=210>](https://lrpserver.hhi.fraunhofer.de/image-classification) |[<img src="http://heatmapping.org/text.png" width=210>](https://lrpserver.hhi.fraunhofer.de/text-classification) |
+| [<img src="http://heatmapping.org/mnist.png" width=205>](https://lrpserver.hhi.fraunhofer.de/handwriting-classification)      | [<img src="http://heatmapping.org/caffe.png" width=205>](https://lrpserver.hhi.fraunhofer.de/image-classification) |[<img src="http://heatmapping.org/text.png" width=205>](https://lrpserver.hhi.fraunhofer.de/text-classification) |
 | A simple LRP demo based on neural networks that predict handwritten digits and were trained using the MNIST data set.       |   A more complex LRP demo based on a neural network implemented using Caffe. The neural network predicts the contents of the picture.    |   An LRP demo that explains classification on natural language. The neural network predicts the type of document.  |
 
 
