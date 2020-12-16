@@ -747,7 +747,7 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 std::vector < std::vector < std::vector<double> > > allrawhm;
 
 if (ro.relpropformulatype == 11 || ro.relpropformulatype == 99) // gradient and sensitivity
-
+{
 	//this defaults to a wrapper, which only sequentially computes the gradient for all inputs at the moment
 	net_->Backward_Gradient_multi(allclassinds, allrawhm, ro);
 	// allrahm is formatted as [Nsamples][3colorchannels][Npixels]
