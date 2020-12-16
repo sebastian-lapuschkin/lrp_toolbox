@@ -746,24 +746,25 @@ for(int nim=0; nim< (int) imgfilesall.size();++nim )
 
 std::vector < std::vector < std::vector<double> > > allrawhm;
 
-if (ro.relpropformulatype == 99){
-	ro.relpropformulatype = 11;
-}
-if (ro.relpropformulatype == 11){
+if (ro.relpropformulatype == 11 || ro.relpropformulatype == 99) // gradient and sensitivity
+
 	//this defaults to a wrapper, which only sequentially computes the gradient for all inputs at the moment
 	net_->Backward_Gradient_multi(allclassinds, allrawhm, ro);
 	// allrahm is formatted as [Nsamples][3colorchannels][Npixels]
 
-	// compute gradient l2norm for all heatmaps
-	for(int i = 0; i < (int) allrawhm.size(); ++i)
+	if(ro.relpropformulatype == 99)
 	{
-		for(int p = 0; p< (int) allrawhm[i][0].size(); ++p)
-            {
-                double norm = sqrt(allrawhm[i][0][p]*allrawhm[i][0][p] + allrawhm[i][1][p]*allrawhm[i][1][p] + allrawhm[i][2][p]*allrawhm[i][2][p]);
-                allrawhm[i][0][p] = norm;
-                allrawhm[i][1][p] = norm;
-                allrawhm[i][2][p] = norm;
-            }
+		// compute gradient l2norm for all heatmaps
+		for(int i = 0; i < (int)allrawhm.size(); ++i)
+		{
+			for(int p = 0; p< (int)allrawhm[i][0].size(); ++p)
+				{
+					double norm = sqrt(allrawhm[i][0][p]*allrawhm[i][0][p] + allrawhm[i][1][p]*allrawhm[i][1][p] + allrawhm[i][2][p]*allrawhm[i][2][p]);
+					allrawhm[i][0][p] = norm;
+					allrawhm[i][1][p] = norm;
+					allrawhm[i][2][p] = norm;
+				}
+		}
 	}
 }
 else{

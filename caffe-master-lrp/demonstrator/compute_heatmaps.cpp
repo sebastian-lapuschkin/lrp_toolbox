@@ -622,27 +622,28 @@ void heatmaprunner::process_heatmap(const std::string & imgfile, const int class
 			std::cout << "heatmapping for " << classinds2[0] << std::endl;
 		}
 
-		if(ro.relpropformulatype == 99){
-			ro.relpropformulatype = 11;
-		}
-        if (ro.relpropformulatype == 11)
+        if (ro.relpropformulatype == 11 || ro.relpropformulatype == 99) // gradient and sensitivity
         {
+			// gradient
             net_->Backward_Gradient(classinds2, rawhm, ro);
-            //compute gradient l2 norm
-            for(int p = 0; p< (int) rawhm[0].size(); ++p)
-            {
-                double norm = sqrt(rawhm[0][p]*rawhm[0][p] + rawhm[1][p]*rawhm[1][p] + rawhm[2][p]*rawhm[2][p]);
-                /*if (norm < 0)
-                {
-                    std::cout << "IMPOSSSIBLE! NORM IS " << norm << std::endl ;
-                }else
-                {
-                    std::cout << norm << std::endl;
-                }*/
-                rawhm[0][p] = norm;
-                rawhm[1][p] = norm;
-                rawhm[2][p] = norm;
-            }
+
+            //compute gradient l2 norm: sensitivity
+			if(ro.relpropformulatype == 99){
+				for(int p = 0; p< (int) rawhm[0].size(); ++p)
+				{
+					double norm = sqrt(rawhm[0][p]*rawhm[0][p] + rawhm[1][p]*rawhm[1][p] + rawhm[2][p]*rawhm[2][p]);
+					/*if (norm < 0)
+					{
+						std::cout << "IMPOSSSIBLE! NORM IS " << norm << std::endl ;
+					}else
+					{
+						std::cout << norm << std::endl;
+					}*/
+					rawhm[0][p] = norm;
+					rawhm[1][p] = norm;
+					rawhm[2][p] = norm;
+				}
+			}
 
         }
         else

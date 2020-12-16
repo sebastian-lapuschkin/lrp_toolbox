@@ -46,10 +46,13 @@ From: ubuntu:16.04
   echo ">>> STEP 1: DOWNLOAD RELEVANT REPOSITORIES"
   ####
   cd /opt
-  wget https://github.com/sebastian-lapuschkin/lrp_toolbox/archive/master.zip
-  unzip master.zip
-  mv lrp_toolbox-master lrp_toolbox
-  rm master.zip
+  #wget https://github.com/sebastian-lapuschkin/lrp_toolbox/archive/master.zip
+  #unzip master.zip
+  #mv lrp_toolbox-master lrp_toolbox
+  #rm master.zip
+  git clone https://github.com/sebastian-lapuschkin/lrp_toolbox
+  cd lrp_toolbox
+  git checkout grad
 
 
   ####
