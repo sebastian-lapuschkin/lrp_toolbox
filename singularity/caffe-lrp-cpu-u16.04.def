@@ -46,7 +46,7 @@ From: ubuntu:16.04
   echo ">>> STEP 1: DOWNLOAD RELEVANT REPOSITORIES"
   ####
   cd /opt
-  BRANCH=grad
+  BRANCH=master
   wget https://github.com/sebastian-lapuschkin/lrp_toolbox/archive/$BRANCH.zip
   unzip $BRANCH.zip
   mv lrp_toolbox-$BRANCH lrp_toolbox
