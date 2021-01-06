@@ -31,7 +31,7 @@
 
 \begin{document}
 
-\title{LRP Toolbox for Artificial Neural Networks 1.3.0 \\ Manual}
+\title{LRP Toolbox for Artificial Neural Networks 1.3.1 \\ ----- \\ Manual}
 
 \author{Sebastian Lapuschkin \and Alexander Binder \and Gr\'egoire Montavon \and Maximilian Kohlbrenner \and Klaus-Robert M\"uller \and Wojciech Samek}
 
@@ -612,17 +612,18 @@ The second interface is a vectorized version of the first interface, i.e. \textt
 \begin{itemize}
 \item 0 for the $\epsilon$-type formula
 \item 2 for the $\alpha-\beta$-type formula
-\item 11 or 99 for Sensitivity Analysis \cite{DBLP:journals/corr/SimonyanVZ13}
+\item 11 for Gradient
 \item 26 for Deconvolution \cite{DBLP:conf/eccv/ZeilerF14}
 \item 54 for $\epsilon$ and flat decompositions below a given layer
 \item 56 for $\epsilon$ and $w^2$ decompositions below a given layer
 \item 58 for $\alpha-\beta$ and flat decompositions below a given layer
 \item 60 for $\alpha-\beta$ and $w^2$ decompositions below a given layer
+\item 99 for Sensitivity Analysis \cite{DBLP:journals/corr/SimonyanVZ13}, i.e., the pixel-wise norm of the gradient
 % new methods:
-\item 166 for Guided Backpropagation \cite{springenberg2014striving}
-\item 100 for LRP composite (see \cite{kohlbrenner2019towards}): $\alpha-\beta$ for convolution layers, $\epsilon$ for the rest
+\item 100 for LRP composite (see \cite{lapuschkin2017understanding,kohlbrenner2019towards}): $\alpha-\beta$ for convolution layers, $\epsilon$ for the rest
 \item 102 for LRP composite (see 100) and flat below a given layer
 \item 104 for LRP composite (see 100) and $w^2$ below a given layer
+\item 166 for Guided Backpropagation \cite{springenberg2014striving}
 \end{itemize}
 
 
@@ -812,7 +813,8 @@ Then, outfiles are written as e.g. \texttt{~/home/user99/results/03102015/data25
 \item \texttt{relpropformulatype} (integer) \\
 Set to 0 for the $\epsilon$-type formula,
 2 for the $\alpha$-$\beta$-type formula,
-11 or 99 for Sensitivity Analysis and 26 for Deconvolution,
+11 for Gradient,
+99 for Sensitivity Analysis and 26 for Deconvolution,
 54 for $\epsilon$+flat,
 56  for $\epsilon+w^2$,
 58 for $\alpha-\beta$+flat
@@ -843,10 +845,10 @@ Value of $\beta$ for the $\alpha$-$\beta$-type formula. Must be non-negative.
 \section{Contact and Support}
 \label{sec:contact}
 
-For Answers to questions, help and support, please contact:\\
+For answers, help and support, please contact:\\
 \begin{tabular}{lrcl}
 Sebastian Lapuschkin  & \texttt{sebastian.lapuschkin} & \hspace{-5mm} \texttt{@} & \hspace{-5mm} \texttt{hhi.fraunhofer.de}\\
-Alexander Binder  & \texttt{alexander\_binder} & \hspace{-5mm} \texttt{@} & \hspace{-5mm} \texttt{sutd.edu.sg}\\
+Alexander Binder  & \texttt{alexabin} & \hspace{-5mm} \texttt{@} & \hspace{-5mm} \texttt{ifi.uio.no}\\
 Wojciech Samek  & \texttt{wojciech.samek} & \hspace{-5mm} \texttt{@} & \hspace{-5mm} \texttt{hhi.fraunhofer.de}
 \end{tabular}
 
