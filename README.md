@@ -79,7 +79,7 @@ When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/p
 
 For further research and projects involving LRP, visit [heatmapping.org](http://heatmapping.org)
 
-Also, consider paying https://github.com/albermax/innvestigate a visit! Next to LRP, iNNvestigate efficiently implements a hand full of additional DNN analysis methods and can boast with a >500-fold increase in computation speed when compared with our CPU-bound Caffe implementation!
+Also, if you prefer Keras/Tensorflow or PyTorch, consider paying https://github.com/albermax/innvestigate (Keras/TF) and https://github.com/chr5tphr/zennit (PyTorch) a visit! Next to LRP, iNNvestigate efficiently implements a hand full of additional DNN analysis methods and can boast with a >500-fold increase in computation speed when compared with our CPU-bound Caffe implementation! Zennit provides the latest LRP Composites and provides tools to combine gradient- and modified backpropagation methods with, e.g., noise tunnel approaches on your GPU.
 
 
 ## Updates and Version History
