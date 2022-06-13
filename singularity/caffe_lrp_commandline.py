@@ -1,5 +1,5 @@
 """
-This script catches the parameters passed to the runnable singularity container from the outside and 
+This script catches the parameters passed to the runnable singularity container from the outside and
 translates them into command line inputs for the caffe binaries living inside the container.
 """
 
@@ -16,7 +16,7 @@ binaries = {'default':           '/opt/lrp_toolbox/caffe-master-lrp/demonstrator
 
 #prepare command line arguments
 parser = argparse.ArgumentParser(description="Process models and data, produce explanatory heatmaps")
-parser.add_argument('--binary',   '-b', default='default', help='Which binary to use for computing heatmaps? Determines asynchronity and amount of meta-infornation.')
+parser.add_argument('--binary',   '-b', default='default', help='Which binary to use for computing heatmaps? Determines asynchronicity and amount of meta-information.')
 parser.add_argument('--config',   '-c', required=True,     help='Path to the lrp demonstrator configuration file')
 parser.add_argument('--filelist', '-f', required=True,     help='Path to the list-of-files-file with pairs of img_path class_to_explain in each line')
 parser.add_argument('--prepath',  '-p', default='./',       help='Path segment to preprend to the generated output files. "./" is the default value')

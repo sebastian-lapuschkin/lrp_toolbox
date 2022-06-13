@@ -1,6 +1,6 @@
 # The LRP Toolbox for Artificial Neural Networks (1.3.1)
 
-The Layer-wise Relevance Propagation (LRP) algorithm explains a classifer's prediction
+The Layer-wise Relevance Propagation (LRP) algorithm explains a classifier's prediction
 specific  to  a  given  data  point  by  attributing
 relevance scores to  important  components
 of  the  input  by  using  the  topology  of  the  learned  model  itself.
@@ -60,7 +60,7 @@ Have a look at [the manual](https://github.com/sebastian-lapuschkin/lrp_toolbox/
 
 ## The LRP Toolbox Paper
 
-When using (any part) of this toolbox, please cite [our paper](http://jmlr.org/papers/volume17/15-618/15-618.pdf)
+When using (any part of) this toolbox, please cite [our paper](http://jmlr.org/papers/volume17/15-618/15-618.pdf)
 
     @article{JMLR:v17:15-618,
         author  = {Sebastian Lapuschkin and Alexander Binder and Gr{{\'e}}goire Montavon and Klaus-Robert M{{{\"u}}}ller and Wojciech Samek},
