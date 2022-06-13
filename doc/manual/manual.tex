@@ -54,7 +54,7 @@ A recent overview containing hints and tips regarding effective application of L
 The toolbox comes with platform-independent stand-alone implementations of LRP in Matlab and python and a plugin for the Caffe~\cite{jia2014caffe} Deep Learning Toolkit.
 Models, Data and Results can be imported and exported as Matlab's \texttt{.mat} files, numpy's \texttt{.npy} or \texttt{.npz} files for python or ASCII-formatted plain text. For details about the supported formats for each implementation see Section \ref{sec:implementation}.
 
-Both the Matlab and python code are fully documented and for each example impelentations demonstrate the application of LRP at hand of the MNIST hand written digit data set \cite{lecun1998mnist}.
+Both the Matlab and python code are fully documented and for each example implementations demonstrate the application of LRP at hand of the MNIST hand written digit data set \cite{lecun1998mnist}.
 The LRP implementation for Caffe extends the respective classes and files with the needed functionality and operates directly on images and pre-trained model from the command line.
 The most recent official release of the source code and example data and models are available from
 \begin{center}
@@ -134,7 +134,7 @@ The resulting \verb!.sif! file has all necessary dependencies installed and cont
 
 %run the demo
 The container comes with a demo skript that calculates relevance scores for images on the caffe models.
-It is called using \verb!singularity run! (or directly as an executable, assuming the required permissionas have been set) and a configuration file, a filelist file and an output path need to be specified:
+It is called using \verb!singularity run! (or directly as an executable, assuming the required permission as have been set) and a configuration file, a filelist file and an output path need to be specified:
 \begin{Verbatim}[frame = single]
 [singularity run] ./caffe-lrp-cpu-u16.04.sif -c CONFIGPATH -f FILELISTPATH -p OUTPUTPATH
 \end{Verbatim}
@@ -164,7 +164,7 @@ Note that an installation of the \texttt{cupy} package for python enables GPU su
 
 \subsubsection*{Caffe open-source package}
 
-\emph{Note that below information is deprecated for Linux versions newer that Ubuntu 16.04 LTS. We recommend sticking to the Singulariy build described earlier to minimize headaches.}
+\emph{Note that below information is deprecated for Linux versions newer that Ubuntu 16.04 LTS. We recommend sticking to the Singularity build described earlier to minimize headaches.}
 \vspace{2mm}
 
 The LRP implementation for Caffe has been forked from the Caffe repository on October 3rd 2015 (rc2). After fulfilling all requirements listed above, execute
@@ -173,7 +173,7 @@ cd <toolbox_location>/caffe-master-lrp
 make clean
 make all
 \end{Verbatim}
-Note that the Caffe-based LRP implementation currently only supports execution only on CPUs and already provides a correspondingly condigured \texttt{Makefile.config}.
+Note that the Caffe-based LRP implementation currently only supports execution only on CPUs and already provides a correspondingly configured \texttt{Makefile.config}.
 
 After successfully building Caffe, navigate to the subdirectory \texttt{demonstrator} and execute \texttt{build.sh} (include and library paths might have to be adjusted) to compile the executables \texttt{lrp\_demo}, \texttt{lrp\_parallel\_demo}, \texttt{lrp\_demo\_minimaloutput} and \texttt{lrp\_parallel\_demo\_minimaloutput} for sequential and parallel heatmap computation respectively. Note that while the binaries ending in \texttt{\_minimaloutput} will only write out plain text relevance maps and the ten dominantly predicted classes, while the other binaries will also produce images showing the actual resized and padded network input, as well as a heatmap visualization as images.
 
@@ -289,7 +289,7 @@ R^{(l,l+1)}_{i\leftarrow j} = \left(\alpha\cdot\frac{z_{ij}^+}{z_j^+} + \beta\cd
 \end{align}
 Adding the constraint $\alpha + \beta = 1$ ensures the relevance conservation principle to hold and reduces the number of added free parameters to one.
 
-This decomposition method is especially usefull when paired with a networks making use of ReLU activation layers, since hidden layer inputs will always be $\geq 0$ and their pre-activation outputs also need to be $\geq 0$ to ``fire''. This means that positively weighted connections $w_{ij}$ --- which all factor into $z_{ij}^+$ --- propagate the inputs in an activatingly, while negative weights create deactivating messages $z_{ij}^-$. So by choosing $\alpha$ (and therefore $\beta$) appropriately, allows to choose what is backwards-propagated in terms of relevance. For example setting $\alpha = 1$, causes $\beta = 0$ will result in relevance maps which yield insight into which features cause neuron activations, while $\alpha=2, \beta=-1$ yields a more balanced explanation with still more focus on the neuron-exciting inputs. Be careful, however, with setting a variable to 0: Sum-pooling after a ReLu activation layer will only yield positive activations. Here, setting $\alpha=0,\beta=1$ will result in no heatmap at all, since there are no inhibiting layer inputs to propagate the relevance to.
+This decomposition method is especially useful when paired with a networks making use of ReLU activation layers, since hidden layer inputs will always be $\geq 0$ and their pre-activation outputs also need to be $\geq 0$ to ``fire''. This means that positively weighted connections $w_{ij}$ --- which all factor into $z_{ij}^+$ --- propagate the inputs in an activatingly, while negative weights create deactivating messages $z_{ij}^-$. So by choosing $\alpha$ (and therefore $\beta$) appropriately, allows to choose what is backwards-propagated in terms of relevance. For example setting $\alpha = 1$, causes $\beta = 0$ will result in relevance maps which yield insight into which features cause neuron activations, while $\alpha=2, \beta=-1$ yields a more balanced explanation with still more focus on the neuron-exciting inputs. Be careful, however, with setting a variable to 0: Sum-pooling after a ReLu activation layer will only yield positive activations. Here, setting $\alpha=0,\beta=1$ will result in no heatmap at all, since there are no inhibiting layer inputs to propagate the relevance to.
 
 \paragraph{The $w^2$-decomposition formula}
 The $w^2$-rule was first introduced in \cite{MonArXiv16} and is obtained by choosing the closest root to $\x$ in direction of maximal descent when using Deep Taylor Decomposition. Although it might seem that this decomposition is independent to the input data, the resulting heatmap explanations are unique for each data point through the influence of $R^{(l)}$. The relevance messages for this decomposition compute as
